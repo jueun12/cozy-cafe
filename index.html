@@ -17,6 +17,16 @@
     --guest-scale:1; --queue-scale:1; --staff-scale:1;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+  /* 드래그 시 브라우저 기본 텍스트/요소 선택(파란 하이라이트) 방지 — 게임은 탭/클릭 전용 */
+  html, body{
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+    -webkit-touch-callout:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  *{ -webkit-user-drag:none; }
+  img{ -webkit-user-drag:none; user-drag:none; }
+  /* 글자 입력이 필요한 요소는 선택 허용(예외) */
+  input, textarea{ -webkit-user-select:text; user-select:text; }
   body{
     font-family:'Segoe UI','Apple SD Gothic Neo',sans-serif;
     background:var(--bg); color:var(--ink);
