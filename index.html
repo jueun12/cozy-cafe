@@ -3093,13 +3093,14 @@ function attachGuestDrag(c){
     const r=stage.getBoundingClientRect();
     const fx=(clientX-r.left)/r.width, fy=(clientY-r.top)/r.height;
     // 비어 있고 예약/더러움 없는 테이블 중, 포인터와 가장 가까운 것(거리 임계 내)
+    // 임계 0.12: 테이블 1칸 + 양옆 의자까지 포함 → 의자 위에 놔도 착석(드롭 영역 넓힘)
     let best=null, bestD=1e9;
     tables.forEach(t=>{
       if(t.occupant||t.reserved||t.dirty) return;
       const d=Math.hypot(fx-t.x, fy-t.y);
       if(d<bestD){ bestD=d; best=t; }
     });
-    return (best && bestD<0.07) ? best : null;
+    return (best && bestD<0.12) ? best : null;
   }
   function highlight(t){
     tables.forEach(x=>x.el.classList.toggle('drop-target', x===t));
