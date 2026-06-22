@@ -144,7 +144,7 @@
     background:var(--accent); border-radius:1cqw;
     padding:0.2cqw 1.1cqw; margin-right:0.4cqw;
   }
-  .game-info .served{ font-size:1.9cqw; font-weight:700; color:var(--accent-deep); }  .game-info .served.hidden{ display:none; }  .game-info .coins{ font-size:1.9cqw; font-weight:700; color:#C99A2E; display:inline-flex; align-items:center; gap:0.4cqw; }
+  .game-info .served{ font-size:1.9cqw; font-weight:700; color:var(--accent-deep); }  .game-info .served.hidden{ display:none; }  .game-info .served.goal-done{ color:#3fa96b; }  .game-info .coins{ font-size:1.9cqw; font-weight:700; color:#C99A2E; display:inline-flex; align-items:center; gap:0.4cqw; }
   .coin-ic{ width:2.1cqw; height:2.1cqw; object-fit:contain; vertical-align:middle; flex:none; }
   .coin-pop{
     position:absolute; transform:translate(-50%,-50%);
@@ -1476,6 +1476,8 @@
   /* 결과 패널 표시 동안 점원 숨김 (패널 위로 안 뚫고 나오게) */
   body.result-open #hero{ visibility:hidden; }
   .result-panel .rp-title{ font-size:2.4cqw; font-weight:800; color:var(--accent-deep); margin-bottom:1.2cqw; }
+  .result-panel .rp-goal{ font-size:1.9cqw; font-weight:800; color:var(--ink-soft); margin-bottom:1cqw; }
+  .result-panel .rp-goal.reached{ color:#3fa96b; }
   .result-panel .rp-row{ font-size:2cqw; color:var(--ink); margin:0.4cqw 0; }
   .result-panel .rp-row b{ color:var(--accent-deep); }
   @keyframes rpPop{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
@@ -1960,6 +1962,7 @@
     <div class="result-panel" id="resultPanel">
       <button class="rp-close" id="resultClose" aria-label="닫기">×</button>
       <div class="rp-title" id="resultTitle">영업 종료</div>
+      <div class="rp-goal" id="resultGoal"></div>
       <div class="rp-row">서빙 <b id="resultServed">0</b>개</div>
       <div class="rp-row">매출 <img class="coin-ic" src="" id="resultCoinIc" alt=""> <b id="resultCoins">0</b></div>
       <div class="rp-row">놓친 손님 <b id="resultMissed">0</b>명</div>
@@ -2443,6 +2446,9 @@ let resultGrace=false;         // 마감 팝업 입력 유예(바깥 클릭 잠�
 const DAY_LENGTH=90;           // 영업 시간(초)
 let timeLeft=DAY_LENGTH;
 let spawnTimer=null;
+// 그날의 목표 서빙 인원 (완만한 곡선: Day1=3, Day2=4, …). 밸런스는 플레이테스트로 조정.
+function dayGoal(day){ return 3 + Math.max(0,(day||1)-1); }
+let goalReachedToday=false;    // 오늘 목표 달성 연출 1회용 — 런타임 전용
 
 // ====== DOM ======
 const stage=document.getElementById('stage');
@@ -3670,7 +3676,12 @@ function customerLeaves(t, satisfied){
   // 퇴장 리액션: 좌석을 바로 지우지 않고, 캐릭터 모션 + 머리위 심볼을 보여준 뒤 제거
   playLeaveReaction(t, satisfied);
   if(satisfied){
-    served++; elServed.textContent=`서빙 ${served}개`;
+    served++; updateServedDisplay();
+    // 목표 달성 순간(딱 도달한 그 서빙) 1회 축하
+    if(!goalReachedToday && served>=dayGoal(dayCount)){
+      goalReachedToday=true;
+      showGoalToast();
+    }
     // 호감도 팁: 친한 친구일수록 더 얹어줌 (Lv0은 없음)
     const tip=tipFor(c.guest);
     const total=(c.paid||0)+tip;
@@ -3920,8 +3931,21 @@ function clearBoard(){
 
 function resetCounters(){
   served=0; missed=0; coins=0; timeLeft=DAY_LENGTH;   // coins=그날 매출만 초기화. wallet(소지금)은 유지
-  elServed.textContent='서빙 0개';
+  goalReachedToday=false;
+  updateServedDisplay();
   updateWalletHud();
+}
+// 상단 서빙 표시 — "서빙 N / 목표" 진행형. 목표 달성 시 ✓ 강조.
+function updateServedDisplay(){
+  if(!elServed) return;
+  const goal=dayGoal(dayCount);
+  if(served>=goal){
+    elServed.textContent=`서빙 ${served} / ${goal} ✓`;
+    elServed.classList.add('goal-done');
+  } else {
+    elServed.textContent=`서빙 ${served} / ${goal}`;
+    elServed.classList.remove('goal-done');
+  }
 }
 // 서빙 카운터·타이머는 영업 중(playing)에만 표시 — 준비/종료 상태에선 숨김
 function setServedVisible(on){
@@ -3962,7 +3986,10 @@ function openDay(){
   });
   updateDayBadge();
   setServedVisible(true);
+  updateServedDisplay();
   updateTimerDisplay();
+  // 영업 시작 목표 안내 — "1분 30초 안에 손님 N명!" (모든 날)
+  setTimeout(()=>{ if(phase==='playing') showGoalIntro(); }, 350/gameSpeed);
   // 첫 손님 2명 (겹치지 않게 시차) + 주기적 등장
   spawnCustomer();
   setTimeout(()=>{ if(phase==='playing') spawnCustomer(); }, 800/gameSpeed);
@@ -3971,10 +3998,21 @@ function openDay(){
   if(justOpened.length){
     setTimeout(()=>{ if(phase==='playing') celebrateAutoMenus(justOpened); }, 600/gameSpeed);
   }
-  // 첫날 조작 안내 (1회만) — 자동공개 연출과 안 겹치게 살짝 뒤
+  // 첫날 조작 안내 (1회만) — 목표 카드(약 2.6초) 다 보여준 뒤
   if(dayCount===1 && !tutorialDone){
-    setTimeout(()=>{ if(phase==='playing') runFirstDayTutorial(); }, 1100/gameSpeed);
+    setTimeout(()=>{ if(phase==='playing') runFirstDayTutorial(); }, 3000/gameSpeed);
   }
+}
+// 영업 시작 시 그날 목표를 카드로 안내 (제한시간 + 목표 인원)
+function showGoalIntro(){
+  const goal=dayGoal(dayCount);
+  const mm=Math.floor(DAY_LENGTH/60), ss=DAY_LENGTH%60;
+  const timeStr = mm>0 ? `${mm}분 ${ss>0?ss+'초':''}`.trim() : `${ss}초`;
+  showTutorBanner(`⏰ ${timeStr} 안에<br>손님 ${goal}명에게 서빙해요!`, 2600);
+}
+// 목표 달성 순간 — 가벼운 축하 토스트 (압박 없는 힐링 톤)
+function showGoalToast(){
+  toast(`오늘 목표 달성! 손님 ${dayGoal(dayCount)}명 서빙 🎉`);
 }
 // autoDay가 현재 일차에 도달한 잠긴 메뉴를 해금 목록에 추가. 새로 열린 메뉴 배열 반환.
 function revealAutoMenus(){
@@ -4072,8 +4110,15 @@ function closeDay(){
   elTimer.classList.remove('low');
   elTimer.classList.remove('urgent');
   // 정산 숫자 표시 후 화면(손님·쟁반)은 바로 비움
+  const goal=dayGoal(dayCount);
+  const reached=served>=goal;
   document.getElementById('resultTitle').textContent=`Day ${dayCount} 영업 종료`;
-  document.getElementById('resultServed').textContent=served;
+  document.getElementById('resultServed').textContent=`${served} / ${goal}`;
+  const goalRow=document.getElementById('resultGoal');
+  if(goalRow){
+    goalRow.textContent = reached ? '🎉 오늘 목표 달성!' : '오늘도 수고했어요 🌙';
+    goalRow.classList.toggle('reached', reached);
+  }
   document.getElementById('resultCoins').textContent=coins;
   document.getElementById('resultMissed').textContent=missed;
   clearBoard();
