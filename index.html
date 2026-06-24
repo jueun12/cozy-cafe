@@ -914,6 +914,26 @@
     animation:revealSpark 1.1s ease-out forwards;
   }
   .reveal-spark-img{ display:block; width:2.6cqw; height:2.6cqw; object-fit:contain; -webkit-user-drag:none; }
+  /* 목표 달성 축하 연출 — 결과창(z120) 위에 보이도록 높은 z-index */
+  .celebrate-spark{
+    position:absolute; z-index:240; pointer-events:none;
+    transform:translate(-50%,-50%);
+    animation:revealSpark 1.2s ease-out forwards;
+  }
+  .celebrate-spark .reveal-spark-img{ width:3.2cqw; height:3.2cqw; }
+  .celebrate-heart{
+    position:absolute; z-index:240; pointer-events:none;
+    transform:translate(-50%,-50%);
+    animation:celebrateHeart 1.4s ease-out forwards;
+  }
+  .celebrate-heart img{ display:block; width:3cqw; height:3cqw; object-fit:contain; -webkit-user-drag:none; }
+  @keyframes celebrateHeart{
+    0%  { opacity:0; transform:translate(-50%,-50%) scale(.3); }
+    20% { opacity:1; transform:translate(calc(-50% + var(--hx)),-110%) scale(1.1); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--hx)),-260%) scale(.9); }
+  }
+  .coin-pop.celebrate-coin{ z-index:240; font-size:2.8cqw; }
+  .coin-pop.celebrate-coin .coin-ic{ width:3cqw; height:3cqw; }
   .sparkle-img{ display:block; object-fit:contain; -webkit-user-drag:none; }
   @keyframes revealSpark{
     0%  { opacity:0; transform:translate(-50%,-50%) scale(.2); }
@@ -1507,6 +1527,13 @@
   .result-panel .rp-goal.reached{ color:#3fa96b; }
   .result-panel .rp-row{ font-size:2cqw; color:var(--ink); margin:0.4cqw 0; }
   .result-panel .rp-row b{ color:var(--accent-deep); }
+  .result-panel .rp-bonus{
+    font-size:1.8cqw; font-weight:700; color:#d6608a; margin-top:1.1cqw;
+    padding-top:1cqw; border-top:0.18cqw dashed #f3c9d8;
+    display:flex; align-items:center; justify-content:center; gap:0.4cqw; flex-wrap:wrap;
+  }
+  .result-panel .rp-bonus b{ color:#c14774; }
+  .result-panel .rp-bonus .coin-ic{ width:2cqw; height:2cqw; vertical-align:middle; }
   /* 영업 시작 카드 (daystart) */
   .daystart-panel{ padding:2.6cqw 3.4cqw 2.2cqw; min-width:30cqw; }
   .daystart-panel .ds-day{
@@ -1526,6 +1553,16 @@
   .daystart-panel .ds-ico{ font-size:2.2cqw; }
   .daystart-panel .ds-label{ font-size:1.7cqw; color:var(--ink-soft); font-weight:700; }
   .daystart-panel .ds-val{ margin-left:auto; font-size:2cqw; font-weight:800; color:var(--accent-deep); }
+  .daystart-panel .ds-reward{ background:#fdeef3; border-color:#f3c9d8; flex-direction:column; align-items:stretch; gap:0.5cqw; }
+  .daystart-panel .ds-reward-head{ display:flex; align-items:center; gap:1cqw; }
+  .daystart-panel .ds-reward .ds-label{ color:#c87a98; }
+  .daystart-panel .ds-reward-list{ display:flex; flex-direction:column; gap:0.3cqw; padding-left:3.2cqw; }
+  .daystart-panel .ds-reward-row{
+    font-size:1.8cqw; font-weight:700; color:#d6608a;
+    display:flex; align-items:center; gap:0.4cqw;
+  }
+  .daystart-panel .ds-reward-row b{ color:#c14774; font-weight:800; }
+  .daystart-panel .ds-reward-row .coin-ic{ width:1.9cqw; height:1.9cqw; vertical-align:middle; }
   .daystart-panel .ds-start{
     width:100%; border:none; border-radius:1.2cqw; cursor:pointer;
     background:linear-gradient(#8fd49a,#5cb377); color:#fff;
@@ -2020,6 +2057,7 @@
       <div class="rp-row">서빙 <b id="resultServed">0</b>개</div>
       <div class="rp-row">매출 <img class="coin-ic" src="" id="resultCoinIc" alt=""> <b id="resultCoins">0</b></div>
       <div class="rp-row">놓친 손님 <b id="resultMissed">0</b>명</div>
+      <div class="rp-bonus hidden" id="resultBonus"></div>
     </div>
   </div>
   <div class="result-overlay hidden" id="dayStartOverlay">
@@ -2029,6 +2067,10 @@
       <div class="ds-goals">
         <div class="ds-goal"><span class="ds-ico">⏰</span><span class="ds-label">영업 시간</span><span class="ds-val" id="dsTime">1분 30초</span></div>
         <div class="ds-goal"><span class="ds-ico">🧑‍🤝‍🧑</span><span class="ds-label">목표 손님</span><span class="ds-val" id="dsGoal">3명</span></div>
+        <div class="ds-goal ds-reward">
+          <div class="ds-reward-head"><span class="ds-ico">💝</span><span class="ds-label">달성 보상</span></div>
+          <div class="ds-reward-list" id="dsReward"></div>
+        </div>
       </div>
       <button class="ds-start" id="dsStartBtn">준비 완료!</button>
     </div>
@@ -2372,6 +2414,7 @@ const FRIEND_EXP_FAV_BONUS=5;   // 좋아하는 메뉴를 대접하면 추가(�
 function addFriendExp(guestId, servedDishId){
   const f=friends[guestId];
   if(!f) return null;            // 아직 친구(또는 후보) 아님
+  visitedFriendsToday.add(guestId);  // 오늘 방문(서빙)한 친구로 기록 → 마감 보너스 대상
   let gain=FRIEND_EXP_BASE;
   if(servedDishId && f.fav===servedDishId) gain+=FRIEND_EXP_FAV_BONUS;
   f.exp=(f.exp||0)+gain;
@@ -2486,6 +2529,14 @@ let spawnTimer=null;
 // 그날의 목표 서빙 인원 (완만한 곡선: Day1=3, Day2=4, …). 밸런스는 플레이테스트로 조정.
 function dayGoal(day){ return 3 + Math.max(0,(day||1)-1); }
 let goalReachedToday=false;    // 오늘 목표 달성 연출 1회용 — 런타임 전용
+// 오늘 영업 중 방문한(서빙한) 친구 id 집합 — 런타임 전용. openDay에서 리셋.
+let visitedFriendsToday=new Set();
+// 목표 달성 보상: 그날 방문한 친구에게 보답 호감도 +α.
+// 초반엔 쥐똥(서빙 1회=10의 1/5 수준), 일차가 올라갈수록 완만히 증가.
+// Day1~2:2, Day3~4:3, Day5~6:4 … floor((day-1)/2)+2.
+function goalBonusExp(day){ return 2 + Math.floor(Math.max(0,(day||1)-1)/2); }
+// 목표 달성 코인 보너스: 매출 대비 소소하지만 달성 신호로 충분. Day1=8, Day5=20 …
+function goalBonusCoin(day){ return 5 + (day||1)*3; }
 
 // ====== DOM ======
 const stage=document.getElementById('stage');
@@ -3969,6 +4020,7 @@ function clearBoard(){
 function resetCounters(){
   served=0; missed=0; coins=0; timeLeft=DAY_LENGTH;   // coins=그날 매출만 초기화. wallet(소지금)은 유지
   goalReachedToday=false;
+  visitedFriendsToday.clear();   // 오늘 방문 친구 기록 초기화
   updateServedDisplay();
   updateWalletHud();
 }
@@ -4035,6 +4087,14 @@ function showDayStartCard(){
   document.getElementById('dsDay').textContent = `Day ${dayCount}`;
   document.getElementById('dsTime').textContent = timeStr;
   document.getElementById('dsGoal').textContent = `${goal}명`;
+  // 달성 보상 미리보기: 방문 손님 호감도 +X · 코인 +Y (1인당 보너스) — 세로 2줄
+  const rExp=goalBonusExp(dayCount), rCoin=goalBonusCoin(dayCount);
+  const rwd=document.getElementById('dsReward');
+  if(rwd){
+    let html = `<div class="ds-reward-row">방문 손님 호감도 <b>+${rExp}</b></div>`;
+    if(rCoin>0) html += `<div class="ds-reward-row"><img class="coin-ic" src="${COIN_IMG}" alt=""> <b>${rCoin}</b></div>`;
+    rwd.innerHTML = html;
+  }
   document.body.classList.add('daystart-open');
   document.getElementById('dayStartOverlay').classList.remove('hidden');
 }
@@ -4162,6 +4222,17 @@ function closeDay(){
   // 정산 숫자 표시 후 화면(손님·쟁반)은 바로 비움
   const goal=dayGoal(dayCount);
   const reached=served>=goal;
+  // 목표 달성 보상: 오늘 방문한 친구에게 보답 호감도 + 소소한 코인 보너스
+  let bonusExp=0, bonusCoin=0, bonusFriendCount=0;
+  if(reached){
+    bonusExp=goalBonusExp(dayCount);
+    bonusCoin=goalBonusCoin(dayCount);
+    visitedFriendsToday.forEach(gid=>{
+      const f=friends[gid];
+      if(f){ f.exp=(f.exp||0)+bonusExp; bonusFriendCount++; }
+    });
+    if(bonusCoin>0){ coins+=bonusCoin; wallet+=bonusCoin; updateWalletHud(); }
+  }
   document.getElementById('resultTitle').textContent=`Day ${dayCount} 영업 종료`;
   document.getElementById('resultServed').textContent=`${served} / ${goal}`;
   const goalRow=document.getElementById('resultGoal');
@@ -4171,10 +4242,26 @@ function closeDay(){
   }
   document.getElementById('resultCoins').textContent=coins;
   document.getElementById('resultMissed').textContent=missed;
+  // 보너스 안내 줄: 달성 + 방문 친구가 있을 때만 노출
+  const bonusRow=document.getElementById('resultBonus');
+  if(bonusRow){
+    if(reached && bonusFriendCount>0){
+      bonusRow.innerHTML=`💝 오늘 방문한 손님 <b>${bonusFriendCount}명</b> 호감도 +${bonusExp}`+
+        (bonusCoin>0?` · 보너스 <img class="coin-ic" src="${COIN_IMG}" alt=""> ${bonusCoin}`:'');
+      bonusRow.classList.remove('hidden');
+    } else {
+      bonusRow.classList.add('hidden');
+    }
+  }
   clearBoard();
   saveGame();   // 하루 끝 → 소지금 영구 저장
   document.getElementById('resultOverlay').classList.remove('hidden');
   document.body.classList.add('result-open');
+  // 목표 달성 시 축하 대연출 (별·하트 팡팡 + 코인 뾰로롱 + 하트 뿜뿜).
+  // 패널 레이아웃이 잡힌 뒤 좌표를 읽어야 하므로 다음 프레임에 발사.
+  if(reached){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>celebrateGoal(bonusCoin)));
+  }
   // 입력 유예: 종료 순간 마침 탭하던 손가락이 팝업을 바로 닫지 않게 0.7초 잠금 (X버튼은 예외)
   resultGrace=true;
   setTimeout(()=>{ resultGrace=false; }, 700);
@@ -4227,6 +4314,62 @@ function burstSparkles(signEl, stage){
     s.style.animationDelay=(Math.random()*0.12)+'s';
     stage.appendChild(s);
     setTimeout(()=>s.remove(), 1300);
+  }
+}
+// 목표 달성 축하 대연출: 결과창 패널 중심에서 별·하트 팡팡 + 코인 뾰로롱 + 하트 뿜뿜.
+// bonusCoin>0이면 코인 팝업도 같이. resultOverlay가 떠 있을 때 호출.
+function celebrateGoal(bonusCoin){
+  const panel=document.getElementById('resultPanel');
+  if(!panel || !stage) return;
+  const gr=stage.getBoundingClientRect();
+  const pr=panel.getBoundingClientRect();
+  const cx=pr.left - gr.left + pr.width/2;   // 패널 중심 px (stage 기준)
+  const cy=pr.top  - gr.top  + pr.height/2;
+  const cxRatio=cx/gr.width, cyRatio=cy/gr.height;
+  // ① 별·하트 팡팡 — 패널 중심에서 사방으로, 3번 시차 발사해 "팡팡팡"
+  const burstAt=(delay,big)=>setTimeout(()=>{
+    const N=14;
+    for(let i=0;i<N;i++){
+      const ang=(Math.PI*2*i/N)+Math.random()*0.5;
+      const dist=(big?90:65)+Math.random()*70;
+      const s=document.createElement('div');
+      s.className='celebrate-spark';
+      s.innerHTML=`<img class="reveal-spark-img" src="${(i%3===2)?DECO_HEART:DECO_STAR}" alt="">`;
+      s.style.left=cx+'px'; s.style.top=cy+'px';
+      s.style.setProperty('--sx', Math.cos(ang)*dist+'px');
+      s.style.setProperty('--sy', Math.sin(ang)*dist+'px');
+      s.style.setProperty('--sr', (Math.random()*160-80)+'deg');
+      s.style.animationDelay=(Math.random()*0.1)+'s';
+      stage.appendChild(s);
+      setTimeout(()=>s.remove(),1400);
+    }
+  }, delay);
+  burstAt(0,true); burstAt(260,false); burstAt(520,true);
+  // ② 하트 뿜뿜 — 패널 아래쪽에서 위로 솟구치는 하트 여러 개
+  for(let i=0;i<7;i++){
+    setTimeout(()=>{
+      const h=document.createElement('div');
+      h.className='celebrate-heart';
+      h.innerHTML=`<img src="${DECO_HEART}" alt="">`;
+      const spread=(Math.random()-0.5)*pr.width*0.7;
+      h.style.left=(cx+spread)+'px';
+      h.style.top=(pr.top - gr.top + pr.height*0.78)+'px';
+      h.style.setProperty('--hx',((Math.random()-0.5)*40)+'px');
+      stage.appendChild(h);
+      setTimeout(()=>h.remove(),1500);
+    }, 200+i*120);
+  }
+  // ③ 코인 뾰로롱 — 보너스 코인이 패널 위로 솟음
+  if(bonusCoin>0){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='coin-pop celebrate-coin';
+      p.innerHTML=`<img class="coin-ic" src="${COIN_IMG}" alt="">+${bonusCoin}`;
+      p.style.left=(cxRatio*100)+'%';
+      p.style.top=((cy/gr.height)*100 - 4)+'%';
+      stage.appendChild(p);
+      setTimeout(()=>p.remove(),1200);
+    }, 360);
   }
 }
 // 일차 진행에 따라 새 기능 해금 (Day1 끝→상점, Day2 끝→친구명부). 새로 열렸으면 연출.
