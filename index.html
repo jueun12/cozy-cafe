@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v12_009</title>
+<title>포근한 디저트 가게 — v20_004</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1060,6 +1060,40 @@
     transition:width .3s ease;
   }
   .friend-exp{ font-size:1.4cqw; color:var(--ink-soft); font-weight:600; }
+
+  /* 레시피북 (도감) */
+  .recipe-count{ margin-left:auto; font-size:1.8cqw; font-weight:700; color:var(--ink-soft); }
+  .recipe-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.4cqw; }
+  .recipe-card{
+    background:#fff; border:0.25cqw solid #ecdcc2; border-radius:1.2cqw;
+    padding:1.4cqw 1.4cqw; display:flex; align-items:center; gap:1.4cqw; text-align:left;
+  }
+  .recipe-card .r-ico{
+    flex:0 0 auto; width:8cqw; height:8cqw; border-radius:1cqw;
+    background:#FFF1DD; border:0.25cqw solid var(--accent);
+    display:flex; align-items:center; justify-content:center; font-size:4cqw; overflow:hidden;
+  }
+  .recipe-card .r-ico img{ width:100%; height:100%; object-fit:cover; }
+  .recipe-card .r-body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:0.45cqw; }
+  .recipe-card .r-name{ font-size:2cqw; font-weight:800; color:var(--ink); line-height:1.1; }
+  .recipe-card .r-en{ font-size:1.35cqw; font-weight:700; color:var(--ink-soft); letter-spacing:.02em; }
+  .recipe-card .r-desc{ font-size:1.5cqw; font-weight:600; color:var(--ink); line-height:1.35; margin-top:0.2cqw; }
+  .recipe-card .r-info{
+    display:flex; flex-wrap:wrap; gap:0.4cqw 0.9cqw; margin-top:0.4cqw;
+    font-size:1.35cqw; font-weight:700; color:var(--ink-soft);
+  }
+  .recipe-card .r-info b{ color:var(--accent-deep); font-weight:800; }
+  .recipe-card .r-fav{ color:var(--accent); font-weight:800; }
+  .recipe-card .r-fav .fav-ico{ display:inline-block; width:1.7cqw; height:1.7cqw; vertical-align:middle; }
+  /* 잠긴 메뉴 */
+  .recipe-card.locked{ background:#f6efe4; border-style:dashed; border-color:#dcc7a6; }
+  .recipe-card.locked .r-ico{
+    background:#e9ddc7; border-color:#cdb892; color:#b8a584; filter:grayscale(1);
+  }
+  .recipe-card.locked .r-name{ color:#b09a78; }
+  .recipe-card.locked .r-lock{ font-size:1.5cqw; font-weight:700; color:#b09a78; }
+  .recipe-card.locked .r-lock b{ color:#c98a3f; font-weight:800; }
+
   /* 레벨업 대기 카드 — 분홍 강조 외곽선 (들썩임은 버튼이 담당) */
   .friend-card.ready{
     cursor:pointer; border-color:var(--accent-deep);
@@ -1927,6 +1961,7 @@
     <span class="coins" id="coins"><img class="coin-ic" src="" alt="코인"><b id="coinNum">0</b></span>
     <span class="timer" id="timer">영업 준비</span>
     <button class="hud-btn" id="btnSpeed" title="배속">1x</button>
+    <button class="hud-btn" id="btnRecipe" title="레시피북">📖</button>
     <button class="hud-btn" id="btnPause" title="일시정지">⏸</button>
     <button class="hud-btn" id="btnSettings" title="설정">⚙️</button>
   </div>
@@ -1982,6 +2017,17 @@
       </div>
       <div class="shop-body" id="friendsBody"></div>
       <div class="scroll-fade" id="friendsScrollFade"><span class="chev">⌄</span></div>
+    </div>
+  </div>
+  <div class="shop-overlay hidden" id="recipeOverlay">
+    <div class="shop-panel" id="recipePanel">
+      <div class="shop-head">
+        <span class="shop-title">레시피북</span>
+        <span class="recipe-count" id="recipeCount"></span>
+        <button class="shop-close" id="recipeClose" aria-label="닫기">✕</button>
+      </div>
+      <div class="shop-body" id="recipeBody"></div>
+      <div class="scroll-fade" id="recipeScrollFade"><span class="chev">⌄</span></div>
     </div>
   </div>
   <div class="shop-overlay hidden" id="newFriendOverlay">
@@ -2119,6 +2165,22 @@ function nextUnlockCandidates(){
 // 전체 음식 맵 (기존 DISH 참조 호환)
 const DISHES=MAIN_DISHES;              // 메인 주문 추첨용 (호환 유지)
 const DISH=Object.fromEntries([...MAIN_DISHES,...SIDE_DISHES].map(d=>[d.id,d]));
+
+// 레시피북용 감성 한 줄 설명. 잠긴 메뉴는 도감에서 가려짐. (자유 수정 가능)
+const DISH_DESC={
+  shortcake:  '폭신한 시트에 생크림과 딸기를 듬뿍. 한 입이면 누구나 웃어요.',
+  cupcake_c:  '진한 코코아 반죽 위에 소복한 초코 크림. 작지만 야무진 행복.',
+  souffle:    '포크를 대면 구름처럼 흔들리는 두툼한 팬케이크.',
+  brownie:    '겉은 바삭, 속은 촉촉. 묵직한 초콜릿의 위로.',
+  croissant:  '결결이 부서지는 버터향. 아침을 깨우는 바삭함.',
+  cherrypie:  '새콤달콤 체리가 가득. 따뜻할 때 먹으면 더 좋아요.',
+  americano:  '향으로 먼저 마시는 한 잔. 디저트의 가장 좋은 친구.',
+  straw_latte:'곱게 간 딸기와 우유가 만든 분홍빛 한 잔.',
+  lemontea:   '상큼한 레몬향이 톡. 나른한 오후를 깨워줘요.',
+  macaron:    '바삭한 껍질 안에 보들보들 필링. 색색이 고운 한 입.',
+  icecream:   '차갑고 부드러운 한 스쿱. 더운 날의 작은 사치.',
+  cat_cookie: '귀여운 고양이 모양 쿠키. 먹기 아까운 바삭함.'
+};
 
 // 통합 업그레이드 트랙 (메뉴별, 무한). 저장됨. { dishId: level }
 //  레벨이 오를 때마다 가격 +1 (무한). 재고는 menuStock가 따로 담당(v18_003).
@@ -4316,6 +4378,54 @@ function burstSparkles(signEl, stage){
     setTimeout(()=>s.remove(), 1300);
   }
 }
+// 챕터 엔딩 대축포: 패널 중심에서 별·하트가 여러 웨이브로 팡팡팡 + 하트 뿜뿜 (가장 화려한 연출)
+function celebrateEnding(){
+  const panel=document.getElementById('endingPanel');
+  if(!panel || !stage) return;
+  const gr=stage.getBoundingClientRect();
+  const pr=panel.getBoundingClientRect();
+  const cx=pr.left - gr.left + pr.width/2;
+  const cy=pr.top  - gr.top  + pr.height/2;
+  // ① 별·하트 사방 팡 — 패널 중심 + 좌우로도 살짝 옮겨가며 여러 발
+  const burstAt=(delay,ox,oy,big)=>setTimeout(()=>{
+    const N=16;
+    for(let i=0;i<N;i++){
+      const ang=(Math.PI*2*i/N)+Math.random()*0.5;
+      const dist=(big?120:80)+Math.random()*90;
+      const s=document.createElement('div');
+      s.className='reveal-spark';
+      s.innerHTML=`<img class="reveal-spark-img" src="${(i%3===2)?DECO_HEART:DECO_STAR}" alt="">`;
+      s.style.left=(cx+ox)+'px'; s.style.top=(cy+oy)+'px';
+      s.style.setProperty('--sx', Math.cos(ang)*dist+'px');
+      s.style.setProperty('--sy', Math.sin(ang)*dist+'px');
+      s.style.setProperty('--sr', (Math.random()*160-80)+'deg');
+      s.style.animationDelay=(Math.random()*0.12)+'s';
+      stage.appendChild(s);
+      setTimeout(()=>s.remove(),1400);
+    }
+  }, delay);
+  const sx=pr.width*0.3, sy=pr.height*0.28;
+  burstAt(0,0,0,true);
+  burstAt(220,-sx,-sy,false);
+  burstAt(420,sx,-sy,false);
+  burstAt(640,-sx,sy,false);
+  burstAt(860,sx,sy,false);
+  burstAt(1080,0,0,true);
+  // ② 하트 뿜뿜 — 패널 아래쪽에서 위로 솟구치는 하트 다발
+  for(let i=0;i<12;i++){
+    setTimeout(()=>{
+      const h=document.createElement('div');
+      h.className='celebrate-heart';
+      h.innerHTML=`<img src="${DECO_HEART}" alt="">`;
+      const spread=(Math.random()-0.5)*pr.width*0.85;
+      h.style.left=(cx+spread)+'px';
+      h.style.top=(pr.top - gr.top + pr.height*0.82)+'px';
+      h.style.setProperty('--hx',((Math.random()-0.5)*44)+'px');
+      stage.appendChild(h);
+      setTimeout(()=>h.remove(),1500);
+    }, 200+i*110);
+  }
+}
 // 목표 달성 축하 대연출: 결과창 패널 중심에서 별·하트 팡팡 + 코인 뾰로롱 + 하트 뿜뿜.
 // bonusCoin>0이면 코인 팝업도 같이. resultOverlay가 떠 있을 때 호출.
 function celebrateGoal(bonusCoin){
@@ -4732,14 +4842,53 @@ function giftableDishes(){
   return unlockedDishes.map(id=>DISH[id]).filter(Boolean);
 }
 // 선물 실행: 비용 차감 + 호감도 부여 + 오늘 기록 + 저장
+// 선물 줄 때: 누른 버튼에서 하트가 펑펑 솟구침 (코인은 조용히 차감 — 따뜻한 행동 강조)
+function giftHeartBurst(btn){
+  if(!btn || !stage) return;
+  btn.classList.remove('squash'); void btn.offsetWidth; btn.classList.add('squash');
+  setTimeout(()=>btn.classList.remove('squash'), 320);
+  const gr=stage.getBoundingClientRect();
+  const r=btn.getBoundingClientRect();
+  const cx=r.left - gr.left + r.width/2;   // 버튼 중심 px (stage 기준)
+  const cy=r.top  - gr.top  + r.height/2;
+  // ① 하트 사방 팡 — 즐겨찾기든 아니든 따뜻하게
+  const N=10;
+  for(let i=0;i<N;i++){
+    const ang=(Math.PI*2*i/N)+Math.random()*0.5;
+    const dist=45+Math.random()*45;
+    const s=document.createElement('div');
+    s.className='celebrate-spark';
+    s.innerHTML=`<img class="reveal-spark-img" src="${DECO_HEART}" alt="">`;
+    s.style.left=cx+'px'; s.style.top=cy+'px';
+    s.style.setProperty('--sx', Math.cos(ang)*dist+'px');
+    s.style.setProperty('--sy', Math.sin(ang)*dist+'px');
+    s.style.setProperty('--sr', (Math.random()*160-80)+'deg');
+    s.style.animationDelay=(Math.random()*0.12)+'s';
+    stage.appendChild(s);
+    setTimeout(()=>s.remove(),1400);
+  }
+  // ② 하트 뿜뿜 — 버튼 위로 솟구치는 하트
+  for(let i=0;i<5;i++){
+    setTimeout(()=>{
+      const h=document.createElement('div');
+      h.className='celebrate-heart';
+      h.innerHTML=`<img src="${DECO_HEART}" alt="">`;
+      h.style.left=(cx+(Math.random()-0.5)*r.width*0.6)+'px';
+      h.style.top=cy+'px';
+      h.style.setProperty('--hx',((Math.random()-0.5)*36)+'px');
+      stage.appendChild(h);
+      setTimeout(()=>h.remove(),1500);
+    }, i*110);
+  }
+}
 function giftFriend(friendId, dishId, btn){
   const f=friends[friendId];
   if(!f) return;
   if(gaveGiftToday(friendId)){ toast('오늘은 이미 선물했어요'); return; }
   const cost=giftCost(f.level||0);
   if(wallet < cost){ toast('코인이 부족해요'); return; }
-  // 누르는 맛 + 코인 빠져나가는 표현 (상점 구매와 동일)
-  reactBuyButton(btn, cost);
+  // 누르는 맛 + 하트 뿜뿜 (코인은 -표시 없이 조용히 차감 — 버튼에 비용 이미 표시됨)
+  giftHeartBurst(btn);
   wallet -= cost;
   updateWalletHud();
   const isFav = (f.fav===dishId);
@@ -4750,12 +4899,12 @@ function giftFriend(friendId, dishId, btn){
   const g=GUESTS.find(x=>x.id===friendId);
   const nm=(g&&g.name)||'친구';
   toast(isFav ? `${nm}이(가) 정말 기뻐해요! 💗 +${gain}` : `${nm}에게 선물했어요 🎁 +${gain}`);
-  // 버튼 눌리는 연출(약 0.3s)·코인 팝업이 보이도록 잠깐 뒤 팝업 닫기
+  // 하트 뿜뿜 연출이 보이도록 잠깐 뒤 팝업 닫기
   setTimeout(()=>{
     closeGiftPicker();
     renderFriends();
     refreshFriendBadges();
-  }, 360);
+  }, 480);
 }
 // 선물할 음식 고르는 팝업 열기
 function openGiftPicker(friendId){
@@ -5041,9 +5190,8 @@ function showEndingCard(){
   document.body.classList.add('shop-open');
   const ov=document.getElementById('endingOverlay');
   ov.classList.remove('hidden');
-  const panel=document.getElementById('endingPanel');
-  setTimeout(()=>{ if(typeof burstSparkles==='function') burstSparkles(panel, stage); }, 200);
-  setTimeout(()=>{ if(typeof burstSparkles==='function') burstSparkles(panel, stage); }, 700);
+  // 패널이 자리잡은 뒤 화려한 별·하트 대축포
+  setTimeout(()=>{ celebrateEnding(); }, 280);
 }
 function closeEndingCard(){
   document.getElementById('endingOverlay').classList.add('hidden');
@@ -5124,6 +5272,89 @@ document.getElementById('friendsBtn').onclick=(e)=>{ e.stopPropagation(); openFr
 document.getElementById('friendsClose').onclick=(e)=>{ e.stopPropagation(); closeFriends(); };
 document.getElementById('friendsOverlay').onclick=()=>{ closeFriends(); };
 document.getElementById('friendsPanel').onclick=(e)=>{ e.stopPropagation(); };
+
+// ====== 레시피북 (도감) ======
+// 읽기 전용. 해금된 메뉴는 아이콘+이름+감성설명+플레이정보, 잠긴 메뉴는 실루엣+해금조건.
+function recipeCardHTML(d){
+  const unlocked = unlockedDishes.includes(d.id);
+  if(!unlocked){
+    const costTxt = (typeof d.unlockCost==='number')
+      ? `해금 <b>🪙${d.unlockCost}</b>`
+      : (d.autoDay ? `Day ${d.autoDay}에 열려요` : '곧 만나요');
+    return `<div class="recipe-card locked">
+      <div class="r-ico">🔒</div>
+      <div class="r-body">
+        <div class="r-name">？？？</div>
+        <div class="r-lock">${costTxt}</div>
+      </div>
+    </div>`;
+  }
+  const desc = DISH_DESC[d.id] || '';
+  const price = dishPrice(d.id);
+  const lv = menuLevel(d.id);
+  const maxStock = dishMaxStock(d.id);
+  // 이 메뉴를 좋아하는 친구(있으면) 표시
+  let favHTML='';
+  const favId = Object.keys(friends).find(fid => friends[fid] && friends[fid].fav===d.id);
+  if(favId){
+    const g=GUESTS.find(x=>x.id===favId);
+    const nm=(g&&g.name)||'손님';
+    favHTML = `<span class="r-fav">💗 ${nm}의 최애</span>`;
+  }
+  return `<div class="recipe-card">
+    <div class="r-ico">${dishIcoInline(d)}</div>
+    <div class="r-body">
+      <div class="r-name">${d.nm}</div>
+      <div class="r-en">${d.en||''}</div>
+      <div class="r-desc">${desc}</div>
+      <div class="r-info">
+        <span>판매가 <b>🪙${price}</b></span>
+        <span>Lv.<b>${lv}</b></span>
+        <span>재고 <b>${maxStock}</b></span>
+        ${favHTML}
+      </div>
+    </div>
+  </div>`;
+}
+function renderRecipe(){
+  const body=document.getElementById('recipeBody');
+  const cnt=document.getElementById('recipeCount');
+  if(!body) return;
+  const all=[...MAIN_DISHES, ...SIDE_DISHES];
+  const unlockedN = all.filter(d=>unlockedDishes.includes(d.id)).length;
+  // 해금된 메뉴 먼저, 그다음 잠긴 메뉴
+  const ordered=[...all].sort((a,b)=>{
+    const ua=unlockedDishes.includes(a.id)?0:1, ub=unlockedDishes.includes(b.id)?0:1;
+    return ua-ub;
+  });
+  if(cnt) cnt.textContent = `${unlockedN} / ${all.length}`;
+  body.innerHTML = `<div class="friends-hint">📖 모은 레시피들이에요. 메뉴를 해금하면 채워져요</div><div class="recipe-grid">${ordered.map(recipeCardHTML).join('')}</div>`;
+  if(!body._scrollHintBound){
+    body.addEventListener('scroll', updateRecipeScrollHint);
+    body._scrollHintBound=true;
+  }
+  requestAnimationFrame(updateRecipeScrollHint);
+}
+function updateRecipeScrollHint(){
+  const body=document.getElementById('recipeBody');
+  const fade=document.getElementById('recipeScrollFade');
+  if(!body || !fade) return;
+  const remain = body.scrollHeight - body.clientHeight - body.scrollTop;
+  fade.classList.toggle('show', remain > 4);
+}
+function openRecipe(){
+  document.body.classList.add('shop-open');
+  renderRecipe();
+  document.getElementById('recipeOverlay').classList.remove('hidden');
+}
+function closeRecipe(){
+  document.getElementById('recipeOverlay').classList.add('hidden');
+  document.body.classList.remove('shop-open');
+}
+document.getElementById('btnRecipe').onclick=(e)=>{ e.stopPropagation(); openRecipe(); };
+document.getElementById('recipeClose').onclick=(e)=>{ e.stopPropagation(); closeRecipe(); };
+document.getElementById('recipeOverlay').onclick=()=>{ closeRecipe(); };
+document.getElementById('recipePanel').onclick=(e)=>{ e.stopPropagation(); };
 
 // 설정 열기/닫기
 function openSettings(){
