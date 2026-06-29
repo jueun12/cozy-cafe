@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v28_003</title>
+<title>포근한 디저트 가게 — v29_004</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1095,6 +1095,56 @@
     transition:width .3s ease;
   }
   .friend-exp{ font-size:1.4cqw; color:var(--ink-soft); font-weight:600; }
+  /* 관계(연인 루트): 명부 R단계 분홍 호칭 + 선물 팝업 꽃다발 안내 */
+  .friend-title.relrank{ color:#D6739B; font-weight:900; }
+  .gift-rel-hint{
+    font-size:1.4cqw; font-weight:700; line-height:1.4; color:#C25A86;
+    background:#FFF2F7; border:0.18cqw solid #F3C2D6; border-radius:0.8cqw;
+    padding:0.5cqw 0.9cqw; margin-top:0.6cqw; text-align:center;
+  }
+  .gift-rel-hint b{ color:#D6739B; font-weight:900; }
+  /* 관계 진행 바 + 진전 버튼 (명부 카드) */
+  .rel-row{ width:86%; margin-top:0.5cqw; display:flex; flex-direction:column; align-items:center; gap:0.25cqw; }
+  .rel-row-label{ font-size:1.25cqw; font-weight:800; color:#C25A86; }
+  .rel-row-label.rel-wait{ color:#B79B86; }
+  .rel-row-label.rel-max{ color:#D6739B; font-weight:900; }
+  .rel-bar{ width:100%; height:1.1cqw; background:#f6d9e6; border-radius:0.6cqw; overflow:hidden; }
+  .rel-bar-fill{ height:100%; background:linear-gradient(#F2A9C6,#D6739B); border-radius:0.6cqw; transition:width .3s ease; }
+  .rel-adv-btn{
+    margin-top:0.5cqw; padding:0.5cqw 1cqw; border:none; border-radius:0.9cqw;
+    background:#E0699B; color:#fff; font-size:1.5cqw; font-weight:900; cursor:pointer;
+    box-shadow:0 0.35cqw 0 #B14C77;
+  }
+  .rel-adv-btn:active{ transform:translateY(0.2cqw); box-shadow:0 0.15cqw 0 #B14C77; }
+  /* 💌 고백 이벤트 컷 (풀스크린) */
+  .confess-panel{
+    position:relative; background:linear-gradient(#FFF3F9,#FFE0EE);
+    border:0.5cqw solid #D6739B; border-radius:2.4cqw;
+    width:44cqw; max-width:44cqw; padding:2.4cqw 2.8cqw 2.2cqw;
+    box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.32);
+    display:flex; flex-direction:column; align-items:center; gap:1.1cqw;
+    animation:levelUpPop .6s cubic-bezier(.34,1.7,.6,1) both;
+  }
+  .confess-hearts{ font-size:3.4cqw; line-height:1; }
+  .confess-portrait{
+    width:13cqw; height:13cqw; border-radius:50%;
+    border:0.45cqw solid #D6739B; background:#fff; overflow:hidden;
+    display:flex; align-items:flex-start; justify-content:center;
+    animation:portraitBob 1.6s ease-in-out infinite;
+  }
+  .confess-portrait img{ width:100%; height:100%; object-fit:cover; object-position:center 20%; }
+  .confess-portrait .emoji-fallback{ font-size:7cqw; }
+  .confess-title{ font-size:2.4cqw; font-weight:900; color:#C25A86; text-align:center; }
+  .confess-say{
+    font-size:1.9cqw; font-weight:700; color:var(--ink); text-align:center; line-height:1.55;
+    background:#fff; border:0.3cqw solid #F3C2D6; border-radius:1.4cqw; padding:1.1cqw 1.6cqw;
+  }
+  .confess-ok{
+    margin-top:0.4cqw; background:linear-gradient(#E0699B,#C8497B); color:#fff; border:0.4cqw solid #fff;
+    font-size:2cqw; font-weight:800; padding:0.9cqw 2.8cqw; border-radius:3cqw;
+    cursor:pointer; box-shadow:0 0.6cqw 0 #9c3a63; -webkit-text-stroke:0.18cqw #8a3257;
+  }
+  .confess-ok:active{ transform:translateY(0.4cqw); box-shadow:0 0.2cqw 0 #9c3a63; }
 
   /* 레시피북 (도감) */
   .recipe-count{ margin-left:auto; font-size:1.8cqw; font-weight:700; color:var(--ink-soft); }
@@ -1238,6 +1288,10 @@
   .gift-dish.squash{ animation:btnSquash .3s ease-out; }
   .gift-dish.fav{ border-color:#E0699B; background:#FFF2F7; box-shadow:0 0.6cqw 0 rgba(224,105,155,.35); }
   .gift-dish.fav:active{ box-shadow:0 0.1cqw 0 rgba(224,105,155,.35); }
+  .gift-dish.bouquet{ border-color:#D6739B; background:#FFEAF3; box-shadow:0 0.6cqw 0 rgba(214,115,155,.4); }
+  .gift-dish.bouquet:active{ box-shadow:0 0.1cqw 0 rgba(214,115,155,.4); }
+  .gift-dish.bouquet .gift-dish-ico{ font-size:3.6cqw; line-height:4.5cqw; text-align:center; }
+  .gift-dish.bouquet .gift-dish-nm{ color:#C25A86; font-weight:900; }
   .gift-dish-ico{ display:block; width:4.5cqw; height:4.5cqw; }
   .gift-dish-ico img{ width:100%; height:100%; object-fit:contain; }
   .gift-dish-nm{ font-size:1.35cqw; font-weight:800; color:var(--ink); text-align:center; }
@@ -2125,6 +2179,16 @@
       <button class="newfriend-ok" id="giftIntroOk">알겠어요 🎁</button>
     </div>
   </div>
+
+  <div class="shop-overlay hidden" id="confessOverlay">
+    <div class="confess-panel" id="confessPanel">
+      <div class="confess-hearts">💗</div>
+      <div class="confess-portrait" id="confessPortrait"></div>
+      <div class="confess-title" id="confessTitle"></div>
+      <div class="confess-say" id="confessSay"></div>
+      <button class="confess-ok" id="confessOk">받아들이기 💗</button>
+    </div>
+  </div>
   <div class="bin" id="bin"><img src="data:image/webp;base64,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" alt="쓰레기통"></div>
   <div class="toast" id="toast"></div>
 
@@ -2634,6 +2698,41 @@ function friendTitle(level){
   const i=Math.max(0, Math.min(FRIEND_TITLES.length-1, level));
   return FRIEND_TITLES[i];
 }
+// ── 연인 루트(관계) ── rel: 0=친구 트랙 / 1~5=특별한친구~약속한사이.
+// Lv5(아주 친한 친구) 도달 후 🌷꽃다발 BOUQUET_NEED회 선물 → rel=1 진입. (호감도 무관, 좌석 무관)
+const REL_TITLES=['', '특별한 친구','서로 의식하는 사이','연인','소중한 연인','약속한 사이'];
+function relTitle(rel){ const i=Math.max(0,Math.min(REL_TITLES.length-1, rel||0)); return REL_TITLES[i]; }
+function relOf(f){ return (f && f.rel) || 0; }
+const BOUQUET_NEED=3;     // 꽃다발 N회 → 특별한 사이 진입 (하루 1회 선물 제한 → 최소 N일)
+const BOUQUET_COST=100;   // 꽃다발 1송이 비용
+let partnerId=null;       // R5 단 1명(독점) — Phase 2에서 사용. 기본 null. 영구 저장
+// ── 관계 진행(R1→R2, R3→R4 = 호감도/선물) ── friends[id].rexp 누적 → 임계 도달 시 수동 진전.
+// R2→R3(고백)·R4→R5(반지)는 아이템 게이트(Phase 2) → 호감도로는 진전 안 됨(여기서 멈춤).
+const REL_EXP_NEED=150;        // 한 단계 진전에 필요한 관계 호감도
+const REL_SERVE_EXP=12;        // 영업 서빙(만족) 시 관계 호감도 — 주(主) 소스
+const REL_SERVE_FAV_BONUS=6;   // 좋아하는 메뉴 대접 보너스
+const REL_GIFT_EXP=20;         // 일반 선물(음식) 시 관계 호감도 — 보조
+function relMax(){ return REL_TITLES.length-1; }   // 5
+function relExpNeed(rel){ return REL_EXP_NEED; }   // 지금은 평탄(밸런싱은 플레이 보고 조정)
+function relAffinityStep(rel){ return rel===1 || rel===3; }   // 호감도로 진전하는 비게이트 단계만
+function relReadyToAdvance(f){ const r=relOf(f); return relAffinityStep(r) && (f.rexp||0) >= relExpNeed(r); }
+function anyRelReady(){ return Object.keys(friends).some(id=>relReadyToAdvance(friends[id])); }
+// 관계 호감도 누적 — 트랙 안(rel>=1) & 비게이트 단계에서만. 좌석 타이머와 무관.
+function addRelExp(friendId, amt){
+  const f=friends[friendId]; if(!f) return;
+  const r=relOf(f);
+  if(r<1 || r>=relMax()) return;     // 트랙 밖이거나 최종 단계
+  if(!relAffinityStep(r)) return;    // 게이트 단계(R2/R4)에서는 멈춤(아이템 대기)
+  f.rexp=Math.min(relExpNeed(r), (f.rexp||0)+amt);
+}
+// ── 💌 고백(R2→R3 게이트) ── R2에서 선물 팝업에 해금. 1회 선물 → 이벤트 컷 → 연인(R3).
+const CONFESS_COST=200;   // 고백 아이템 비용 (특별한 마일스톤)
+const CONFESS_LINES=[
+  '있잖아… 너랑 있으면 하루가 참 따뜻해. 우리, 연인이 되어줄래?',
+  '늘 여기 오는 진짜 이유, 사실 너였어. 내 마음 받아줄래?',
+  '이 카페보다 네가 더 좋아졌어. 나랑 연인 하자.'
+];
+let confessPendingId=null;   // 고백 이벤트 컷이 떠 있는 동안 대상 친구 id (닫을 때 R3 발전)
 // 호감도 누적: 만족한 손님이 친구면 exp 부여. 좋아하는 메뉴를 대접했으면 보너스.
 // 반환: {leveledUp:bool, newLevel, gained} (연출용). 친구가 아니면 null.
 const FRIEND_EXP_BASE=10;       // 만족 1회 기본 호감도
@@ -2645,6 +2744,12 @@ function addFriendExp(guestId, servedDishId){
   let gain=FRIEND_EXP_BASE;
   if(servedDishId && f.fav===servedDishId) gain+=FRIEND_EXP_FAV_BONUS;
   f.exp=(f.exp||0)+gain;
+  // 연인 루트 진행 — 영업 서빙 = 주(主) 소스. addRelExp가 트랙/단계 가드 처리.
+  if(relOf(f)>=1){
+    let rg=REL_SERVE_EXP;
+    if(servedDishId && f.fav===servedDishId) rg+=REL_SERVE_FAV_BONUS;
+    addRelExp(guestId, rg);
+  }
   // 자동 레벨업 X — exp가 차면 "레벨업 대기" 상태로 쌓아두고, 명부에서 직접 눌러 레벨업.
   return { gained:gain, pending:friendReadyToLevel(f) };
 }
@@ -3844,7 +3949,7 @@ function updateSeat(t){
 const SAVE_KEY='cozyCafeSave_v2';
 function saveGame(){
   try{
-    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, giftToday, giftIntroShown, tutorialDone };
+    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, giftToday, giftIntroShown, tutorialDone, partnerId };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   }catch(e){ /* 아티팩트 미리보기 등에서 localStorage 차단될 수 있음 — 무시 */ }
 }
@@ -3920,6 +4025,7 @@ function loadGame(){
     if(Array.isArray(data.giftToday)) giftToday=data.giftToday.slice();
     if(typeof data.giftIntroShown==='boolean') giftIntroShown=data.giftIntroShown;
     if(typeof data.tutorialDone==='boolean') tutorialDone=data.tutorialDone;
+    if(typeof data.partnerId==='string') partnerId=data.partnerId; else partnerId=null;
     if(data.featuresUnlocked && typeof data.featuresUnlocked==='object'){
       featuresUnlocked.shop    = !!data.featuresUnlocked.shop;
       featuresUnlocked.friends = !!data.featuresUnlocked.friends;
@@ -5535,7 +5641,7 @@ const GIFT_COST_BASE=30;        // 선물 기본 비용
 const GIFT_COST_PER_LV=10;      // 친구 레벨당 비용 증가
 const GIFT_EXP_BASE=20;         // 선물 기본 호감도
 const GIFT_EXP_FAV=40;          // 좋아하는 메뉴를 선물하면 호감도(보너스 포함)
-function giftUnlocked(){ return !!friends['guest_15']; }   // 특별손님 하루 등장 후 선물 기능 열림
+function giftUnlocked(){ return !!friends['guest_15'] && giftIntroShown; }   // 손님15 등장 → 다음 마감의 안내 팝업 이후 선물 기능 열림
 function giftCost(level){ return GIFT_COST_BASE + (level||0)*GIFT_COST_PER_LV; }
 function gaveGiftToday(id){ return giftToday.includes(id); }
 // 선물 가능한 보유 음식 목록(해금된 메뉴)
@@ -5595,6 +5701,7 @@ function giftFriend(friendId, dishId, btn){
   const isFav = (f.fav===dishId);
   const gain = isFav ? GIFT_EXP_FAV : GIFT_EXP_BASE;
   f.exp = (f.exp||0) + gain;
+  if(relOf(f)>=1) addRelExp(friendId, REL_GIFT_EXP);   // 선물 = 관계 진행 보조 소스
   giftToday.push(friendId);
   saveGame();
   const g=GUESTS.find(x=>x.id===friendId);
@@ -5606,6 +5713,122 @@ function giftFriend(friendId, dishId, btn){
     renderFriends();
     refreshFriendBadges();
   }, 480);
+}
+// 🌷 꽃다발 선물: 하루 1회 제한 공유(giftToday). bq 누적, BOUQUET_NEED 도달 시 rel=1 진입.
+// 호감도(exp)·좌석 타이머와 완전 무관 — 금지 구역 안 건드림.
+function giftBouquet(friendId, btn){
+  const f=friends[friendId];
+  if(!f) return;
+  if(gaveGiftToday(friendId)){ toast('오늘은 이미 선물했어요'); return; }
+  if(wallet < BOUQUET_COST){ toast('코인이 부족해요'); return; }
+  giftHeartBurst(btn);
+  wallet -= BOUQUET_COST;
+  updateWalletHud();
+  f.bq=(f.bq||0)+1;
+  giftToday.push(friendId);
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  if(f.bq>=BOUQUET_NEED && relOf(f)===0){
+    f.rel=1;          // 특별한 친구(R1) 진입
+    saveGame();
+    setTimeout(()=>{ closeGiftPicker(); enterRelationship(friendId); }, 480);
+  } else {
+    saveGame();
+    toast(`${nm}에게 🌷 꽃다발을 선물했어요 (${f.bq}/${BOUQUET_NEED})`);
+    setTimeout(()=>{ closeGiftPicker(); renderFriends(); refreshFriendBadges(); }, 480);
+  }
+}
+// 💌 고백 선물: 1회 → 이벤트 컷 → 연인(R3). 발전은 컷을 닫을 때(즉시 X). 좌석 무관.
+function giftConfess(friendId, btn){
+  const f=friends[friendId];
+  if(!f) return;
+  if(relOf(f)!==2) return;
+  if(gaveGiftToday(friendId)){ toast('오늘은 이미 선물했어요'); return; }
+  if(wallet < CONFESS_COST){ toast('코인이 부족해요'); return; }
+  giftHeartBurst(btn);
+  wallet -= CONFESS_COST;
+  updateWalletHud();
+  giftToday.push(friendId);
+  saveGame();
+  setTimeout(()=>{ closeGiftPicker(); showConfessEvent(friendId); }, 480);
+}
+// 고백 이벤트 컷 — 친구 얼굴 + 고백 대사 + 하트. 닫으면 R3 발전.
+function showConfessEvent(friendId){
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  confessPendingId=friendId;
+  const portrait=document.getElementById('confessPortrait');
+  if(portrait){
+    portrait.innerHTML = g && g.stand
+      ? `<img src="${g.stand}" alt="">`
+      : `<div class="emoji-fallback">${(g&&g.emoji)||'🙂'}</div>`;
+  }
+  const titleEl=document.getElementById('confessTitle');
+  if(titleEl) titleEl.textContent = `${nm}의 고백`;
+  const sayEl=document.getElementById('confessSay');
+  if(sayEl) sayEl.textContent = CONFESS_LINES[Math.floor(Math.random()*CONFESS_LINES.length)];
+  document.body.classList.add('shop-open');
+  const ov=document.getElementById('confessOverlay');
+  if(ov) ov.classList.remove('hidden');
+}
+function closeConfess(){
+  const ov=document.getElementById('confessOverlay');
+  if(ov) ov.classList.add('hidden');
+  const id=confessPendingId; confessPendingId=null;
+  if(id && friends[id] && relOf(friends[id])===2){
+    friends[id].rel=3;          // 연인(R3) 진입
+    friends[id].rexp=0;         // R3→R4 진행 새로 시작
+    saveGame();
+    const g=GUESTS.find(x=>x.id===id);
+    const nm=(g&&g.name)||'친구';
+    relCelebrate(id, `${nm}와(과) 연인이 되었어요 💗`);
+  } else {
+    renderFriends();
+  }
+  // 명부가 닫힌 게 아니면 shop-open 유지
+  const friendsOv=document.getElementById('friendsOverlay');
+  if(!friendsOv || friendsOv.classList.contains('hidden')){
+    document.body.classList.remove('shop-open');
+  }
+}
+// 관계 모먼트 — 차분한 하트가 화면 중앙에서 떠오름(외곽선만, glow/blur 없음) + 알림. 진입/진전 공용.
+function relCelebrate(friendId, message){
+  if(stage){
+    const gr=stage.getBoundingClientRect();
+    const cx=gr.width/2, cy=gr.height*0.5;
+    for(let i=0;i<9;i++){
+      setTimeout(()=>{
+        const h=document.createElement('div');
+        h.className='celebrate-heart';
+        h.innerHTML=`<img src="${DECO_HEART}" alt="">`;
+        h.style.left=(cx+(Math.random()-0.5)*gr.width*0.4)+'px';
+        h.style.top=cy+'px';
+        h.style.setProperty('--hx',((Math.random()-0.5)*48)+'px');
+        stage.appendChild(h);
+        setTimeout(()=>h.remove(),1600);
+      }, i*90);
+    }
+  }
+  toast(message);
+  renderFriends();
+  refreshFriendBadges();
+}
+// rel 0→1 진입(꽃다발)
+function enterRelationship(friendId){
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  relCelebrate(friendId, `${nm}와(과) 특별한 사이가 되었어요 🌷💗`);
+}
+// 호감도 단계 진전(R1→R2, R3→R4). 명부 "더 가까워지기" 버튼에서 호출.
+function advanceRelationship(friendId){
+  const f=friends[friendId];
+  if(!relReadyToAdvance(f)) return;
+  const r=relOf(f)+1;
+  f.rel=r; f.rexp=0;
+  saveGame();
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  relCelebrate(friendId, `${nm}와(과) 한 걸음 더 가까워졌어요 💗 (${relTitle(r)})`);
 }
 // 선물할 음식 고르는 팝업 열기
 function openGiftPicker(friendId){
@@ -5620,12 +5843,39 @@ function openGiftPicker(friendId){
   const titleEl=document.getElementById('giftTitle');
   if(titleEl) titleEl.innerHTML = `${nm}에게 선물하기 <span class="gift-cost">🪙${cost}</span>`;
   const favD=DISH[f.fav];
+  // 🌷 꽃다발: Lv5 & rel==0. 💌 고백: rel==2. 둘 다 선물 팝업 맨 앞 + 안내.
+  const showBouquet = ((f.level||0)>=5 && relOf(f)===0);
+  const showConfess = (relOf(f)===2);
+  const bqNow = f.bq||0;
   const subEl=document.getElementById('giftSub');
-  if(subEl) subEl.innerHTML = favD
-    ? `${nm}은(는) <span class="gift-fav-ico">${dishIcoInline(favD)}</span> ${favD.nm}을(를) 좋아해요`
-    : '';
+  if(subEl){
+    const favLine = favD
+      ? `${nm}은(는) <span class="gift-fav-ico">${dishIcoInline(favD)}</span> ${favD.nm}을(를) 좋아해요`
+      : '';
+    const bqLine = showBouquet
+      ? `<div class="gift-rel-hint">🌷 꽃다발을 ${BOUQUET_NEED}번 선물하면 특별한 사이로 발전해요 <b>${bqNow}/${BOUQUET_NEED}</b></div>`
+      : '';
+    const confLine = showConfess
+      ? `<div class="gift-rel-hint">💌 고백을 전하면 <b>연인</b> 사이로 발전해요</div>`
+      : '';
+    subEl.innerHTML = favLine + bqLine + confLine;
+  }
   const dishes=giftableDishes();
-  grid.innerHTML = dishes.map(d=>{
+  const bouquetBtn = showBouquet
+    ? `<button class="gift-dish bouquet" data-bouquet="1">
+        <span class="gift-dish-ico">🌷</span>
+        <span class="gift-dish-nm">꽃다발 🪙${BOUQUET_COST}</span>
+        <span class="gift-dish-heart">💗</span>
+      </button>`
+    : '';
+  const confessBtn = showConfess
+    ? `<button class="gift-dish bouquet" data-confess="1">
+        <span class="gift-dish-ico">💌</span>
+        <span class="gift-dish-nm">고백 🪙${CONFESS_COST}</span>
+        <span class="gift-dish-heart">💗</span>
+      </button>`
+    : '';
+  grid.innerHTML = bouquetBtn + confessBtn + dishes.map(d=>{
     const isFav=(d.id===f.fav);
     return `<button class="gift-dish${isFav?' fav':''}" data-dish="${d.id}">
       <span class="gift-dish-ico">${dishIcoInline(d)}</span>
@@ -5636,6 +5886,10 @@ function openGiftPicker(friendId){
   grid.querySelectorAll('.gift-dish[data-dish]').forEach(btn=>{
     btn.onclick=()=>{ giftFriend(friendId, btn.getAttribute('data-dish'), btn); };
   });
+  const bqBtn=grid.querySelector('.gift-dish[data-bouquet]');
+  if(bqBtn) bqBtn.onclick=()=>{ giftBouquet(friendId, bqBtn); };
+  const confBtn=grid.querySelector('.gift-dish[data-confess]');
+  if(confBtn) confBtn.onclick=()=>{ giftConfess(friendId, confBtn); };
   document.body.classList.add('shop-open');
   ov.classList.remove('hidden');
 }
@@ -5682,6 +5936,28 @@ function friendCardHTML(id){
     + `<span class="perk">🪙 팁 <b>+${tipAmt}</b></span>`
     + `</div>`;
   const nm = (g && g.name) ? `<div class="friend-name">${g.name}</div>` : '';
+  // 관계(연인 루트): rel>0이면 분홍 호칭. 꽃다발 고지는 선물 팝업 안에서 노출(명부 카드엔 안 넣음).
+  const rel=relOf(f);
+  const titleTxt = rel>0 ? relTitle(rel) : friendTitle(lv);
+  const titleCls = rel>0 ? ' relrank' : '';
+  // 관계 진행 바 + 진전 버튼 (rel>=1). 호감도 단계는 바, 게이트 단계(R2/R4)는 대기 안내, R5는 완료.
+  const relReady = relReadyToAdvance(f);
+  let relRow='';
+  if(rel>=1 && rel<relMax()){
+    if(relAffinityStep(rel)){
+      const relNeed=relExpNeed(rel), relExp=f.rexp||0;
+      const relPct = relReady?100:Math.max(0,Math.min(100, Math.round(relExp/relNeed*100)));
+      relRow = `<div class="rel-row">
+        <div class="rel-row-label">💞 ${relTitle(rel)} → ${relTitle(rel+1)}</div>
+        <div class="rel-bar" title="서빙·선물로 더 가까워져요"><div class="rel-bar-fill" style="width:${relPct}%"></div></div>
+      </div>`;
+    } else {
+      relRow = `<div class="rel-row"><div class="rel-row-label rel-wait">💞 특별한 계기를 기다리는 중…</div></div>`;
+    }
+  } else if(rel>=relMax()){
+    relRow = `<div class="rel-row"><div class="rel-row-label rel-max">💞 ${relTitle(rel)}</div></div>`;
+  }
+  const relAdvBtn = relReady ? `<button class="rel-adv-btn" data-reladv="${id}">더 가까워지기 💗</button>` : '';
   const bottom = ready
     ? `<button class="friend-levelup-btn" data-levelup="${id}">레벨업 ❤️</button>`
     : `<div class="friend-exp">${exp} / ${need}</div>`;
@@ -5701,10 +5977,12 @@ function friendCardHTML(id){
   }
   return `<div class="friend-card${ready?' ready':''}">
     ${bang}${face}${nm}${fav}
-    <div class="friend-title">${friendTitle(lv)}</div>
+    <div class="friend-title${titleCls}">${titleTxt}</div>
     <div class="friend-lv"><span class="lv-heart">❤️</span> Lv.${lv}</div>
     <div class="friend-bar" title="좋아하는 메뉴를 대접하면 호감도가 올라요"><div class="friend-bar-fill" style="width:${pct}%"></div></div>
     ${perks}
+    ${relRow}
+    ${relAdvBtn}
     ${bottom}
     ${giftBtn}
   </div>`;
@@ -5767,8 +6045,8 @@ function renderFriends(){
   if(!body) return;
   const ids=Object.keys(friends).sort((a,b)=>{
     const fa=friends[a], fb=friends[b];
-    // 1) 레벨업 대기(!) 친구를 맨 위로
-    const ra=friendReadyToLevel(fa)?1:0, rb=friendReadyToLevel(fb)?1:0;
+    // 1) 레벨업/관계 진전 대기 친구를 맨 위로
+    const ra=(friendReadyToLevel(fa)||relReadyToAdvance(fa))?1:0, rb=(friendReadyToLevel(fb)||relReadyToAdvance(fb))?1:0;
     if(ra!==rb) return rb-ra;
     // 2) 레벨 높은 순
     if((fb.level||0)!==(fa.level||0)) return (fb.level||0)-(fa.level||0);
@@ -5797,6 +6075,10 @@ function renderFriends(){
   // 선물 버튼 클릭 → 음식 선택 팝업
   body.querySelectorAll('.friend-gift-btn[data-gift]').forEach(btn=>{
     btn.onclick=(e)=>{ e.stopPropagation(); openGiftPicker(btn.getAttribute('data-gift')); };
+  });
+  // 관계 진전 버튼 클릭 → 다음 단계로
+  body.querySelectorAll('.rel-adv-btn[data-reladv]').forEach(btn=>{
+    btn.onclick=(e)=>{ e.stopPropagation(); advanceRelationship(btn.getAttribute('data-reladv')); };
   });
   // 스크롤 힌트 갱신 (렌더 직후 + 스크롤 중). 한 번만 리스너 부착.
   if(!body._scrollHintBound){
@@ -5954,11 +6236,14 @@ document.getElementById('giftPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('giftIntroOk').onclick=(e)=>{ e.stopPropagation(); closeGiftIntro(); };
 document.getElementById('giftIntroOverlay').onclick=()=>{ closeGiftIntro(); };
 document.getElementById('giftIntroPanel').onclick=(e)=>{ e.stopPropagation(); };
+document.getElementById('confessOk').onclick=(e)=>{ e.stopPropagation(); closeConfess(); };
+document.getElementById('confessOverlay').onclick=()=>{ closeConfess(); };
+document.getElementById('confessPanel').onclick=(e)=>{ e.stopPropagation(); };
 // 명부 간판 뱃지: 레벨업 대기 친구 있으면 ! 표시
 function refreshFriendBadges(){
   const b=document.getElementById('friendsBadge');
   if(!b) return;
-  b.classList.toggle('hidden', !anyFriendReady());
+  b.classList.toggle('hidden', !anyFriendReady() && !anyRelReady());
 }
 function openFriends(){
   document.body.classList.add('shop-open');
