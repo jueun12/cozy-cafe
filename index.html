@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v29_004</title>
+<title>포근한 디저트 가게 — v30_001</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1145,6 +1145,28 @@
     cursor:pointer; box-shadow:0 0.6cqw 0 #9c3a63; -webkit-text-stroke:0.18cqw #8a3257;
   }
   .confess-ok:active{ transform:translateY(0.4cqw); box-shadow:0 0.2cqw 0 #9c3a63; }
+  /* 🥀 이별 확인창 — 차분한 무채색 톤 */
+  .confess-panel.breakup{ background:linear-gradient(#FBF7F4,#EFE7E2); border-color:#B7A79E; }
+  .confess-panel.breakup .confess-portrait{ border-color:#B7A79E; filter:grayscale(0.4); }
+  .confess-panel.breakup .confess-title{ color:#8A7A70; }
+  .breakup-btns{ display:flex; gap:1.2cqw; margin-top:0.4cqw; }
+  .breakup-cancel{
+    background:#fff; color:#7A6A60; border:0.35cqw solid #C9BCB3;
+    font-size:1.9cqw; font-weight:800; padding:0.85cqw 2.2cqw; border-radius:3cqw;
+    cursor:pointer; box-shadow:0 0.5cqw 0 #C9BCB3;
+  }
+  .breakup-cancel:active{ transform:translateY(0.3cqw); box-shadow:0 0.15cqw 0 #C9BCB3; }
+  .breakup-ok{
+    background:linear-gradient(#A38C80,#8A7367); color:#fff; border:0.35cqw solid #fff;
+    font-size:1.9cqw; font-weight:800; padding:0.85cqw 2.2cqw; border-radius:3cqw;
+    cursor:pointer; box-shadow:0 0.5cqw 0 #6f5a50; -webkit-text-stroke:0.16cqw #5e4b42;
+  }
+  .breakup-ok:active{ transform:translateY(0.3cqw); box-shadow:0 0.15cqw 0 #6f5a50; }
+  /* 선물 팝업 내 🥀 이별 버튼 — 음식/로맨틱 아이템과 구분되는 무채색 */
+  .gift-dish.breakup-item{ border-color:#C2B4AB; background:#F4EEEA; box-shadow:0 0.6cqw 0 rgba(138,115,103,.35); }
+  .gift-dish.breakup-item:active{ box-shadow:0 0.1cqw 0 rgba(138,115,103,.35); }
+  .gift-dish.breakup-item .gift-dish-ico{ font-size:3.6cqw; line-height:4.5cqw; text-align:center; }
+  .gift-dish.breakup-item .gift-dish-nm{ color:#8A7A70; font-weight:900; }
 
   /* 레시피북 (도감) */
   .recipe-count{ margin-left:auto; font-size:1.8cqw; font-weight:700; color:var(--ink-soft); }
@@ -2189,6 +2211,29 @@
       <button class="confess-ok" id="confessOk">받아들이기 💗</button>
     </div>
   </div>
+
+  <div class="shop-overlay hidden" id="promiseOverlay">
+    <div class="confess-panel" id="promisePanel">
+      <div class="confess-hearts">💍</div>
+      <div class="confess-portrait" id="promisePortrait"></div>
+      <div class="confess-title" id="promiseTitle"></div>
+      <div class="confess-say" id="promiseSay"></div>
+      <button class="confess-ok" id="promiseOk">약속하기 💍</button>
+    </div>
+  </div>
+
+  <div class="shop-overlay hidden" id="breakupOverlay">
+    <div class="confess-panel breakup" id="breakupPanel">
+      <div class="confess-hearts">🥀</div>
+      <div class="confess-portrait" id="breakupPortrait"></div>
+      <div class="confess-title" id="breakupTitle"></div>
+      <div class="confess-say">관계가 처음으로 돌아가요.<br>언제든 다시 다가갈 수 있어요.</div>
+      <div class="breakup-btns">
+        <button class="breakup-cancel" id="breakupCancel">아니요</button>
+        <button class="breakup-ok" id="breakupOk">헤어지기 🥀</button>
+      </div>
+    </div>
+  </div>
   <div class="bin" id="bin"><img src="data:image/webp;base64,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" alt="쓰레기통"></div>
   <div class="toast" id="toast"></div>
 
@@ -2728,11 +2773,22 @@ function addRelExp(friendId, amt){
 // ── 💌 고백(R2→R3 게이트) ── R2에서 선물 팝업에 해금. 1회 선물 → 이벤트 컷 → 연인(R3).
 const CONFESS_COST=200;   // 고백 아이템 비용 (특별한 마일스톤)
 const CONFESS_LINES=[
-  '있잖아… 너랑 있으면 하루가 참 따뜻해. 우리, 연인이 되어줄래?',
-  '늘 여기 오는 진짜 이유, 사실 너였어. 내 마음 받아줄래?',
-  '이 카페보다 네가 더 좋아졌어. 나랑 연인 하자.'
+  '있잖아… 너랑 있으면 하루가 참 따뜻해.',
+  '늘 여기 오는 진짜 이유, 사실 너였어.',
+  '내가 좋아하는 맛을 기억해 주었을 때부터, 이 카페에 오는 게 더 특별해졌어.'
 ];
 let confessPendingId=null;   // 고백 이벤트 컷이 떠 있는 동안 대상 친구 id (닫을 때 R3 발전)
+// ── 💍 반지(R4→R5 게이트, 단일 슬롯) ── R4에서 해금. 1회 선물 → 약속 이벤트 → 약속한 사이(R5).
+// R5는 partnerId로 단 1명만. 이미 약속한 연인이 있으면 다른 R4에선 반지 비활성.
+const RING_COST=300;   // 반지 비용 (최종 마일스톤)
+const PROMISE_LINES=[
+  '앞으로의 하루하루를, 너와 함께 채워가고 싶어.',
+  '이 가게에서 시작된 이야기, 너랑 끝까지 써내려가고 싶어.',
+  '평범한 날도 너와 함께라면 특별해져. 계속 이렇게 곁에 있어줘.'
+];
+let promisePendingId=null;   // 약속 이벤트 컷이 떠 있는 동안 대상 친구 id (닫을 때 R5 발전)
+// ── 🥀 이별(재구애 가능) ── rel>=1 친구의 선물 팝업에 노출. 확인 후 관계 해제(rel/rexp/bq 리셋, R5면 슬롯 해제).
+let breakupPendingId=null;   // 이별 확인창 대상 친구 id
 // 호감도 누적: 만족한 손님이 친구면 exp 부여. 좋아하는 메뉴를 대접했으면 보너스.
 // 반환: {leveledUp:bool, newLevel, gained} (연출용). 친구가 아니면 null.
 const FRIEND_EXP_BASE=10;       // 만족 1회 기본 호감도
@@ -4018,6 +4074,10 @@ function loadGame(){
           const lv = (typeof f.level==='number') ? f.level
                    : (typeof f.heart==='number' ? f.heart : 0);
           friends[id]={ fav:f.fav, level:lv, exp:(typeof f.exp==='number'?f.exp:0) };
+          // 관계(연인 루트) 필드 복원 — 누락 시 게임 재시작마다 진행이 사라짐
+          if(typeof f.rel==='number')  friends[id].rel=f.rel;
+          if(typeof f.rexp==='number') friends[id].rexp=f.rexp;
+          if(typeof f.bq==='number')   friends[id].bq=f.bq;
         }
       });
     }
@@ -4026,6 +4086,8 @@ function loadGame(){
     if(typeof data.giftIntroShown==='boolean') giftIntroShown=data.giftIntroShown;
     if(typeof data.tutorialDone==='boolean') tutorialDone=data.tutorialDone;
     if(typeof data.partnerId==='string') partnerId=data.partnerId; else partnerId=null;
+    // 무결성: partnerId가 실제 R5(약속한 사이) 친구를 안 가리키면 스테일 → 해제
+    if(partnerId && !(friends[partnerId] && relOf(friends[partnerId])===5)) partnerId=null;
     if(data.featuresUnlocked && typeof data.featuresUnlocked==='object'){
       featuresUnlocked.shop    = !!data.featuresUnlocked.shop;
       featuresUnlocked.friends = !!data.featuresUnlocked.friends;
@@ -5791,6 +5853,114 @@ function closeConfess(){
     document.body.classList.remove('shop-open');
   }
 }
+// 💍 반지 선물: R4 & 아직 약속한 연인 없음(!partnerId). 1회 → 약속 이벤트 → 약속한 사이(R5).
+function giftRing(friendId, btn){
+  const f=friends[friendId];
+  if(!f) return;
+  if(relOf(f)!==4) return;
+  if(partnerId && partnerId!==friendId){ toast('이미 약속한 연인이 있어요'); return; }
+  if(gaveGiftToday(friendId)){ toast('오늘은 이미 선물했어요'); return; }
+  if(wallet < RING_COST){ toast('코인이 부족해요'); return; }
+  giftHeartBurst(btn);
+  wallet -= RING_COST;
+  updateWalletHud();
+  giftToday.push(friendId);
+  saveGame();
+  setTimeout(()=>{ closeGiftPicker(); showPromiseEvent(friendId); }, 480);
+}
+// 약속 이벤트 컷 — 닫으면 R5 발전 + partnerId 설정(단일 슬롯).
+function showPromiseEvent(friendId){
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  promisePendingId=friendId;
+  const portrait=document.getElementById('promisePortrait');
+  if(portrait){
+    portrait.innerHTML = g && g.stand
+      ? `<img src="${g.stand}" alt="">`
+      : `<div class="emoji-fallback">${(g&&g.emoji)||'🙂'}</div>`;
+  }
+  const titleEl=document.getElementById('promiseTitle');
+  if(titleEl) titleEl.textContent = `${nm}와(과)의 약속`;
+  const sayEl=document.getElementById('promiseSay');
+  if(sayEl) sayEl.textContent = PROMISE_LINES[Math.floor(Math.random()*PROMISE_LINES.length)];
+  document.body.classList.add('shop-open');
+  const ov=document.getElementById('promiseOverlay');
+  if(ov) ov.classList.remove('hidden');
+}
+function closePromise(){
+  const ov=document.getElementById('promiseOverlay');
+  if(ov) ov.classList.add('hidden');
+  const id=promisePendingId; promisePendingId=null;
+  // 단일 슬롯 재확인: 닫는 사이 다른 약속이 성사됐다면 발전 막음
+  if(id && friends[id] && relOf(friends[id])===4 && (!partnerId || partnerId===id)){
+    friends[id].rel=5;          // 약속한 사이(R5) 진입
+    friends[id].rexp=0;
+    partnerId=id;               // R5 단일 슬롯 점유
+    saveGame();
+    const g=GUESTS.find(x=>x.id===id);
+    const nm=(g&&g.name)||'친구';
+    relCelebrate(id, `${nm}와(과) 약속한 사이가 되었어요 💍`);
+  } else {
+    renderFriends();
+  }
+  const friendsOv=document.getElementById('friendsOverlay');
+  if(!friendsOv || friendsOv.classList.contains('hidden')){
+    document.body.classList.remove('shop-open');
+  }
+}
+// 🥀 이별: rel>=1 친구. 선물 팝업의 🥀 → 확인창 (실수 방지). 확인 시에만 관계 해제.
+function giftBreakup(friendId){
+  const f=friends[friendId];
+  if(!f || relOf(f)<1) return;
+  closeGiftPicker();
+  showBreakupConfirm(friendId);
+}
+function showBreakupConfirm(friendId){
+  const g=GUESTS.find(x=>x.id===friendId);
+  const nm=(g&&g.name)||'친구';
+  breakupPendingId=friendId;
+  const portrait=document.getElementById('breakupPortrait');
+  if(portrait){
+    portrait.innerHTML = g && g.stand
+      ? `<img src="${g.stand}" alt="">`
+      : `<div class="emoji-fallback">${(g&&g.emoji)||'🙂'}</div>`;
+  }
+  const titleEl=document.getElementById('breakupTitle');
+  if(titleEl) titleEl.textContent = `${nm}와(과) 헤어질까요?`;
+  document.body.classList.add('shop-open');
+  const ov=document.getElementById('breakupOverlay');
+  if(ov) ov.classList.remove('hidden');
+}
+function doBreakup(){
+  const ov=document.getElementById('breakupOverlay');
+  if(ov) ov.classList.add('hidden');
+  const id=breakupPendingId; breakupPendingId=null;
+  const f=id && friends[id];
+  if(f && relOf(f)>=1){
+    f.rel=0; f.rexp=0; f.bq=0;        // 관계 처음(친구)으로 — 재구애 가능
+    if(partnerId===id) partnerId=null; // R5였다면 단일 슬롯 해제
+    saveGame();
+    const g=GUESTS.find(x=>x.id===id);
+    const nm=(g&&g.name)||'친구';
+    toast(`${nm}와(과) 다시 친구가 되었어요`);
+  }
+  renderFriends();
+  refreshFriendBadges();
+  const friendsOv=document.getElementById('friendsOverlay');
+  if(!friendsOv || friendsOv.classList.contains('hidden')){
+    document.body.classList.remove('shop-open');
+  }
+}
+function cancelBreakup(){
+  const ov=document.getElementById('breakupOverlay');
+  if(ov) ov.classList.add('hidden');
+  breakupPendingId=null;
+  renderFriends();
+  const friendsOv=document.getElementById('friendsOverlay');
+  if(!friendsOv || friendsOv.classList.contains('hidden')){
+    document.body.classList.remove('shop-open');
+  }
+}
 // 관계 모먼트 — 차분한 하트가 화면 중앙에서 떠오름(외곽선만, glow/blur 없음) + 알림. 진입/진전 공용.
 function relCelebrate(friendId, message){
   if(stage){
@@ -5846,6 +6016,8 @@ function openGiftPicker(friendId){
   // 🌷 꽃다발: Lv5 & rel==0. 💌 고백: rel==2. 둘 다 선물 팝업 맨 앞 + 안내.
   const showBouquet = ((f.level||0)>=5 && relOf(f)===0);
   const showConfess = (relOf(f)===2);
+  const ringTaken = (partnerId && partnerId!==friendId && friends[partnerId] && relOf(friends[partnerId])===5);   // 실제 R5 연인이 있을 때만
+  const showRing = (relOf(f)===4 && !ringTaken);
   const bqNow = f.bq||0;
   const subEl=document.getElementById('giftSub');
   if(subEl){
@@ -5858,7 +6030,12 @@ function openGiftPicker(friendId){
     const confLine = showConfess
       ? `<div class="gift-rel-hint">💌 고백을 전하면 <b>연인</b> 사이로 발전해요</div>`
       : '';
-    subEl.innerHTML = favLine + bqLine + confLine;
+    const ringLine = showRing
+      ? `<div class="gift-rel-hint">💍 반지를 선물하면 <b>약속한 사이</b>가 돼요 (단 한 사람과만)</div>`
+      : (relOf(f)===4 && ringTaken
+          ? `<div class="gift-rel-hint">💍 이미 약속한 연인이 있어 약속할 수 없어요</div>`
+          : '');
+    subEl.innerHTML = favLine + bqLine + confLine + ringLine;
   }
   const dishes=giftableDishes();
   const bouquetBtn = showBouquet
@@ -5875,14 +6052,27 @@ function openGiftPicker(friendId){
         <span class="gift-dish-heart">💗</span>
       </button>`
     : '';
-  grid.innerHTML = bouquetBtn + confessBtn + dishes.map(d=>{
+  const ringBtn = showRing
+    ? `<button class="gift-dish bouquet" data-ring="1">
+        <span class="gift-dish-ico">💍</span>
+        <span class="gift-dish-nm">반지 🪙${RING_COST}</span>
+        <span class="gift-dish-heart">💗</span>
+      </button>`
+    : '';
+  const breakupBtn = (relOf(f)>=1)
+    ? `<button class="gift-dish breakup-item" data-breakup="1">
+        <span class="gift-dish-ico">🥀</span>
+        <span class="gift-dish-nm">이별</span>
+      </button>`
+    : '';
+  grid.innerHTML = bouquetBtn + confessBtn + ringBtn + dishes.map(d=>{
     const isFav=(d.id===f.fav);
     return `<button class="gift-dish${isFav?' fav':''}" data-dish="${d.id}">
       <span class="gift-dish-ico">${dishIcoInline(d)}</span>
       <span class="gift-dish-nm">${d.nm}</span>
       ${isFav?'<span class="gift-dish-heart">💗</span>':''}
     </button>`;
-  }).join('');
+  }).join('') + breakupBtn;
   grid.querySelectorAll('.gift-dish[data-dish]').forEach(btn=>{
     btn.onclick=()=>{ giftFriend(friendId, btn.getAttribute('data-dish'), btn); };
   });
@@ -5890,6 +6080,10 @@ function openGiftPicker(friendId){
   if(bqBtn) bqBtn.onclick=()=>{ giftBouquet(friendId, bqBtn); };
   const confBtn=grid.querySelector('.gift-dish[data-confess]');
   if(confBtn) confBtn.onclick=()=>{ giftConfess(friendId, confBtn); };
+  const ringBtnEl=grid.querySelector('.gift-dish[data-ring]');
+  if(ringBtnEl) ringBtnEl.onclick=()=>{ giftRing(friendId, ringBtnEl); };
+  const breakupBtnEl=grid.querySelector('.gift-dish[data-breakup]');
+  if(breakupBtnEl) breakupBtnEl.onclick=()=>{ giftBreakup(friendId); };
   document.body.classList.add('shop-open');
   ov.classList.remove('hidden');
 }
@@ -6239,6 +6433,13 @@ document.getElementById('giftIntroPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('confessOk').onclick=(e)=>{ e.stopPropagation(); closeConfess(); };
 document.getElementById('confessOverlay').onclick=()=>{ closeConfess(); };
 document.getElementById('confessPanel').onclick=(e)=>{ e.stopPropagation(); };
+document.getElementById('promiseOk').onclick=(e)=>{ e.stopPropagation(); closePromise(); };
+document.getElementById('promiseOverlay').onclick=()=>{ closePromise(); };
+document.getElementById('promisePanel').onclick=(e)=>{ e.stopPropagation(); };
+document.getElementById('breakupOk').onclick=(e)=>{ e.stopPropagation(); doBreakup(); };
+document.getElementById('breakupCancel').onclick=(e)=>{ e.stopPropagation(); cancelBreakup(); };
+document.getElementById('breakupOverlay').onclick=()=>{ cancelBreakup(); };
+document.getElementById('breakupPanel').onclick=(e)=>{ e.stopPropagation(); };
 // 명부 간판 뱃지: 레벨업 대기 친구 있으면 ! 표시
 function refreshFriendBadges(){
   const b=document.getElementById('friendsBadge');
