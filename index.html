@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v30_001</title>
+<title>포근한 디저트 가게 — v30_002</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1116,6 +1116,52 @@
     box-shadow:0 0.35cqw 0 #B14C77;
   }
   .rel-adv-btn:active{ transform:translateY(0.2cqw); box-shadow:0 0.15cqw 0 #B14C77; }
+  /* 친구 상세 페이지 — 명부 카드의 얼굴 탭으로 진입(3-b). 정적 데이터+관계 상태 표시. */
+  #friendDetailOverlay{ z-index:260; }
+  .detail-panel{
+    position:relative; width:52cqw; max-width:52cqw; max-height:82%;
+    background:rgba(255,251,243,.99); border:0.4cqw solid var(--accent);
+    border-radius:2cqw; box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.32);
+    padding:3cqw 2.4cqw 2.4cqw; overflow-y:auto;
+    display:flex; flex-direction:column; align-items:center; gap:0.7cqw;
+    animation:shopPop .25s ease-out;
+  }
+  .detail-close{ position:absolute; top:1.2cqw; right:1.2cqw; }
+  .detail-portrait{
+    width:22cqw; height:30cqw; flex:none; border-radius:1.6cqw;
+    border:0.35cqw solid var(--accent); background:#FFF1DD; overflow:hidden;
+    display:flex; align-items:flex-end; justify-content:center; font-size:9cqw;
+  }
+  .detail-portrait img{ width:100%; height:100%; object-fit:contain; object-position:bottom center; }
+  .detail-name{ font-size:3cqw; font-weight:900; color:var(--ink); margin-top:0.6cqw; }
+  .detail-rank{ font-size:2cqw; font-weight:800; color:var(--accent); }
+  .detail-rank.relrank{ color:#D6739B; font-weight:900; }
+  .detail-intro{
+    font-size:1.7cqw; font-weight:600; color:var(--ink-soft); line-height:1.6;
+    text-align:center; margin-top:0.5cqw; padding:0 1cqw;
+  }
+  .detail-stats{ display:flex; gap:1.2cqw; width:100%; margin-top:1cqw; }
+  .detail-stat{
+    flex:1; background:#fff; border:0.2cqw solid #ecdcc2; border-radius:1.2cqw;
+    padding:1cqw 1.2cqw; text-align:center;
+  }
+  .detail-stat .ds-key{ font-size:1.4cqw; font-weight:700; color:var(--ink-soft); }
+  .detail-stat .ds-val{ font-size:1.9cqw; font-weight:800; color:var(--ink); margin-top:0.3cqw; }
+  .detail-stat .ds-val .fav-ico{ font-size:2cqw; }
+  .detail-relrow{ width:100%; margin-top:0.8cqw; display:flex; justify-content:center; }
+  /* 추억 섹션 (고백/약속 rel 기반 잠금→해금, 3-c) */
+  .detail-memory-wrap{ width:100%; }
+  .detail-memory{ width:100%; margin-top:1.2cqw; border-top:0.2cqw solid #f0e2cf; padding-top:1.2cqw; }
+  .mem-title{ font-size:1.7cqw; font-weight:800; color:var(--accent-deep); text-align:center; margin-bottom:0.8cqw; }
+  .mem-item{ background:#FFF2F7; border:0.18cqw solid #F3C2D6; border-radius:1cqw; padding:0.9cqw 1.1cqw; margin-bottom:0.7cqw; }
+  .mem-item.locked{ background:#f6f1ea; border-color:#e3d8c8; }
+  .mem-key{ font-size:1.4cqw; font-weight:800; color:#C25A86; margin-bottom:0.3cqw; }
+  .mem-item.locked .mem-key{ color:#a99a87; }
+  .mem-line{ font-size:1.6cqw; font-weight:600; color:var(--ink); line-height:1.5; }
+  .mem-line.dim{ color:#b3a594; }
+  .mem-day{ font-size:1.2cqw; font-weight:700; color:#B97A92; background:#fff; border:0.12cqw solid #F0CFDD; border-radius:0.8cqw; padding:0.1cqw 0.6cqw; margin-left:0.4cqw; }
+  /* 명부 카드 얼굴 = 상세 진입 (탭 가능 표시) */
+  .friend-card:not(.mystery) .friend-face{ cursor:pointer; }
   /* 💌 고백 이벤트 컷 (풀스크린) */
   .confess-panel{
     position:relative; background:linear-gradient(#FFF3F9,#FFE0EE);
@@ -2127,7 +2173,7 @@
   <div class="shop-overlay hidden" id="friendsOverlay">
     <div class="shop-panel" id="friendsPanel">
       <div class="shop-head">
-        <span class="shop-title">친구 명부</span>
+        <span class="shop-title">친구 리스트</span>
         <span class="friends-count" id="friendsCount"></span>
         <button class="shop-close" id="friendsClose" aria-label="닫기">✕</button>
       </div>
@@ -2194,7 +2240,7 @@
       <div class="gift-intro-emoji">🎁</div>
       <div class="gift-intro-title">선물하기가 열렸어요!</div>
       <div class="gift-intro-msg">
-        이제 친구 명부에서 친구들에게<br>
+        이제 친구 리스트에서 친구들에게<br>
         음식을 선물할 수 있어요.<br>
         <b>좋아하는 메뉴</b>를 선물하면 더 기뻐해요 💗
       </div>
@@ -2232,6 +2278,28 @@
         <button class="breakup-cancel" id="breakupCancel">아니요</button>
         <button class="breakup-ok" id="breakupOk">헤어지기 🥀</button>
       </div>
+    </div>
+  </div>
+
+  <div class="shop-overlay hidden" id="friendDetailOverlay">
+    <div class="detail-panel" id="detailPanel">
+      <button class="shop-close detail-close" id="detailClose" aria-label="닫기">✕</button>
+      <div class="detail-portrait" id="detailPortrait"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-rank" id="detailRank"></div>
+      <div class="detail-intro" id="detailIntro"></div>
+      <div class="detail-stats">
+        <div class="detail-stat">
+          <div class="ds-key">좋아하는 메뉴</div>
+          <div class="ds-val" id="detailFav"></div>
+        </div>
+        <div class="detail-stat">
+          <div class="ds-key">친밀도</div>
+          <div class="ds-val" id="detailLv"></div>
+        </div>
+      </div>
+      <div class="detail-relrow" id="detailRelRow"></div>
+      <div class="detail-memory-wrap" id="detailMemory"></div>
     </div>
   </div>
   <div class="bin" id="bin"><img src="data:image/webp;base64,UklGRlQQAABXRUJQVlA4WAoAAAAQAAAA/wAA/wAAQUxQSPAAAAABYOS2bST9/9O+Txyns7URMQGcM+vi01DRMaj0BFQ+PhnMTiaDk83UZPWWkdnAZPd2keGbRZZvFZl+Ucn2J4kS7EpxtqJgW1C+3hSyLUXtSHHbUeJOFLsNBW9C0VtQ+AYUfzkNsJhGWEpDXDgaYxkNctFolEtGwzz++2RiFtScBIuGOVB3ClSeAbUnQPn4MJgdJmPD5/zYtMHq+Q+JsfuF3e0a1hM/K1je/yEpdj+w/f9HSuz+YH2LhmcLBxTY//8jHZ5+tHj/kQxd5sIy466g00zoNRG6zYN+06DjLOg5CdpOgc4zoPn+CLA3QuyLI2RWUDggPg8AALBTAJ0BKgABAAE+USSQRSOiJZJKdgxYBQS0t2XXkQzcwKlM4yU3GxjF7gthnbx7U/4njLX6K3T7N/wPFO1epTn/I8eL63/1PUh/svrI/6XmrfemOb6ekqJSSmyatMTs8Ulr12/9x3OQtpeJ4TU6ljU8EcsLUHnnCXoHIpT1QYqFRD3ISmPTxZ+4iGwoSLbj4bD3msRm9BupTzCSMOYrvX4+iTEmah4qWevJHw2UaywGDx8VANBeSFxQ4XTutCCxb2H+I5QE//7DVPKB/yaP1ot9kV0kyLERuELRvn/4Nc1dFB7vK4GLnTBqQG0+7Vg8gKMdmGmLN/F7RM2Il3NEgdygzph5wv5s/C+8zK1Mh6WLBJRZcg/2+GK5PSAf+B7JN1P5XPg3wc1RQ5PjfWZFR0OhXzz4ZnwV8u1yBKvpFMvF8RUbPfrHsylvVKloAozVKf8JWLqqvrderAJe7qgts1hFFSfZLyjfRqlWIg2Xr34Kh+UM+Z2P0ha5R2YV8mikxJ66FcNa90sBYEfdzAvza0YLjNP1q2WlPbov8AIPVg1uzXE7qvv594lD2J3I4zFEOSLZ/Dol3C04+gEOCSyNp9BX9jKB8nhh0m1zsrB83orU4Zmi4FlMQkGfVNSQQW1GCfA6jXs8Pe/9u1/VyRId9wdjWIVRPesg1lLLYX4Ei1k+JGXPymL6zE9u32wBq9Y5TnkiaV8fbRRxam9CaHSS8IL7sycSXGFWwJYwEr07648fqhuC9paFOKZ8riSyj4QI7jdBLNRJIWD1nSE3mM/jNmSfOm75D5p6ggRKZqpxEQ/p+RiZWsP6sbPYrAq5ZFAGHwQB3U9n2wmQ1S1dlQWDhLK8P8+4CYLh8+U9QfhuaGMe5CDKflqVV9wdwel3c4wiZXTjYgzokAD+5JwCJnkYf/cue+dt8BR46mKWWHYDundHnNVixeB7CnMMmqfYAgNRQTYMVYG9LEtZCsVf/sLoAAQ3fZpu95WNYzDZ+0e+cQokZLgyQ4gZHGyKySdSTWWIP70P/HOpZbf5ZAGES2u7PQWa/UC6lPN3NRx2haY+zlj7/f+A9dUeFUY1c7K1/Sd9C7ZXwDWmc/fCv5IAO6A1bsuDu/YfyJmbyrOzsCvZKoDFcYNxzYLhIWCW3MvCAGB6lzdJKod4VQ3hvtXxmhnMqDw+72CgDHiSOLVb5GlujjPsPB/8G2LyN75NFkpWJX8gvfDyuuiQ6Cfnl8A2stuDruXawhPiYtcmnvZ7ggBBwejZ/z6iLFWRLWbii4e8GT5zl54RNoGLlwBO9rCzlU2d4kSQ4u8TLz75Zi+uefNGzh6v/JX72Hf2b7LlBPs2CkgxkYoKB2D+QmusyyUgIpKJYSU6AaVFlaPnmoYbj4kulWAZDzurkGR1NCZmYQdVngBNPFjAgrx3PiWvlWynYGROptgySP0z1dru/8CJmshVWGUA9HEhvzeTdrWVluI1xIkC64PGVY56n/pjiZ/+vQVuwGINITRWvO/Qiv7fpo95/P4iWBxgMlgoKQ7+yJfTB/77N0TybMhnqPuBU93UCbAY36Tx9w+9vJ3/wYz7VJhjLOhP+qgdqQhrcj/GdSr/7fPbz7/qbXP6oSTZ/gkDRMa8xQbB5S/ZIfP6Ij7EYs6EW92jt8/E60QHINk5lj8E7xkPYw+flCD1+fDCD571IvC9ac/Y/1FPW6YgXvAVyZec/80pXdFz8aJIxymdMgIGuyDTVCZapCp8gfmNxNmXB4Be/ZtqdrY1MXDaM/hXLA/o/F4fUgf+OeIRISl2Bokm9/BRK4fYhQr6GEnNt0f6HTc0acKLoLkbjFsMq+1CjhkJXZTRyg23fcy21QI5Ht90i2kQshWt0GTcjvFlrwvUWxWs570Tmh41ehV51CY9inllr0XXxO8ZHgzegGaqcuDV94clBeJh7u4+PN68Pda1Z5DbCWI0Nrp1m0IWBrA9wM6J+/l4+qPnFKjuxuA5LD9X8XbZtH5INFmo8L5c5X3K95WmnBfhU5RNbjZ+1Il/CvjOZmX674R+LZXw5+N71BzoBED+cC4uQKApb50xesqJdrKIVHN1HV/0qE+E8Ea7C6tTb+IRLPBtp9jqgTfF6DZYoh7h1e1vhFDXfYHpn4fHRrzG4pUNwR9J/9j7O4V4Srp8F/SZDizMKLc85YX+plmBUPatjqLs7ES9o7acNJAdzUHozWp5f7HwCHvkqb/v09dgWxKKsKNKmxgk5D2C+b/Dap2NdU10jX34bQU16WUveem/NWVx079Ss2NSS6MfcHS3R/4TB2Rrm7JhEGi+xeWkQwwY0KG+zX5YozWf15BSM1HMZuASvPk0WvMkljScjhUyE6C5kefyh1ImV36ojI3c5GKMc71dTQB0GUmFA6n5ZA1ujnEHayFIRSroNePA///tUadjIEPfsebPB/AAuZQcIqWUD9NyfChUBvWl3Z3SOTEbRVpFh+6qRtqUcjr29YvDLZaJnx7kG15bu9wcdDEPLWdyx9cODO/RuO4O7b3udjGBijOmSuw2BMkVvEBRNTyHslivRBx5FKzYrTAM6t5/xSxhVIPpjSp9gB7nj3Pl1cUng8CpYfO1jbnhatbDWgEHknhKptPLe0JbVQy90w7sR3X+hksu2bdyUvqZmAnd7kUEHaqMrRmX1Q3txEdw+q1eFn13Mtucmx2kQ0tw7z8/P+JbNBM30bz4bpVJTh7avBnPo+aSNvYWzZHkA5r8FiW96GV4HVTo0eyisSHW8RDb96MTvFrSGKfglBBZXg2c/nroVc7jmnQx/X1RIX7OGKE7Q1Ql8Gt0DEOG7lBvxmthsQ4FOUA3lM9kx5sPUyVf2/I8U91LxdUk+nKO8wxyOFKVbX1/kVk46GI8b/srarSpnod4KJhL5rOV8XCMchzCtnBoKgddj8jwIA0PozWTfnQUTHHh5N/1hYUYvM/rHCghnpL9nyrFGMVK4Rgt4kjH5MQWrubj7ehqk8xx/7dIEZUYBKbPf2EyUQdy4lQGnPEWWyD6fhYH9Fdhgl0l60m1+iAXdgf6BMotf+JY82wsP/9VqOj5f++4V2VFt0VWG7/2yd3Cfkg2vJA9ty/YHB2qQLe7+ze5/rH5VX8IsLmk6WBNEuRtguycjSG39vmsHIVyuZRkJOn1kPNJbXm61zZ2JzMXimrM6gs+B4dGJ9zJs6K2gHd4h8X7HHMEj7AcuRVhfnXe5V60Z/dmzXnaWUiGBUp3w7G1aPO4NhA1shzRMXUPgo3b/jm+szHeJa3/HngHK4ZNdJY+WRxllOnd2Ub3H4YlbDtse1QjXCf3HvisRIra0PgPKfl+U/CalnqfVZioGpANpxY1UunkWjqvsFa7GxL8xa3+L36kN1WpYVh3uKzmKdsUtLvk6P5QGM6kEnkuy6Q/Fji6s0RoYS+1kjx0lUdj5/kQ4nsJfsZ8ndLzRYsOd9kGetvjTpXnhT4fQihUYPTNQ/LWf7YgTHkEPQYWt6YJ7b5EZVgNVgGsYPKw5ipn6bhm+TmCMsRzKxA48ZhfxcqhhfNI8sr71fhaXoeQi1wX2NjlBFGhAsY+rHqY6dq5LhJDiMAZJKtzKfchJvukbuj/T65VmtOntxHjpBoDX+pjrWwDrHqPN3BYEBkbKU/f++bqx3rKcSGuIWuBtTiMXcEZrmGOxogyGjtJ+YJlB2jCCLICxbBEqqZpAKr3O5KT/SyuxcjEodidtA8RrrkNsBpH1UwhwiOzZB2pFR2nX2rJc0AeFuJTNRIsHtKp7nbVvnvHD9zW4zBH0qXUMp+sPK15UX3OSgPK7GJh8Tcc75v5XUpPdmbJ5R2sOnugNnTr3Q8JkeG/DPg37BRNioUkzXXxD/j9rcv6orymnxNJxOTIfwcS+FmWoYaLSnt0uWGGd/8Nosf0V8dJWFFjRqz6dd1Eh7qRY+EsolTCvMmurELvxkMk7CDeUuBO8Yg6lm6c0JSyclbeQb1hn+eUUcqx9mVOg3TAdOYlGkNOdb4ENa55iIgg05O8doBS4sc5VXsH8XR1J+vJfte+LZMiwWe0GwAqRatY+3RkW2+i0/qqL7Y3P6nqIP1H0yoM41s16WXlQB3aOMHXFDkMLq+4Saxa3qjA8p5V9UyFDH45gs/jNZSFGrHID248YZ4uWqxws4EG5c1s0uOh61lmD8Nk0NOFNRBS6QfM/Ywu5SezMcQ2C7eoUEJcYynifBLGbWJUdrz6J6XXsFVpmFI6m+qganMzEG/o1RqUaxdUFa9S4ryRJQt9FcH/ZUCtCCYpDekKQ66nLqRIQ9f7tY4C/gKcIdIBtYPJ5BC0dqrVIMa79XX2erc66hj40txry2sMxFm8EYCOwIfoJq9epSI1JoDvfY6mt797h5SaA5DtT7OBlu58cebuvYhv1++/qztg4EZl0Ni1AadouIBMg+qN/yjwe/H1PT4jO7Zf70kwfqO3VbMZyq0HlMa6ovdexUdML3+SGH0lqIS+m5JBpvUWiFk6PPncOFHPbNnebPAYtkNLvsnEBqrgxdjXPMtAFxc8IYGNciKnmx4EWlWtG+n/+/qdOVD1DkO0bz5wqQ095ElleJ67MLZKOseDK1+bYc6TJ3c2M2uOAvR5iyZGOAAAzukoBB37ajDOWuQOxnab5dBkV794IR3aHQrZvPOoRShh2dHTE0UXWXcxvH5oQ5yNYTP6yGYIbN6lGyjtYjg7I9C3Q2ohnGlceWNNM9r8tzXd1Xf9Khes8rSX/8/i8jrn/N6NEXr1nzQgrvO2fp//vR9e/cEGA6q09Gs/Yc/lIwxNaOFQz+ePKmI4kufofU4p1EmXu+I+F0OLkXdbFoNNPOfa7QOS9/g+cpA54UWV4AoNN24ALvF2Cn0cgk1t4O4hStUAqBzeYIFWFqW77jVBtCDBZV5yO+Eiym6z/D5ZiEQIh5u72kXPf9xSwmynu9ysSHuo7/sE9SYqQN+tWY+6cl1IGqkPsWMwH/RMP+b0LRjiIBOXw0bcDpEtVCgw5ET/bx3HomY/RcHWK0a8/rTIrO+vhJAsk0ygiQmImC3AvRxNALpZK0OWeULrOJUcIQj8JxODgSOphs8NagwJC0NQjksFVjbMxtq/qqFdk4FkjkqYiyqQ0K0k6H53Dts0qfkstWggEWrpEFuzEQqwwdTdfcFEUcJAAqjibqjL3DFk3a6pKc0eDtBOtoyEIK5PO4djpdC3riKuko9CCeSci8f0D4CDkZoAAAAA" alt="쓰레기통"></div>
@@ -2435,57 +2503,193 @@ function nextUpgradeInfo(id){
 }
 
 const FACES=['🧑','👩','👴','👵','🧔','👱‍♀️','🧓','👨'];
+// 캐릭터 정적 데이터 단일 출처. fav(좋아하는 메뉴 id) + 개성(소개/대사)을 여기 한 곳에 모음.
+// fav: 예전엔 DEFAULT_FRIENDS/UNLOCK_FRIEND/meetSpecialGuest 3곳에 흩어져 있던 것을 GUESTS로 통합(v30_002).
+// intro=소개문, hello=인사 풀, favLine={m}=메뉴명 치환, confess=고백 대사, promise=약속 대사.
+// hello/favLine/confess/promise는 상세 페이지(3-b)·대사 분기(3-c)에서 소비. 3-a 시점엔 데이터만 얹음.
 const GUESTS=[
   { id:'guest_1', name:'노아', emoji:'🧑',
     stand:ASSETS.guest_1_stand,
-    sit:ASSETS.guest_1_sit },
+    sit:ASSETS.guest_1_sit,
+    fav:'shortcake',
+    intro:'가게 문 열 때부터 있던 단골. 늘 같은 자리에서 조용히 웃어준다.',
+    hello:['오늘도 잘 부탁해.','여기 앉아 있으면 마음이 편해져.'],
+    favLine:['{m}, 오늘도 마음이 편해지는 맛이네.','{m} 한 입이면 하루가 풀려.'],
+    friendLine:'너와 있으면 편해',
+    bestLine:'여긴 이제 내 두 번째 집 같아',
+    confess:'너랑 있는 이 시간이 좋아.',
+    promise:'앞으로의 시간도 너와 함께하고 싶어' },
   { id:'guest_2', name:'미오', emoji:'😺',
     stand:ASSETS.guest_2_stand,
-    sit:ASSETS.guest_2_sit },
+    sit:ASSETS.guest_2_sit,
+    fav:'cupcake_c',
+    intro:'초코 향만 나면 어디든 쪼르르 나타나는 단골.',
+    hello:['또 왔어~ 오늘도 잘 부탁해!','여기 오면 기분이 보들보들해져.'],
+    favLine:['{m} 냄새 맡고 바로 달려왔잖아.'],
+    friendLine:'우리 이제 친구야, 그치?',
+    bestLine:'너랑 있으면 하루 종일 기분 좋아!',
+    confess:'너 보러 오는 게, 요즘 하루 중에 제일 좋은 일이 됐어… 헤헤.',
+    promise:'앞으로도 매일 너한테 달려올 거야!' },
   { id:'guest_3', name:'엠마', emoji:'👱‍♀️',
     stand:ASSETS.guest_3_stand,
-    sit:ASSETS.guest_3_sit },
+    sit:ASSETS.guest_3_sit,
+    fav:'americano',
+    intro:'쓴 아메리카노만 찾는 단골. 무심한 듯 늘 같은 자리에 앉는다.',
+    hello:['뭐, 들른 김에 한 잔.','…자주 오는 거 별 이유 없어. ...그냥.'],
+    favLine:['{m}, 오늘도 괜찮네. 내 취향이야.'],
+    friendLine:'뭐… 이 정도면 친구라고 해도 되겠지.',
+    bestLine:'...너와 있으면 꽤 편해',
+    confess:'너랑 있는 시간이 싫지 않아.',
+    promise:'앞으로도 계속 여기에 있고 싶어. 너도 계속 여기 있어 줘. …부탁이야.' },
   { id:'guest_4', name:'릴리', emoji:'👧',
     stand:ASSETS.guest_4_stand,
-    sit:ASSETS.guest_4_sit },
+    sit:ASSETS.guest_4_sit,
+    fav:'shortcake',
+    intro:'구석 자리를 좋아하는 수줍은 단골. 작게 웃는 게 예쁘다.',
+    hello:['저… 나 또 왔어.','여기 오면… 왠지 안심돼.'],
+    favLine:['{m}… 좋아해. 오늘도 고마워…'],
+    friendLine:'우리… 이제 친구 맞지? 기뻐.',
+    bestLine:'이제 너 옆에서라면, 편하게 웃을 수 있어.',
+    confess:'이런 말 처음이라 떨리는데… 네 생각이 자꾸 나.',
+    promise:'오래오래… 네 옆에 있고 싶어. 그래도 돼…?' },
   { id:'guest_5', name:'클로이', emoji:'👧',
     stand:ASSETS.guest_5_stand,
-    sit:ASSETS.guest_5_sit },
+    sit:ASSETS.guest_5_sit,
+    fav:'cupcake_c',
+    intro:'들어올 때부터 텐션이 가득한 단골. 웃음소리가 가게를 채운다.',
+    hello:['나 왔어! 오늘 뭐 추천하는 거 있어?!','여기 분위기 진짜 최고야!'],
+    favLine:['{m}!! 이거 완전 좋아!'],
+    friendLine:'우리 이제 완전 친구다! 신난다!',
+    bestLine:'너는 완전 베프야!',
+    confess:'있잖아, 나 너 볼 때마다 즐거워져서 자꾸 웃음이 나와. …이거 좋아하는 거 맞지?',
+    promise:'우리 앞으로도 계속 이렇게 즐겁게 지내자! 약속!' },
   { id:'guest_6', name:'레오', emoji:'🧒',
     stand:ASSETS.guest_6_stand,
-    sit:ASSETS.guest_6_sit },
+    sit:ASSETS.guest_6_sit,
+    fav:'souffle',
+    intro:'이것저것 궁금한 게 많은 단골. 질문이 끊이질 않는다.',
+    hello:['오늘 신메뉴 있어? 먹어볼래!','여긴 볼 때마다 새로운 게 있어서 좋아.'],
+    favLine:['{m} 어떻게 이렇게 폭신해? 비결이 뭐야?'],
+    friendLine:'우리 이제 친구니까, 너에 대해 더 많이 물어봐도 될까? 궁금한 게 너무 많아!',
+    bestLine:'너에 대해선 이제 거의 다 알게 된 것 같아! 그래도 더 더 알아가고 싶어!',
+    confess:'궁금한 게 또 생겼어. …너도 나 보면 두근거려?',
+    promise:'앞으로도 너에 대해서 계속 계속 더 많이 알아 가고 싶어.' },
   { id:'guest_7', name:'에단', emoji:'🧒',
     stand:ASSETS.guest_7_stand,
-    sit:ASSETS.guest_7_sit },
+    sit:ASSETS.guest_7_sit,
+    fav:'straw_latte',
+    intro:'문을 활짝 열며 들어오는 씩씩한 단골. 목소리가 크다.',
+    hello:['안녕! 오늘도 힘내려 왔어!','여기 오면 기운이 솟아!'],
+    favLine:['{m}! 오늘도 뭐든 할 수 있을 것 같아!'],
+    friendLine:'이제 우리 친구인 거야!',
+    bestLine:'넌 내 최고의 단짝이야!',
+    confess:'너 좋아해, 진짜로!',
+    promise:'내가 끝까지 네 곁을 지켜줄게!' },
   { id:'guest_8', name:'소피', emoji:'🧒',
     stand:ASSETS.guest_8_stand,
-    sit:ASSETS.guest_8_sit },
+    sit:ASSETS.guest_8_sit,
+    fav:'brownie',
+    intro:'메뉴를 꼼꼼히 살피는 단골. 늘 단정하고 예의 바르다.',
+    hello:['안녕! 오늘도 잘 부탁해.','여기 있으면, 마음이 차분해져서 좋아.'],
+    favLine:['{m}, 균형이 잘 맞아. 역시 솜씨가 좋네.'],
+    friendLine:'친구라고 부를 수 있어서 기뻐.',
+    bestLine:'이만큼 가까워진 사람, 너밖에 없어.',
+    confess:'오래 생각해봤는데… 너와 좀 더 함께 있고 싶어.',
+    promise:'오래오래, 끝까지 함께하고 싶어.' },
   { id:'guest_9', name:'루카', emoji:'🧒',
     stand:ASSETS.guest_9_stand,
-    sit:ASSETS.guest_9_sit },
+    sit:ASSETS.guest_9_sit,
+    fav:'icecream',
+    intro:'느긋하게 들어와 천천히 녹여 먹는 단골. 늘 여유롭다.',
+    hello:['음… 나 왔어. 좀 더 있다 가도 되지?','여기 의자 편해서 자꾸 오래 있게 돼…'],
+    favLine:['{m}… 좀 더 천천히 먹고 싶은데...'],
+    friendLine:'친구…. 우리 이제 친구.. 음.. 좋아...',
+    bestLine:'흐암… 네 옆이 제일 편해..',
+    confess:'네 옆에 계속 있고 싶어.',
+    promise:'…우리 오래 오래 같이 있자.' },
   { id:'guest_10', name:'한나', emoji:'🧒',
     stand:ASSETS.guest_10_stand,
-    sit:ASSETS.guest_10_sit },
+    sit:ASSETS.guest_10_sit,
+    fav:'croissant',
+    intro:'올 때마다 안부를 묻는 다정한 단골. 마음이 따뜻하다.',
+    hello:['나 왔어! 밥은 먹었어? 무리하면 안 돼~','여기 오면 내가 다 포근해져.'],
+    favLine:['{m} 따끈할 때 너도 한 입 먹어. 같이 먹자.'],
+    friendLine:'아이참, 밥은 잘 먹고 다니는 거야? 이거 따뜻할 때 먹어!',
+    bestLine:'너는 내가 제일 아끼는 사람이야. 이것도 좀 먹어 봐.',
+    confess:'있잖아, 나도 모르게… 늘 너를 챙겨주고 싶어져.',
+    promise:'이제 내가 평생 네 곁에서 챙겨줄게.' },
   { id:'guest_11', name:'오웬', emoji:'🧒',
     stand:ASSETS.guest_11_stand,
-    sit:ASSETS.guest_11_sit },
+    sit:ASSETS.guest_11_sit,
+    fav:'lemontea',
+    intro:'톡 쏘는 레몬티만 찾는 새침한 단골. 표정이 무덤덤하다.',
+    hello:['…나 왔어.','딱히 너 보러 온 거 아니거든. 차 마시러 온 거야.'],
+    favLine:['{m}, 뭐… 나쁘지 않네. ...뭐…좋은 걸지도..'],
+    friendLine:'친구…',
+    bestLine:'…너는 좀 특별한 친구일지도.',
+    confess:'사실 좀 더 너와 같이 있고 싶었어.',
+    promise:'…계속 내 옆에 있어 줘.' },
 
   { id:'guest_12', name:'유키', emoji:'🧑',
     stand:ASSETS.guest_12_stand,
-    sit:ASSETS.guest_12_sit },
+    sit:ASSETS.guest_12_sit,
+    fav:'cherrypie',
+    intro:'창가에 앉아 골똘히 생각에 잠기는 조용한 단골.',
+    hello:['날씨가 좋아서 들렀어.','여긴 시간이 천천히 흐르는 것 같아.'],
+    favLine:['{m}, 마치 계절이 담겨 있는 것 같아.'],
+    friendLine:'누군가와 친구가 된다는 건, 마음이 따뜻해지는 일이구나.',
+    bestLine:'네 곁에선 시간이 참 다정하게 흘러.',
+    confess:'너는… 내 조용한 하루의 빛과 같아.',
+    promise:'흘러가는 시간 속에, 너와 영원히 함께였으면 해.' },
   { id:'guest_13', name:'베리', emoji:'👧',
     stand:ASSETS.guest_13_stand,
-    sit:ASSETS.guest_13_sit },
+    sit:ASSETS.guest_13_sit,
+    fav:'macaron',
+    intro:'알록달록 차려입고 오는 멋쟁이 단골. 예쁜 걸 좋아한다.',
+    hello:['오늘 내 코디 어때? 잘 어울리지?','여기 진짜 취향이야.'],
+    favLine:['{m}, 너무 예뻐! 먹기 아까울 정도야.'],
+    friendLine:'우리 이제 친구인 거지?! 여기저기 마구 마구 놀러 다니자!!',
+    bestLine:'내 베스트프렌드는 너로 정했어!',
+    confess:'어쩌지!! 요즘 내 눈엔 너만 들어와.',
+    promise:'세상에서 가장 반짝이는 건 너였어! 계속 같이 있고 싶어!' },
   { id:'guest_14', name:'네로', emoji:'😺',
     stand:ASSETS.guest_14_stand,
-    sit:ASSETS.guest_14_sit },
+    sit:ASSETS.guest_14_sit,
+    fav:'cat_cookie',
+    intro:'도도하게 자리를 고르는 단골. 마음에 들어야 곁을 준다.',
+    hello:['...흥, ...제법이잖아.','특별히 내일도 가 주지.'],
+    favLine:['{m}… 제법이네. 다음에 또 먹으러 가주지.'],
+    friendLine:'…흐음. 너무 친한 척하진 말아 줄래… 흐음-',
+    bestLine:'흐음…. 너 제법이잖아.',
+    confess:'…너는 예외야.',
+    promise:'나 혼자서는 안 되겠어. 내 곁에, 영원히 함께 있어줘.' },
   { id:'guest_15', name:'하루', emoji:'🧒',
     stand:ASSETS.guest_15_stand,
-    sit:ASSETS.guest_15_sit },
+    sit:ASSETS.guest_15_sit,
+    fav:'souffle',
+    intro:'어쩌다 한 번 찾아오는 햇살 같은 손님. 보는 것만으로 기분이 갠다.',
+    hello:['오늘은 좋은 하루가 될 거 같은 예감이야!','햇살을 맘껏 받은 거 같아!'],
+    favLine:['{m}, 엄청 푹신해! 구름을 먹는 기분이야!'],
+    friendLine:'너랑 친구가 되다니, 최고의 날이잖아!',
+    bestLine:'내 최고의 친구가 되어줘서 고마워!',
+    confess:'마음은 늘 여기 있었어.',
+    promise:'언제나 네 곁에 있고 싶어.' },
   { id:'guest_16', name:'시아', emoji:'👧',
     stand:ASSETS.guest_16_stand,
-    sit:ASSETS.guest_16_sit },
+    sit:ASSETS.guest_16_sit,
+    fav:'icecream',
+    intro:'모두가 정든 뒤에야 나타나는 손님. 어딘가 아련한 분위기.',
+    hello:['…언제나 여기에 오고 싶었어.','...또 먹고 싶어.'],
+    favLine:['{m}, 마음은 따뜻해지는 거 같아.'],
+    friendLine:'우리 이제 친구인 거야…? ….너무 좋아.',
+    bestLine:'지금까지 이렇게 친해진 친구는 없었어.. 기뻐.',
+    confess:'많은 곳을 지나왔지만… 여기에 멈추고 싶어졌어.',
+    promise:'이제 어디도 안 가. 이제 여기가 내가 머물 곳이야.' },
 ];
+// id로 캐릭터 정적 데이터 조회. fav·소개·대사를 꺼낼 단일 진입점.
+const GUESTS_BY_ID = Object.fromEntries(GUESTS.map(g=>[g.id, g]));
+function guestDef(id){ return GUESTS_BY_ID[id] || null; }
+function favOf(id){ const g=guestDef(id); return g ? g.fav : undefined; }
 const FURNITURE={
   table: [
     { kind:'wood', levels:[ ASSETS.furn_table ] },
@@ -2840,42 +3044,46 @@ function levelUpFriend(guestId){
   if(!friendReadyToLevel(f)) return null;
   f.exp -= expForLevel(f.level||0);
   f.level=(f.level||0)+1;
+  // 마일스톤 달성 day 기록 (추억 표기용). 한 번 찍히면 유지. 소급 X.
+  if(f.level===3 && !f.lv3day) f.lv3day=dayCount;
+  if(f.level===5 && !f.lv5day) f.lv5day=dayCount;
   saveGame();
-  return { newLevel:f.level, line:friendThankLine(f) };
+  return { newLevel:f.level, line:friendThankLine(f, guestId) };
 }
-// 레벨업 시 친구가 하는 한마디
+// 레벨업 시 친구가 하는 한마디 (캐릭터별 GUESTS 대사 우선, 없으면 공용 풀 폴백)
 const FRIEND_FAV_LINES=['{m} 정말 맛있어!','역시 여기 {m}가 최고야','{m} 먹으러 또 올게!','{m}, 오늘도 행복하다~'];
 const FRIEND_GEN_LINES=['친절하게 대해줘서 고마워!','여기 오면 마음이 포근해져','늘 반겨줘서 좋아','오늘도 잘 먹고 가요','다음에 또 들를게요!'];
-function friendThankLine(f){
+function friendThankLine(f, id){
+  const g = id ? guestDef(id) : null;
   const favName=(f.fav && DISH[f.fav])?DISH[f.fav].nm:null;
+  const favPool=(g && g.favLine && g.favLine.length)?g.favLine:FRIEND_FAV_LINES;
+  const genPool=(g && g.hello && g.hello.length)?g.hello:FRIEND_GEN_LINES;
   if(favName && Math.random()<0.55){
-    return FRIEND_FAV_LINES[Math.floor(Math.random()*FRIEND_FAV_LINES.length)].replace('{m}',favName);
+    return favPool[Math.floor(Math.random()*favPool.length)].replace('{m}',favName);
   }
-  return FRIEND_GEN_LINES[Math.floor(Math.random()*FRIEND_GEN_LINES.length)];
+  return genPool[Math.floor(Math.random()*genPool.length)];
 }
 // 기능 순차 해금: Day1 끝(정산 닫을 때 dayCount가 2가 됨)→상점, Day2 끝(→3)→친구명부. 저장됨.
 let featuresUnlocked={ shop:false, friends:false, unlock:false };
 // 기본 친구 5명(guest_1~5) — 첫날부터 카페 단골. 좋아하는 메뉴는 골고루.
 // (호감도 누적·친구 전환 로직은 다음 작업에서 연결)
-const DEFAULT_FRIENDS={
-  guest_1: { fav:'shortcake', level:0, exp:0 },
-  guest_2: { fav:'cupcake_c', level:0, exp:0 },
-  guest_3: { fav:'americano', level:0, exp:0 },
-  guest_4: { fav:'shortcake', level:0, exp:0 },
-  guest_5: { fav:'cupcake_c', level:0, exp:0 }
-};
+// 첫날 단골 guest_1~5. fav는 GUESTS(guestDef)에서 끌어옴 — 값 단일 출처(v30_002).
+const DEFAULT_FRIEND_IDS=['guest_1','guest_2','guest_3','guest_4','guest_5'];
+const DEFAULT_FRIENDS=Object.fromEntries(
+  DEFAULT_FRIEND_IDS.map(id=>[id, { fav:favOf(id), level:0, exp:0 }])
+);
 // 메뉴 해금 → 새 친구 등장 매핑. 해당 메뉴를 해금하면 그 친구가 명부에 추가됨("친구 100명" 루프의 시작).
-// 기본 친구는 guest_1~5, 해금으로 늘어나는 친구는 guest_6~ .
+// 기본 친구는 guest_1~5, 해금으로 늘어나는 친구는 guest_6~ . fav는 GUESTS에서 끌어옴(v30_002).
 const UNLOCK_FRIEND={
-  souffle:     { guest:'guest_6',  fav:'souffle'     },
-  straw_latte: { guest:'guest_7',  fav:'straw_latte' },
-  brownie:     { guest:'guest_8',  fav:'brownie'     },
-  icecream:    { guest:'guest_9',  fav:'icecream'    },
-  croissant:   { guest:'guest_10', fav:'croissant'   },
-  lemontea:    { guest:'guest_11', fav:'lemontea'    },
-  cherrypie:   { guest:'guest_12', fav:'cherrypie'   },
-  macaron:     { guest:'guest_13', fav:'macaron'     },
-  cat_cookie:  { guest:'guest_14', fav:'cat_cookie'  }
+  souffle:     { guest:'guest_6'  },
+  straw_latte: { guest:'guest_7'  },
+  brownie:     { guest:'guest_8'  },
+  icecream:    { guest:'guest_9'  },
+  croissant:   { guest:'guest_10' },
+  lemontea:    { guest:'guest_11' },
+  cherrypie:   { guest:'guest_12' },
+  macaron:     { guest:'guest_13' },
+  cat_cookie:  { guest:'guest_14' }
 };
 // 아직 친구 아님 → 도감에 ?(실루엣). "○○ 해금하면 만날 수 있어요"로 조건 표시.
 // 아직 해금 안 된 메뉴 중, 친구가 매핑돼 있고 그 친구가 아직 명부에 없는 항목.
@@ -4078,6 +4286,11 @@ function loadGame(){
           if(typeof f.rel==='number')  friends[id].rel=f.rel;
           if(typeof f.rexp==='number') friends[id].rexp=f.rexp;
           if(typeof f.bq==='number')   friends[id].bq=f.bq;
+          // 마일스톤 day 기록 복원 (추억 표기용). 구버전 세이브엔 없음 → 미기록(소급 X).
+          if(typeof f.lv3day==='number') friends[id].lv3day=f.lv3day;
+          if(typeof f.lv5day==='number') friends[id].lv5day=f.lv5day;
+          if(typeof f.r3day==='number')  friends[id].r3day=f.r3day;
+          if(typeof f.r5day==='number')  friends[id].r5day=f.r5day;
         }
       });
     }
@@ -5033,7 +5246,7 @@ function checkFeatureUnlocks(){
   let revealed=null;
   if(!featuresUnlocked.friends && dayCount>=1){
     featuresUnlocked.friends=true;
-    revealed={ msg:'✨ 친구 명부가 열렸어요!', el:document.getElementById('friendsBtn') };
+    revealed={ msg:'✨ 친구 리스트가 열렸어요!', el:document.getElementById('friendsBtn') };
   } else if(!featuresUnlocked.shop && dayCount>=2){
     featuresUnlocked.shop=true;
     featuresUnlocked.unlock=true;   // 상점과 함께 메뉴 해금도 열림
@@ -5497,7 +5710,7 @@ function unlockDish(dishId, btn){
   let newFriendId='';
   const fm=UNLOCK_FRIEND[dishId];
   if(fm && !friends[fm.guest]){
-    friends[fm.guest]={ fav:fm.fav, level:0, exp:0 };
+    friends[fm.guest]={ fav:favOf(fm.guest), level:0, exp:0 };
     newFriendId=fm.guest;
   }
   buildShelves();     // 선반/스테이션에 즉시 반영 (자물쇠 → 음식)
@@ -5828,7 +6041,7 @@ function showConfessEvent(friendId){
   const titleEl=document.getElementById('confessTitle');
   if(titleEl) titleEl.textContent = `${nm}의 고백`;
   const sayEl=document.getElementById('confessSay');
-  if(sayEl) sayEl.textContent = CONFESS_LINES[Math.floor(Math.random()*CONFESS_LINES.length)];
+  if(sayEl) sayEl.textContent = (g && g.confess) ? g.confess : CONFESS_LINES[Math.floor(Math.random()*CONFESS_LINES.length)];
   document.body.classList.add('shop-open');
   const ov=document.getElementById('confessOverlay');
   if(ov) ov.classList.remove('hidden');
@@ -5840,6 +6053,7 @@ function closeConfess(){
   if(id && friends[id] && relOf(friends[id])===2){
     friends[id].rel=3;          // 연인(R3) 진입
     friends[id].rexp=0;         // R3→R4 진행 새로 시작
+    if(!friends[id].r3day) friends[id].r3day=dayCount;   // 고백 day 기록 (추억 표기용)
     saveGame();
     const g=GUESTS.find(x=>x.id===id);
     const nm=(g&&g.name)||'친구';
@@ -5882,7 +6096,7 @@ function showPromiseEvent(friendId){
   const titleEl=document.getElementById('promiseTitle');
   if(titleEl) titleEl.textContent = `${nm}와(과)의 약속`;
   const sayEl=document.getElementById('promiseSay');
-  if(sayEl) sayEl.textContent = PROMISE_LINES[Math.floor(Math.random()*PROMISE_LINES.length)];
+  if(sayEl) sayEl.textContent = (g && g.promise) ? g.promise : PROMISE_LINES[Math.floor(Math.random()*PROMISE_LINES.length)];
   document.body.classList.add('shop-open');
   const ov=document.getElementById('promiseOverlay');
   if(ov) ov.classList.remove('hidden');
@@ -5896,6 +6110,7 @@ function closePromise(){
     friends[id].rel=5;          // 약속한 사이(R5) 진입
     friends[id].rexp=0;
     partnerId=id;               // R5 단일 슬롯 점유
+    if(!friends[id].r5day) friends[id].r5day=dayCount;   // 약속 day 기록 (추억 표기용)
     saveGame();
     const g=GUESTS.find(x=>x.id===id);
     const nm=(g&&g.name)||'친구';
@@ -5938,6 +6153,7 @@ function doBreakup(){
   const f=id && friends[id];
   if(f && relOf(f)>=1){
     f.rel=0; f.rexp=0; f.bq=0;        // 관계 처음(친구)으로 — 재구애 가능
+    f.r3day=0; f.r5day=0;             // 연인 day 기록도 초기화 (재구애 시 새로 기록). lv3day/lv5day는 유지.
     if(partnerId===id) partnerId=null; // R5였다면 단일 슬롯 해제
     saveGame();
     const g=GUESTS.find(x=>x.id===id);
@@ -6108,12 +6324,69 @@ function closeGiftIntro(){
   if(ov) ov.classList.add('hidden');
   document.body.classList.remove('shop-open');
 }
+// 친구 상세 페이지(3-b) — 명부 얼굴 탭 진입. guestDef(정적: 소개/이모지/일러스트) + friends[id](상태: 레벨/관계) 표시.
+// 새 저장 필드 없음(전부 기존 데이터 재활용). 추억(고백/약속) 섹션은 3-c에서 추가.
+function openFriendDetail(id){
+  const g=guestDef(id), f=friends[id];
+  if(!g || !f) return;
+  const portrait=document.getElementById('detailPortrait');
+  portrait.innerHTML = g.stand ? `<img src="${g.stand}" alt="">` : `<span>${g.emoji||'🙂'}</span>`;
+  document.getElementById('detailName').textContent = g.name||'';
+  const lv=f.level||0, rel=relOf(f);
+  const rankEl=document.getElementById('detailRank');
+  rankEl.textContent = rel>0 ? relTitle(rel) : friendTitle(lv);
+  rankEl.className = 'detail-rank' + (rel>0 ? ' relrank' : '');
+  document.getElementById('detailIntro').textContent = g.intro||'';
+  const d=DISH[f.fav];
+  document.getElementById('detailFav').innerHTML = d ? `<span class="fav-ico">${dishIcoInline(d)}</span> ${d.nm}` : '—';
+  document.getElementById('detailLv').textContent = 'Lv.'+lv;
+  // 관계 진행 줄 (rel>=1) — 명부 카드와 동일 규칙
+  let relRow='';
+  if(rel>=1 && rel<relMax()){
+    if(relAffinityStep(rel)){
+      const need=relExpNeed(rel), ex=f.rexp||0;
+      const pct=relReadyToAdvance(f)?100:Math.max(0,Math.min(100,Math.round(ex/need*100)));
+      relRow=`<div class="rel-row"><div class="rel-row-label">💞 ${relTitle(rel)} → ${relTitle(rel+1)}</div>`
+        +`<div class="rel-bar"><div class="rel-bar-fill" style="width:${pct}%"></div></div></div>`;
+    } else {
+      relRow=`<div class="rel-row"><div class="rel-row-label rel-wait">💞 특별한 계기를 기다리는 중…</div></div>`;
+    }
+  } else if(rel>=relMax()){
+    relRow=`<div class="rel-row"><div class="rel-row-label rel-max">💞 ${relTitle(rel)}</div></div>`;
+  }
+  document.getElementById('detailRelRow').innerHTML = relRow;
+  // 추억(친구/베프/고백/약속) — Lv3(첫 친구 마일스톤)부터 노출. 해금은 level/rel 값만으로(새 저장필드 없음).
+  // 친구=Lv3, 베프=Lv5, 고백=rel3, 약속=rel5. 고백/약속 슬롯은 연인 트랙(rel>=1) 진입 시에만 표시(스포일러 방지).
+  let memHtml='';
+  if(lv>=3 || rel>=1){
+    const memItem=(unlocked,icon,label,line,day)=> unlocked
+      ? `<div class="mem-item"><div class="mem-key">${icon} ${label}${day?` <span class="mem-day">Day ${day}</span>`:''}</div><div class="mem-line">“${line}”</div></div>`
+      : `<div class="mem-item locked"><div class="mem-key">🔒 ${label}</div><div class="mem-line dim">아직 잠겨 있어요</div></div>`;
+    let items='';
+    items += memItem(lv>=3,'🌱','친구',g.friendLine||'', f.lv3day);
+    items += memItem(lv>=5,'🤝','베스트 프렌드',g.bestLine||'', f.lv5day);
+    if(rel>=1){
+      items += memItem(rel>=3,'💌','고백',g.confess||'', f.r3day);
+      items += memItem(rel>=5,'💍','약속',g.promise||'', f.r5day);
+    }
+    memHtml=`<div class="detail-memory"><div class="mem-title">📖 추억</div>`+items+`</div>`;
+  }
+  document.getElementById('detailMemory').innerHTML = memHtml;
+  document.getElementById('friendDetailOverlay').classList.remove('hidden');
+  document.body.classList.add('shop-open');
+}
+function closeFriendDetail(){
+  document.getElementById('friendDetailOverlay').classList.add('hidden');
+  // 명부가 여전히 열려 있으면 shop-open 유지
+  const fo=document.getElementById('friendsOverlay');
+  if(!fo || fo.classList.contains('hidden')) document.body.classList.remove('shop-open');
+}
 function friendCardHTML(id){
   const f=friends[id]||{};
   const g=GUESTS.find(x=>x.id===id);
   const face = g && g.stand
-    ? `<img class="friend-face" src="${g.stand}" alt="">`
-    : `<div class="friend-face">${(g&&g.emoji)||'🙂'}</div>`;
+    ? `<img class="friend-face" data-detail="${id}" src="${g.stand}" alt="">`
+    : `<div class="friend-face" data-detail="${id}">${(g&&g.emoji)||'🙂'}</div>`;
   const d=DISH[f.fav];
   const fav = d
     ? `<div class="friend-fav"><span class="fav-ico">${dishIcoInline(d)}</span> ${d.nm} 좋아함</div>`
@@ -6229,7 +6502,7 @@ function endingProgressHTML(){
     </div>`;
   }
   return `<div class="ending-progress">
-    <div class="ep-label">아주 친한 친구 <b>${done}</b> / ${total} · 모두와 친해지면 특별한 이야기가 기다려요</div>
+    <div class="ep-label">아주 친한 친구 <b>${done}</b> / ${total} · 모두와 아주 친한 친구가 되어볼까요?</div>
     <div class="ep-bar"><div class="ep-fill" style="width:${pct}%"></div></div>
   </div>`;
 }
@@ -6261,7 +6534,7 @@ function renderFriends(){
       <div class="friend-lv mystery-lv">❔ Lv.?</div>
     </div>`;
   }).join('');
-  body.innerHTML = `${endingProgressHTML()}<div class="friends-hint">💗 좋아하는 메뉴를 대접하면 더 빨리 친해져요</div><div class="friends-grid">${friendCards}${mysteryCards}${specialMysteryCards()}</div>`;
+  body.innerHTML = `${endingProgressHTML()}<div class="friends-hint">💗 좋아하는 메뉴를 대접하면 더 빨리 친해져요</div><div class="friends-hint">👆 얼굴을 누르면 캐릭터 상세를 볼 수 있어요</div><div class="friends-grid">${friendCards}${mysteryCards}${specialMysteryCards()}</div>`;
   // 레벨업 버튼 클릭 → 풀스크린 레벨업 연출
   body.querySelectorAll('.friend-levelup-btn').forEach(btn=>{
     btn.onclick=(e)=>{ e.stopPropagation(); doLevelUp(btn.getAttribute('data-levelup')); };
@@ -6273,6 +6546,10 @@ function renderFriends(){
   // 관계 진전 버튼 클릭 → 다음 단계로
   body.querySelectorAll('.rel-adv-btn[data-reladv]').forEach(btn=>{
     btn.onclick=(e)=>{ e.stopPropagation(); advanceRelationship(btn.getAttribute('data-reladv')); };
+  });
+  // 얼굴 탭 → 상세 페이지 진입 (버튼들과 분리)
+  body.querySelectorAll('.friend-face[data-detail]').forEach(el=>{
+    el.onclick=(e)=>{ e.stopPropagation(); openFriendDetail(el.getAttribute('data-detail')); };
   });
   // 스크롤 힌트 갱신 (렌더 직후 + 스크롤 중). 한 번만 리스너 부착.
   if(!body._scrollHintBound){
@@ -6385,9 +6662,9 @@ function showNewFriendPopup(id){
 // === 특별 손님(guest_15/16): 메뉴 해금이 아닌 별도 조건으로 등장 ===
 const ALL_MENU_IDS=['shortcake','cupcake_c','souffle','brownie','croissant','cherrypie','americano','straw_latte','lemontea','macaron','icecream','cat_cookie'];
 // 친구 한 명을 명부에 등장시키고(대사 토스트→카드 팝업) 저장.
-function meetSpecialGuest(id, fav, msg){
+function meetSpecialGuest(id, msg){
   if(friends[id]) return;
-  friends[id]={ fav, level:0, exp:0 };
+  friends[id]={ fav:favOf(id), level:0, exp:0 };
   saveGame();
   if(msg) toast(msg);
   showNewFriendPopup(id);
@@ -6400,7 +6677,7 @@ function checkSpecialGuests(){
   if(allUnlocked && !allMenuDay){ allMenuDay=dayCount; saveGame(); }
   // guest_15: 메뉴 전부 해금 + 그 상태로 하루 경과(= 기록된 날보다 뒤 일차) → 마감 후 등장
   if(allUnlocked && !friends.guest_15 && allMenuDay && dayCount>allMenuDay){
-    meetSpecialGuest('guest_15','souffle','여기 메뉴 다양하다며? 소문 듣고 왔어!');
+    meetSpecialGuest('guest_15','여기 메뉴 다양하다며? 소문 듣고 왔어!');
   }
 }
 // guest_16(시아) 등장 판정 전용. 레벨업 직후 호출 → 조건 충족 시 바로 등장.
@@ -6408,7 +6685,7 @@ function checkSpecialGuests(){
 function checkGuest16(){
   if(!friends.guest_15 || friends.guest_16) return false;
   for(let i=1;i<=15;i++){ const f=friends['guest_'+i]; if(!f || (f.level||0)<3) return false; }
-  meetSpecialGuest('guest_16','icecream','다들 당신과 친구래요. 저도 그 사이에 끼어도 될까요?');
+  meetSpecialGuest('guest_16','다들 당신과 친구래요. 저도 그 사이에 끼어도 될까요?');
   return true;
 }
 function closeNewFriendPopup(){
@@ -6433,6 +6710,9 @@ document.getElementById('giftIntroPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('confessOk').onclick=(e)=>{ e.stopPropagation(); closeConfess(); };
 document.getElementById('confessOverlay').onclick=()=>{ closeConfess(); };
 document.getElementById('confessPanel').onclick=(e)=>{ e.stopPropagation(); };
+document.getElementById('detailClose').onclick=(e)=>{ e.stopPropagation(); closeFriendDetail(); };
+document.getElementById('friendDetailOverlay').onclick=()=>{ closeFriendDetail(); };
+document.getElementById('detailPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('promiseOk').onclick=(e)=>{ e.stopPropagation(); closePromise(); };
 document.getElementById('promiseOverlay').onclick=()=>{ closePromise(); };
 document.getElementById('promisePanel').onclick=(e)=>{ e.stopPropagation(); };
