@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v30_002</title>
+<title>포근한 디저트 가게 — v31_001</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1160,6 +1160,27 @@
   .mem-line{ font-size:1.6cqw; font-weight:600; color:var(--ink); line-height:1.5; }
   .mem-line.dim{ color:#b3a594; }
   .mem-day{ font-size:1.2cqw; font-weight:700; color:#B97A92; background:#fff; border:0.12cqw solid #F0CFDD; border-radius:0.8cqw; padding:0.1cqw 0.6cqw; margin-left:0.4cqw; }
+  /* 홈 초대 버튼 (Phase 3) */
+  /* 홈 초대 친구 좌석 = occupant-seat 시각 재사용 + 탭 가능 (occupant 데이터/상태머신과 무관, 순수 장식) */
+  .occupant-seat.home-seat{ cursor:pointer; }
+  /* 까닥임: 엉덩이(바닥 중심) 축 좌우 회전 흔들 — 위아래 이동 없음 */
+  .occupant-seat.home-seat .who.home-bob{
+    animation:homeBob var(--bob-dur,1.6s) ease-in-out infinite;
+    transform-origin:bottom center;
+  }
+  @keyframes homeBob{ 0%,100%{ transform:rotate(-2.6deg); } 50%{ transform:rotate(2.6deg); } }
+  /* 홈 말풍선 (Phase 3-C) — 클릭 시 보너스 호감도 */
+  .home-bubble{
+    position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+    background:rgba(255,255,255,.94); border:0.2cqw solid var(--floor-line); border-radius:1.1cqw;
+    padding:0.35cqw 0.8cqw; margin-bottom:0.5cqw; box-shadow:0 0.2cqw 0.5cqw rgba(0,0,0,.1);
+    font-size:2.2cqw; font-weight:800; color:var(--accent-deep); line-height:1;
+    white-space:nowrap; cursor:pointer; pointer-events:auto; z-index:25;
+    animation:homeBubblePop .22s ease;
+  }
+  .home-bubble.text{ font-size:1.4cqw; max-width:16cqw; white-space:normal; text-align:center; line-height:1.35; }
+  .home-bubble img{ width:2.2cqw; height:2.2cqw; object-fit:contain; vertical-align:middle; display:inline-block; }
+  @keyframes homeBubblePop{ from{ transform:translateX(-50%) scale(.5); opacity:0; } to{ transform:translateX(-50%) scale(1); opacity:1; } }
   /* 명부 카드 얼굴 = 상세 진입 (탭 가능 표시) */
   .friend-card:not(.mystery) .friend-face{ cursor:pointer; }
   /* 💌 고백 이벤트 컷 (풀스크린) */
@@ -1326,6 +1347,23 @@
   .friend-gift-btn.poor{
     background:#EDE3D6; color:#b9866a; box-shadow:none; cursor:not-allowed;
     border-color:#e0cdbb; opacity:.85; font-size:1.25cqw;
+  }
+  /* 카페 초대 토글 버튼 (친구 카드, Phase 3) — off/on/가득 */
+  .friend-invite-btn{
+    margin-top:0.35cqw; cursor:pointer;
+    background:linear-gradient(#F3DAC0,#E4BE96); color:#6b4423;
+    border:0.22cqw solid #fff; border-radius:1.2cqw;
+    font-size:1.4cqw; font-weight:900; padding:0.55cqw 1cqw;
+    box-shadow:0 0.4cqw 0 #c19a6b;
+  }
+  .friend-invite-btn:active{ transform:translateY(0.2cqw); box-shadow:0 0.15cqw 0 #c19a6b; }
+  .friend-invite-btn.on{
+    background:linear-gradient(#B98A5E,#9C6E44); color:#fff; border-color:#e8d5c0;
+    box-shadow:0 0.4cqw 0 #7a5433;
+  }
+  .friend-invite-btn.full{
+    background:#E6DDCE; color:#9a8a73; box-shadow:none; cursor:default;
+    border-color:#d8ccb8; font-size:1.25cqw;
   }
   /* 선물 음식 선택 팝업 */
   .gift-panel{
@@ -2955,11 +2993,43 @@ function relOf(f){ return (f && f.rel) || 0; }
 const BOUQUET_NEED=3;     // 꽃다발 N회 → 특별한 사이 진입 (하루 1회 선물 제한 → 최소 N일)
 const BOUQUET_COST=100;   // 꽃다발 1송이 비용
 let partnerId=null;       // R5 단 1명(독점) — Phase 2에서 사용. 기본 null. 영구 저장
+// ── Phase 3: 홈 초대 방치형 ── 홈에 초대한 친구 id 배열. home 단계에서 테이블에 앉음. 영구 저장.
+let invited=[];           // 초대한 친구 id 목록 (최대 homeInviteCap())
+// 초대석 캡. 지금은 4 고정. 나중에 "조건 충족 시 +1" 확장은 이 함수 내부만 교체하면 됨(참조처 전부 이 함수만 봄).
+function homeInviteCap(){ return 4; }
+function isInvited(id){ return invited.includes(id); }
+function canInviteMore(){ return invited.length < homeInviteCap(); }
+function inviteFriend(id){
+  if(!friends[id]) return false;        // 아직 안 만난 친구는 초대 불가
+  if(isInvited(id)) return true;        // 이미 초대됨
+  if(!canInviteMore()) return false;    // 칸 참
+  invited.push(id);
+  saveGame();
+  return true;
+}
+function uninviteFriend(id){
+  const i=invited.indexOf(id);
+  if(i<0) return false;
+  invited.splice(i,1);
+  saveGame();
+  return true;
+}
 // ── 관계 진행(R1→R2, R3→R4 = 호감도/선물) ── friends[id].rexp 누적 → 임계 도달 시 수동 진전.
 // R2→R3(고백)·R4→R5(반지)는 아이템 게이트(Phase 2) → 호감도로는 진전 안 됨(여기서 멈춤).
 const REL_EXP_NEED=150;        // 한 단계 진전에 필요한 관계 호감도
 const REL_SERVE_EXP=12;        // 영업 서빙(만족) 시 관계 호감도 — 주(主) 소스
 const REL_SERVE_FAV_BONUS=6;   // 좋아하는 메뉴 대접 보너스
+// ── Phase 3-C: 홈 말풍선 클릭 보너스 ── 서빙(주 소스)보다 작게. 트리클(자동 증가) 없음 — 반드시 클릭해야 함.
+const HOME_TAP_EXP=4;          // 홈 말풍선 클릭 시 친구 호감도 (서빙 10~15보다 작게)
+const HOME_TAP_REL_EXP=6;      // 연인 루트 rexp 보너스 (서빙 12~18보다 작게)
+function homeTapReward(guestId){
+  const f=friends[guestId]; if(!f) return null;
+  f.exp=(f.exp||0)+HOME_TAP_EXP;
+  if(relOf(f)>=1) addRelExp(guestId, HOME_TAP_REL_EXP);   // addRelExp가 트랙/게이트 가드 처리
+  saveGame();
+  refreshFriendBadges();   // 레벨업 대기 뱃지 갱신
+  return HOME_TAP_EXP;
+}
 const REL_GIFT_EXP=20;         // 일반 선물(음식) 시 관계 호감도 — 보조
 function relMax(){ return REL_TITLES.length-1; }   // 5
 function relExpNeed(rel){ return REL_EXP_NEED; }   // 지금은 평탄(밸런싱은 플레이 보고 조정)
@@ -3405,6 +3475,70 @@ function buildTables(){
     });
     tables.push({idx:i, x:t.x, y:t.y, col:tc.col, row:tc.row, occupant:null, reserved:false, seatSide:'left', el, chairs:chairEls});
   });
+}
+
+// ====== 홈 초대 친구 렌더 (Phase 3) ======
+// 초대된 친구를 home 단계에서 테이블 의자에 앉혀 보여줌. 영업 손님(tables[].occupant + c.state)과
+// 완전히 분리된 순수 장식 요소 — SEATED 상태 머신을 전혀 건드리지 않는다. homeGuestEls로만 관리.
+const HOME_SEAT_TABLES=[0,1,2,3];   // 2인석 4개(1~4번)를 초대석으로 재사용
+let homeGuestEls=[];
+// 말풍선 사이클: 대기 8~12초 → 표시 4초(클릭 시 보너스, 안 누르면 사라짐) → 다시 대기. 세이브 안 함(휘발성).
+const HOME_BUBBLE_WAIT_MIN=8000, HOME_BUBBLE_WAIT_RAND=4000;
+const HOME_BUBBLE_SHOW=4000;
+function clearHomeGuests(){
+  homeGuestEls.forEach(el=>{
+    if(el){ clearTimeout(el._waitTimer); clearTimeout(el._hideTimer); if(el.parentNode) el.remove(); }
+  });
+  homeGuestEls=[];
+}
+function renderHomeGuests(){
+  clearHomeGuests();
+  if(phase!=='home') return;   // 홈에서만 표시
+  invited.forEach((id, i)=>{
+    if(i>=HOME_SEAT_TABLES.length) return;
+    const g=guestDef(id); if(!g) return;
+    const t=tables[HOME_SEAT_TABLES[i]]; if(!t) return;
+    const chair = t.chairs ? (t.chairs.find(ch=>ch.side==='left')||t.chairs[0]) : null;
+    const host = chair ? chair.el : t.el;
+    const seat=document.createElement('div');
+    seat.className='occupant-seat home-seat left';
+    // 까닥임: 엉덩이(바닥) 축 좌우 흔들. 주기·시작 랜덤 → 4명 제각각. (위아래 부유 X)
+    const dur=(2.0+Math.random()*0.8).toFixed(2), delay=(-Math.random()*2).toFixed(2);
+    seat.innerHTML=`<div class="who home-bob" style="animation-duration:${dur}s;animation-delay:${delay}s;">${guestImg(g,'sit')}</div>`;
+    applySeatPos(seat, 'left');
+    seat._guestId=id; seat._tx=t.x; seat._ty=t.y;   // 보상 좌표/대상
+    seat.onclick=(e)=>{ e.stopPropagation(); openFriendDetail(id); };   // 탭 → 상세
+    host.appendChild(seat);
+    homeGuestEls.push(seat);
+    scheduleHomeBubble(seat);   // 말풍선 사이클 시작
+  });
+}
+// 다음 말풍선 예약 (대기 후 표시)
+function scheduleHomeBubble(seat){
+  seat._waitTimer=setTimeout(()=>{ if(seat.isConnected) showHomeBubble(seat); },
+                             HOME_BUBBLE_WAIT_MIN + Math.random()*HOME_BUBBLE_WAIT_RAND);
+}
+// 말풍선 표시: 대사(homeLine 있으면 가끔) 또는 아이콘(··· / 하트). 클릭 시 보너스, 미클릭 시 자동 소멸.
+function showHomeBubble(seat){
+  const id=seat._guestId, g=guestDef(id);
+  const lines=(g && Array.isArray(g.homeLine)) ? g.homeLine : null;   // homeLine=작가가 나중에 채울 옵셔널 필드
+  const b=document.createElement('div');
+  if(lines && lines.length && Math.random()<0.5){
+    b.className='home-bubble text'; b.textContent=lines[Math.floor(Math.random()*lines.length)];
+  } else {
+    b.className='home-bubble'; b.innerHTML = Math.random()<0.5 ? '···' : `<img src="${DECO_HEART}" alt="">`;
+  }
+  b.onclick=(e)=>{
+    e.stopPropagation();
+    const gained=homeTapReward(id);
+    if(gained!=null) floatText(seat._tx, seat._ty-0.06, `+${gained} 💗`);
+    clearTimeout(seat._hideTimer);
+    if(b.parentNode) b.remove();
+    scheduleHomeBubble(seat);
+  };
+  seat.appendChild(b);
+  seat._bubbleEl=b;
+  seat._hideTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); scheduleHomeBubble(seat); }, HOME_BUBBLE_SHOW);
 }
 
 // ====== HUD ======
@@ -4129,8 +4263,8 @@ function serveBurst(t){
 
 // 손님 좌석 DOM 제거 (의자·테이블 어디 붙었든)
 function removeOccupantSeat(t){
-  if(t.chairs) t.chairs.forEach(ch=>{ const o=ch.el.querySelector('.occupant-seat'); if(o) o.remove(); });
-  const ot=t.el.querySelector('.occupant-seat'); if(ot) ot.remove();
+  if(t.chairs) t.chairs.forEach(ch=>{ const o=ch.el.querySelector('.occupant-seat:not(.home-seat)'); if(o) o.remove(); });
+  const ot=t.el.querySelector('.occupant-seat:not(.home-seat)'); if(ot) ot.remove();
 }
 
 // 손님 좌석 위치를 의자 기준 SEAT_OFFSET대로 적용 (실제·미리보기 공통)
@@ -4213,7 +4347,7 @@ function updateSeat(t){
 const SAVE_KEY='cozyCafeSave_v2';
 function saveGame(){
   try{
-    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, giftToday, giftIntroShown, tutorialDone, partnerId };
+    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, giftToday, giftIntroShown, tutorialDone, partnerId, invited };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   }catch(e){ /* 아티팩트 미리보기 등에서 localStorage 차단될 수 있음 — 무시 */ }
 }
@@ -4301,6 +4435,13 @@ function loadGame(){
     if(typeof data.partnerId==='string') partnerId=data.partnerId; else partnerId=null;
     // 무결성: partnerId가 실제 R5(약속한 사이) 친구를 안 가리키면 스테일 → 해제
     if(partnerId && !(friends[partnerId] && relOf(friends[partnerId])===5)) partnerId=null;
+    // 홈 초대 목록 복원 — friends 복원 이후여야 필터가 동작. 실존·이미 아는 친구만, 캡까지. 구버전 세이브엔 없음 → 빈 배열.
+    if(Array.isArray(data.invited)){
+      const seen={};
+      invited = data.invited
+        .filter(id => friends[id] && !seen[id] && (seen[id]=true))   // 실존·중복 제거
+        .slice(0, homeInviteCap());                                  // 초대석 캡
+    }
     if(data.featuresUnlocked && typeof data.featuresUnlocked==='object'){
       featuresUnlocked.shop    = !!data.featuresUnlocked.shop;
       featuresUnlocked.friends = !!data.featuresUnlocked.friends;
@@ -4872,6 +5013,7 @@ function openDay(){
   if(pendingNextDay){ dayCount++; pendingNextDay=false; updateDayBadge(); saveGame(); }
   // (특별 손님 등장은 시작 시점이 아니라 마감 후/레벨업 후로 이동 — 영업 흐름 유지)
   clearDayState();
+  clearHomeGuests();   // 영업 시작 → 홈 초대 친구 좌석 정리 (Phase 3)
   phase='briefing';            // 영업 카드 표시 중 — 타이머/손님 행동 정지
   paused=false;
   document.getElementById('pauseBanner').classList.add('hidden');
@@ -5267,6 +5409,7 @@ function dismissResult(){
   hero.busy=false; hero.moving=false; hero.path=null; pendingAction=null; wandering=false;
   idleWanderAt=0;   // 진입 텀 후 배회 시작
   showSeatHints(false);   // 영업 중 켜둔 착석 힌트(노란 테두리/화살표) 제거 — 홈 화면에 남던 버그 수정
+  renderHomeGuests();   // 홈 복귀 → 초대 친구 다시 착석 (Phase 3)
   // 날짜 넘김은 OPEN 누를 때(openDay)로 이동. 여기선 방금 끝낸 일차 기준으로 해금만 판단.
   pendingNextDay=true;   // 다음 OPEN에서 날짜 +1
   dailyBought={ unlock:false, stock:false, price:false, heroSpeed:false, cleanSpeed:false, ovenSpeed:false, spawnSpeed:false, queuePatience:false };   // 새 날 준비 → 업그레이드 다시 열림
@@ -6442,6 +6585,16 @@ function friendCardHTML(id){
       giftBtn = `<button class="friend-gift-btn" data-gift="${id}">🎁 선물 (🪙${cost})</button>`;
     }
   }
+  // 카페 초대 토글 버튼 (Phase 3): 모든 친구 카드에 항상. 선물 해금과 무관.
+  // off→"카페에 초대" / on→"초대중"(다시 누르면 해제) / 미초대인데 칸 참→비활성.
+  let inviteBtn='';
+  if(isInvited(id)){
+    inviteBtn = `<button class="friend-invite-btn on" data-invite="${id}">☕ 초대중</button>`;
+  } else if(canInviteMore()){
+    inviteBtn = `<button class="friend-invite-btn" data-invite="${id}">☕ 카페에 초대</button>`;
+  } else {
+    inviteBtn = `<button class="friend-invite-btn full" disabled>초대석 가득</button>`;
+  }
   return `<div class="friend-card${ready?' ready':''}">
     ${bang}${face}${nm}${fav}
     <div class="friend-title${titleCls}">${titleTxt}</div>
@@ -6452,6 +6605,7 @@ function friendCardHTML(id){
     ${relAdvBtn}
     ${bottom}
     ${giftBtn}
+    ${inviteBtn}
   </div>`;
 }
 // 특별손님(guest_15 하루 / guest_16 시아) 잠긴 카드.
@@ -6534,7 +6688,7 @@ function renderFriends(){
       <div class="friend-lv mystery-lv">❔ Lv.?</div>
     </div>`;
   }).join('');
-  body.innerHTML = `${endingProgressHTML()}<div class="friends-hint">💗 좋아하는 메뉴를 대접하면 더 빨리 친해져요</div><div class="friends-hint">👆 얼굴을 누르면 캐릭터 상세를 볼 수 있어요</div><div class="friends-grid">${friendCards}${mysteryCards}${specialMysteryCards()}</div>`;
+  body.innerHTML = `${endingProgressHTML()}<div class="friends-hint">💗 좋아하는 메뉴를 대접하면 더 빨리 친해져요</div><div class="friends-hint">🖼️ 얼굴 이미지를 누르면 상세 페이지가 팝업돼요</div><div class="friends-grid">${friendCards}${mysteryCards}${specialMysteryCards()}</div>`;
   // 레벨업 버튼 클릭 → 풀스크린 레벨업 연출
   body.querySelectorAll('.friend-levelup-btn').forEach(btn=>{
     btn.onclick=(e)=>{ e.stopPropagation(); doLevelUp(btn.getAttribute('data-levelup')); };
@@ -6546,6 +6700,16 @@ function renderFriends(){
   // 관계 진전 버튼 클릭 → 다음 단계로
   body.querySelectorAll('.rel-adv-btn[data-reladv]').forEach(btn=>{
     btn.onclick=(e)=>{ e.stopPropagation(); advanceRelationship(btn.getAttribute('data-reladv')); };
+  });
+  // 카페 초대 토글 버튼 (Phase 3) — 초대/해제 후 리스트 재렌더 + 홈이면 화면 반영
+  body.querySelectorAll('.friend-invite-btn[data-invite]').forEach(btn=>{
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const id=btn.getAttribute('data-invite');
+      if(isInvited(id)) uninviteFriend(id); else inviteFriend(id);
+      renderFriends();                          // 버튼 상태 + 다른 카드 '가득' 상태 갱신
+      if(phase==='home') renderHomeGuests();    // 홈 화면 즉시 반영
+    };
   });
   // 얼굴 탭 → 상세 페이지 진입 (버튼들과 분리)
   body.querySelectorAll('.friend-face[data-detail]').forEach(el=>{
@@ -6867,6 +7031,7 @@ renderTrayHud();
 updateWalletHud();   // 소지금 HUD 초기 표시
 setServedVisible(false);   // 초기 '영업 준비' 상태 — 서빙 카운터 숨김
 refreshHomeSigns();   // 홈 상태: 해금된 간판만 표시 (상점/친구는 일차 진행으로 열림)
+renderHomeGuests();   // 홈 초대 친구 착석 표시 (Phase 3)
 refreshFriendBadges();   // 레벨업 대기 친구 있으면 명부 간판에 ! 표시
 heroEl.style.left='50%'; heroEl.style.top='74%';
 requestAnimationFrame(tick);
