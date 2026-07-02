@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v31_001</title>
+<title>포근한 디저트 가게 — v32_011</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -635,6 +635,22 @@
     0%,100%{ transform:scale(var(--staff-scale)) rotate(-5deg); }
     50%    { transform:scale(var(--staff-scale)) rotate(5deg); }
   }
+  /* 걷는 중: 위아래로 통통 (손님 walkBob과 동일 감각. 홈에서만 토글) */
+  #hero.walking .body{ animation:heroWalkBob .5s ease-in-out infinite; }
+  @keyframes heroWalkBob{
+    0%,100%{ transform:scale(var(--staff-scale)) translateY(0); }
+    50%    { transform:scale(var(--staff-scale)) translateY(-0.5cqw); }
+  }
+  /* 점원 혼잣말 말풍선(플레이버, 클릭 X) */
+  #hero .hero-bubble{
+    position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+    background:rgba(255,255,255,.94); border:0.2cqw solid var(--floor-line); border-radius:1.1cqw;
+    padding:0.35cqw 0.8cqw; margin-bottom:0.4cqw; box-shadow:0 0.2cqw 0.5cqw rgba(0,0,0,.1);
+    font-size:1.4cqw; font-weight:800; color:var(--accent-deep); line-height:1.2;
+    white-space:nowrap; width:max-content; max-width:22cqw; pointer-events:none; z-index:30;
+    animation:heroBubblePop .22s ease;
+  }
+  @keyframes heroBubblePop{ from{ transform:translateX(-50%) scale(.6); opacity:0; } to{ transform:translateX(-50%) scale(1); opacity:1; } }
   #hero .body .staff-img{
     width:100%; height:100%; object-fit:contain; object-position:bottom;
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
@@ -1171,16 +1187,16 @@
   @keyframes homeBob{ 0%,100%{ transform:rotate(-2.6deg); } 50%{ transform:rotate(2.6deg); } }
   /* 홈 말풍선 (Phase 3-C) — 클릭 시 보너스 호감도 */
   .home-bubble{
-    position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
+    position:absolute; left:72%; bottom:68%; transform:translateX(-10%);
     background:rgba(255,255,255,.94); border:0.2cqw solid var(--floor-line); border-radius:1.1cqw;
     padding:0.35cqw 0.8cqw; margin-bottom:0.5cqw; box-shadow:0 0.2cqw 0.5cqw rgba(0,0,0,.1);
     font-size:2.2cqw; font-weight:800; color:var(--accent-deep); line-height:1;
     white-space:nowrap; cursor:pointer; pointer-events:auto; z-index:25;
     animation:homeBubblePop .22s ease;
   }
-  .home-bubble.text{ font-size:1.4cqw; max-width:16cqw; white-space:normal; text-align:center; line-height:1.35; }
+  .home-bubble.text{ font-size:1.4cqw; width:max-content; max-width:16cqw; white-space:normal; text-align:center; line-height:1.35; }
   .home-bubble img{ width:2.2cqw; height:2.2cqw; object-fit:contain; vertical-align:middle; display:inline-block; }
-  @keyframes homeBubblePop{ from{ transform:translateX(-50%) scale(.5); opacity:0; } to{ transform:translateX(-50%) scale(1); opacity:1; } }
+  @keyframes homeBubblePop{ from{ transform:translateX(-10%) scale(.5); opacity:0; } to{ transform:translateX(-10%) scale(1); opacity:1; } }
   /* 명부 카드 얼굴 = 상세 진입 (탭 가능 표시) */
   .friend-card:not(.mystery) .friend-face{ cursor:pointer; }
   /* 💌 고백 이벤트 컷 (풀스크린) */
@@ -2947,7 +2963,9 @@ function queuePatCost(lv){ return Math.floor(QUEUE_PAT_COST_BASE * Math.pow(QUEU
 function spawnSlotShowsSpawn(){ return (dayCount % 2) === 0; }
 let hero={x:0.5, y:0.74, tx:0.5, ty:0.74, moving:false, busy:false, speed:HERO_BASE_SPEED, path:null};
 // ====== 아웃게임(home) 유휴 배회 ======
-const WANDER_SPEED=HERO_BASE_SPEED*0.5;   // 평소의 50% — 아주 느긋
+const WANDER_SPEED=HERO_BASE_SPEED*0.22;   // 아웃게임 배회 — 클릭 이동과 동일한 느긋한 힐링 속도
+const HOME_MOVE_SPEED=HERO_BASE_SPEED*0.22; // 홈 클릭 이동 — 아주 느긋한 힐링 속도
+let homeStroll=false;                       // 홈 클릭 이동(느린 속도) 진행 중 여부
 let idleWanderAt=0;                        // 다음 배회 시작 시각(gameNow 기준). 0=미예약
 let wandering=false;                       // 현재 배회 이동 중 여부
 // 홀(평소 정지 가능 영역)에서 현재 위치와 너무 가깝지 않은 임의의 빈 칸 중심 좌표 반환
@@ -2960,6 +2978,83 @@ function pickWanderCell(){
   let pool=cells.filter(p=>Math.hypot(p.x-hero.x,p.y-hero.y)>0.12);  // 제자리 반복 방지
   if(!pool.length) pool=cells;
   return pool[Math.floor(Math.random()*pool.length)];
+}
+// ▼ 점원 혼잣말 대사 — 작가(신민) 영역: 자유롭게 수정/추가. 보상 없는 순수 연출(클릭 X).
+const HERO_MONO=['오늘도 좋은 하루~','커피 향이 좋네…','다음 손님은 누굴까?','디저트 준비 완료!','창밖 날씨가 포근해','조금 쉬었다 할까'];
+// ▼ 닦기 완료 후 대사 — 작가(신민) 영역: 자유롭게 수정/추가.
+const HERO_WIPE_DONE=['우와! 얼룩이 지워졌어!','깨끗해졌어!','반짝반짝~','이제 새것 같네!'];
+// ▼ 재고 체크 대사 — 작가(신민) 영역: 자유롭게 수정/추가.
+const HERO_STOCK=['재고 확인~','재료는 넉넉하네','이건 좀 채워둘까?','오늘 뭐가 잘 나갈까?'];
+// 점원 머리 위 말풍선(플레이버). 자동 소멸.
+function showHeroBubble(text, dur){
+  clearTimeout(heroEl._bubbleTimer);
+  const old=heroEl.querySelector('.hero-bubble'); if(old) old.remove();
+  const b=document.createElement('div'); b.className='hero-bubble'; b.textContent=text;
+  heroEl.appendChild(b);
+  heroEl._bubbleTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); }, dur||2500);
+}
+// 유휴 배회(통로 경유)
+function startWander(){
+  const dest=pickWanderCell();
+  if(!dest){ idleWanderAt=gameNow+1500; return; }
+  wandering=true; hero.speed=WANDER_SPEED;
+  moveAlong(aislePath(dest.x, dest.y), ()=>{
+    hero.speed=HERO_BASE_SPEED; wandering=false;
+    idleWanderAt=gameNow+2500+Math.random()*3500;   // 2.5~6초 쉬었다 다음
+  });
+}
+// 제자리 혼잣말
+function heroMonologue(){
+  showHeroBubble(HERO_MONO[Math.floor(Math.random()*HERO_MONO.length)], 2600);
+  idleWanderAt=gameNow+3500+Math.random()*3000;      // 혼잣말 후 텀
+}
+// 랜덤 테이블 닦기 (홈 전용 연출 — 초대석 0~3 제외, 손님 없는 5·6번만. wiping 포즈+거품)
+function heroWipeTable(){
+  const list=tables.filter(t=>t && t.col!=null && t.row!=null && !HOME_SEAT_TABLES.includes(t.idx));
+  if(!list.length){ startWander(); return; }
+  const t=list[Math.floor(Math.random()*list.length)];
+  const stand=nearestStand(t.col, t.row-1);          // 테이블 위쪽 칸(닦는 동작 잘 보이게)
+  wandering=true; hero.speed=WANDER_SPEED;
+  moveAlong(aislePath(stand.x, stand.y), ()=>{
+    hero.speed=HERO_BASE_SPEED; wandering=false;
+    hero.busy=true; heroEl.classList.add('wiping');  // 닦는 동안 다른 유휴활동 잠금
+    sparkleClean(t);                                 // 비누거품·물방울 이펙트
+    heroEl._wipeSparkle=setTimeout(()=>{ if(heroEl.classList.contains('wiping')) sparkleClean(t); }, 550);
+    heroEl._wipeTimer=setTimeout(()=>{
+      heroEl.classList.remove('wiping');
+      if(phase!=='home') return;                     // 홈 벗어났으면 상태 안 건드림(openDay가 정리)
+      hero.busy=false;
+      showHeroBubble(HERO_WIPE_DONE[Math.floor(Math.random()*HERO_WIPE_DONE.length)], 2200);
+      idleWanderAt=gameNow+3000+Math.random()*3000;
+    }, 1200);
+  });
+}
+// 유휴 시 활동 선택
+function doIdleActivity(){
+  const r=Math.random();
+  if(r<0.10) heroWipeTable();                        // 10% 테이블 닦기 (드물게 — 닳지 않게)
+  else if(r<0.34) heroMonologue();                   // 24% 혼잣말
+  else if(r<0.56) heroCheckStock();                  // 22% 재고 체크
+  else startWander();                                // 나머지 배회
+}
+// 메뉴(진열대) 앞 재고 체크 — 선반 접근 위치로 가서 잠깐 멈춰 말풍선
+function heroCheckStock(){
+  const list=shelves.filter(s=>s && s.dishId!=null && s.ax!=null && s.ay!=null);
+  if(!list.length){ startWander(); return; }
+  const s=list[Math.floor(Math.random()*list.length)];
+  wandering=true; hero.speed=WANDER_SPEED;
+  moveAlong(aislePath(s.ax, s.ay), ()=>{
+    hero.speed=HERO_BASE_SPEED; wandering=false;
+    hero.busy=true;
+    showHeroBubble(HERO_STOCK[Math.floor(Math.random()*HERO_STOCK.length)], 2000);
+    if(s.el) tapFeedback(s.el);                       // 확인하는 선반이 톡 반응
+    heroEl._stockTap=setTimeout(()=>{ if(s.el && heroEl.querySelector('.hero-bubble')) tapFeedback(s.el); }, 800);
+    heroEl._stockTimer=setTimeout(()=>{
+      if(phase!=='home') return;
+      hero.busy=false;
+      idleWanderAt=gameNow+2500+Math.random()*3000;
+    }, 1600);
+  });
 }
 let tray=[];                   // 담은 dish id 배열 (최대 4)
 const TRAY_MAX=4;
@@ -3483,8 +3578,8 @@ function buildTables(){
 const HOME_SEAT_TABLES=[0,1,2,3];   // 2인석 4개(1~4번)를 초대석으로 재사용
 let homeGuestEls=[];
 // 말풍선 사이클: 대기 8~12초 → 표시 4초(클릭 시 보너스, 안 누르면 사라짐) → 다시 대기. 세이브 안 함(휘발성).
-const HOME_BUBBLE_WAIT_MIN=8000, HOME_BUBBLE_WAIT_RAND=4000;
-const HOME_BUBBLE_SHOW=4000;
+const HOME_BUBBLE_WAIT_MIN=3000, HOME_BUBBLE_WAIT_RAND=7000;
+const HOME_BUBBLE_SHOW_MIN=3000, HOME_BUBBLE_SHOW_RAND=2500;
 function clearHomeGuests(){
   homeGuestEls.forEach(el=>{
     if(el){ clearTimeout(el._waitTimer); clearTimeout(el._hideTimer); if(el.parentNode) el.remove(); }
@@ -3493,7 +3588,7 @@ function clearHomeGuests(){
 }
 function renderHomeGuests(){
   clearHomeGuests();
-  if(phase!=='home') return;   // 홈에서만 표시
+  if(phase!=='home'){ stopHomeDropIns(); return; }   // 홈에서만 표시
   invited.forEach((id, i)=>{
     if(i>=HOME_SEAT_TABLES.length) return;
     const g=guestDef(id); if(!g) return;
@@ -3512,6 +3607,8 @@ function renderHomeGuests(){
     homeGuestEls.push(seat);
     scheduleHomeBubble(seat);   // 말풍선 사이클 시작
   });
+  reconcileDropIns();   // 초대가 새로 차지한 칸의 방문객만 정리 (Phase 3-D-2)
+  startHomeDropIns();   // 빈 초대석에 랜덤 방문객 순환 시작 (Phase 3-D)
 }
 // 다음 말풍선 예약 (대기 후 표시)
 function scheduleHomeBubble(seat){
@@ -3538,7 +3635,117 @@ function showHomeBubble(seat){
   };
   seat.appendChild(b);
   seat._bubbleEl=b;
-  seat._hideTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); scheduleHomeBubble(seat); }, HOME_BUBBLE_SHOW);
+  seat._hideTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); scheduleHomeBubble(seat); }, HOME_BUBBLE_SHOW_MIN + Math.random()*HOME_BUBBLE_SHOW_RAND);
+}
+
+// ====== Phase 3-D: 랜덤 드롭인 (모델 B — 자동 순환) ======
+// 안 채운 빈 초대석에 해금 친구가 자동으로 왔다 감. ★ SEATED(occupant/c.state) 안 씀 — homeDropEls로만 관리하는 순수 장식(고정 초대와 동일 방식). 휘발성(저장 X).
+let homeDropEls=[];
+let homeDropTimer=null;
+const HOME_DROP_SPAWN_MIN=6000, HOME_DROP_SPAWN_RAND=6000;   // 6~12초마다 등장 시도
+const HOME_DROP_STAY_MIN=20000, HOME_DROP_STAY_RAND=20000;   // 20~40초 체류
+const HOME_DROP_FADE=400;                                    // 등장/퇴장 opacity 페이드(ms)
+// ▼ 방문객 등장/퇴장 인사 — 작가(신민) 영역: 자유롭게 수정/추가. 보상 없는 순수 연출.
+const HOME_DROP_HELLO=['나 왔어!','지나가다 들렀어!','놀러 왔어~'];
+const HOME_DROP_BYE=['이만 가볼게~','다음에 또 올게!','잘 있어~'];
+const HOME_DROP_HELLO_SHOW=2500, HOME_DROP_BYE_SHOW=1800;
+// 플레이버 말풍선(클릭 보상 아님) — 등장/퇴장 인사용. 기존 _bubbleEl 슬롯 재사용.
+function showHomeFlavor(seat, text){
+  clearTimeout(seat._waitTimer); clearTimeout(seat._hideTimer);
+  if(seat._bubbleEl && seat._bubbleEl.parentNode) seat._bubbleEl.remove();
+  const b=document.createElement('div');
+  b.className='home-bubble text'; b.textContent=text;
+  b.onclick=(e)=>{                       // 대사 말풍선도 누르면 호감도 (초대·방문객·인사 전부 동일 규칙)
+    e.stopPropagation();
+    const gained=homeTapReward(seat._guestId);
+    if(gained!=null) floatText(seat._tx, seat._ty-0.06, `+${gained} 💗`);
+    if(b.parentNode) b.remove();
+  };
+  seat.appendChild(b); seat._bubbleEl=b;
+  return b;
+}
+function clearHomeDropIns(){
+  homeDropEls.forEach(el=>{
+    if(el){ clearTimeout(el._waitTimer); clearTimeout(el._hideTimer); clearTimeout(el._stayTimer); if(el.parentNode) el.remove(); }
+  });
+  homeDropEls=[];
+}
+// 고정 초대 + 현재 드롭인이 점유하지 않은 빈 초대석 인덱스
+function homeEmptySeatIdx(){
+  const used=new Set();
+  invited.forEach((id,i)=>{ if(i<HOME_SEAT_TABLES.length) used.add(i); });
+  homeDropEls.forEach(el=>{ if(el && el._seatIdx!=null) used.add(el._seatIdx); });
+  const out=[]; for(let i=0;i<HOME_SEAT_TABLES.length;i++) if(!used.has(i)) out.push(i);
+  return out;
+}
+// 드롭인 후보: 아는 친구 중 초대 안 됨 · 연인(partnerId) 아님 · 현재 드롭인 아님 (연인은 R5 배회로 별도 등장 예정)
+function homeDropCandidates(){
+  const busy=new Set(homeDropEls.map(el=>el && el._guestId));
+  return Object.keys(friends).filter(id=> !isInvited(id) && id!==partnerId && !busy.has(id) && guestDef(id));
+}
+function spawnHomeDropIn(){
+  const empties=homeEmptySeatIdx(); if(!empties.length) return;
+  const cands=homeDropCandidates(); if(!cands.length) return;
+  const seatIdx=empties[Math.floor(Math.random()*empties.length)];
+  const id=cands[Math.floor(Math.random()*cands.length)];
+  const g=guestDef(id); if(!g) return;
+  const t=tables[HOME_SEAT_TABLES[seatIdx]]; if(!t) return;
+  const chair = t.chairs ? (t.chairs.find(ch=>ch.side==='left')||t.chairs[0]) : null;
+  const host = chair ? chair.el : t.el;
+  const seat=document.createElement('div');
+  seat.className='occupant-seat home-seat left';
+  const dur=(2.0+Math.random()*0.8).toFixed(2), delay=(-Math.random()*2).toFixed(2);
+  seat.innerHTML=`<div class="who home-bob" style="animation-duration:${dur}s;animation-delay:${delay}s;">${guestImg(g,'sit')}</div>`;
+  applySeatPos(seat,'left');
+  seat._guestId=id; seat._tx=t.x; seat._ty=t.y; seat._seatIdx=seatIdx; seat._dropIn=true;
+  seat.onclick=(e)=>{ e.stopPropagation(); openFriendDetail(id); };
+  seat.style.opacity='0'; seat.style.transition=`opacity ${HOME_DROP_FADE}ms ease`;
+  host.appendChild(seat);
+  homeDropEls.push(seat);
+  requestAnimationFrame(()=>{ if(seat.isConnected) seat.style.opacity='1'; });
+  // 등장 인사(플레이버) → 잠시 후 일반 보상 말풍선 사이클 시작
+  const hello=HOME_DROP_HELLO[Math.floor(Math.random()*HOME_DROP_HELLO.length)];
+  const hb=showHomeFlavor(seat, hello);
+  seat._hideTimer=setTimeout(()=>{
+    if(hb.parentNode) hb.remove();
+    if(seat.isConnected && homeDropEls.includes(seat) && !seat._leaving) scheduleHomeBubble(seat);
+  }, HOME_DROP_HELLO_SHOW);
+  seat._stayTimer=setTimeout(()=>leaveHomeDropIn(seat), HOME_DROP_STAY_MIN + Math.random()*HOME_DROP_STAY_RAND);
+}
+function leaveHomeDropIn(seat, silent){
+  if(!seat || seat._leaving) return;
+  seat._leaving=true;   // 퇴장 연출 중엔 그 칸을 계속 점유로 취급(겹침 방지) — finish에서 배열 제거
+  clearTimeout(seat._waitTimer); clearTimeout(seat._hideTimer); clearTimeout(seat._stayTimer);
+  const finish=()=>{
+    homeDropEls=homeDropEls.filter(el=>el!==seat);
+    seat.style.opacity='0';
+    setTimeout(()=>{ if(seat.parentNode) seat.remove(); }, HOME_DROP_FADE);
+  };
+  if(silent){
+    if(seat._bubbleEl && seat._bubbleEl.parentNode) seat._bubbleEl.remove();
+    finish();
+  } else {
+    showHomeFlavor(seat, HOME_DROP_BYE[Math.floor(Math.random()*HOME_DROP_BYE.length)]);
+    setTimeout(finish, HOME_DROP_BYE_SHOW);
+  }
+}
+// 초대 토글로 초대석이 늘면, 그 칸을 쓰던 방문객만 즉시 정리(작별 생략). 나머지는 유지.
+function reconcileDropIns(){
+  homeDropEls.slice().forEach(seat=>{
+    if(seat && seat._seatIdx < invited.length) leaveHomeDropIn(seat, true);
+  });
+}
+function homeDropTick(){
+  if(phase==='home') spawnHomeDropIn();
+  homeDropTimer=setTimeout(homeDropTick, HOME_DROP_SPAWN_MIN + Math.random()*HOME_DROP_SPAWN_RAND);
+}
+function startHomeDropIns(){
+  if(homeDropTimer) return;   // 중복 스케줄러 방지
+  homeDropTimer=setTimeout(homeDropTick, HOME_DROP_SPAWN_MIN + Math.random()*HOME_DROP_SPAWN_RAND);
+}
+function stopHomeDropIns(){
+  if(homeDropTimer){ clearTimeout(homeDropTimer); homeDropTimer=null; }
+  clearHomeDropIns();
 }
 
 // ====== HUD ======
@@ -3649,6 +3856,37 @@ stage.addEventListener('click',(e)=>{
   // 큐 방식: 빈 곳 클릭으로 점원을 직접 옮기지 않음(다이너대시식 — 대상 클릭만).
   // 빈 곳을 누르면 자리 표시만 해제.
   showSeatHints(false);
+});
+
+// ====== 아웃게임(home) 클릭 이동 — 느릿느릿, aislePath로 테이블/의자 우회 ======
+function nearestStandableXY(x,y){
+  const c=xyToCell(x,y);
+  let best=null, bd=Infinity;
+  for(let col=HALL_COL_MIN;col<=HALL_COL_MAX;col++)
+    for(let row=HALL_ROW_MIN;row<=HALL_ROW_MAX;row++){
+      if(!isStandable(col,row)) continue;
+      const d=Math.hypot(col-c.col, row-c.row);
+      if(d<bd){ bd=d; best={col,row}; }
+    }
+  return best ? cellToXY(best.col,best.row) : null;
+}
+function homeClickMove(x,y){
+  const dest=nearestStandableXY(x,y); if(!dest) return;   // 충돌영역이면 가장 가까운 빈 칸으로 보정
+  clearTimeout(heroEl._wipeTimer); clearTimeout(heroEl._wipeSparkle); clearTimeout(heroEl._stockTimer); clearTimeout(heroEl._stockTap); heroEl.classList.remove('wiping'); hero.busy=false;   // 진행 중 닦기/재고체크 취소
+  clickRing(dest.x, dest.y);
+  wandering=false; idleWanderAt=0;                        // 진행 중 배회 취소/리셋
+  homeStroll=true;
+  moveAlong(aislePath(dest.x, dest.y), ()=>{              // 통로 경유(테이블/의자 우회)
+    homeStroll=false;
+    idleWanderAt=gameNow+2500+Math.random()*3500;         // 도착 후 잠깐 쉬었다 배회 재개
+  });
+}
+stage.addEventListener('click',(e)=>{
+  if(phase!=='home') return;
+  // 버튼/좌석/간판/말풍선 등 UI 클릭은 이동 트리거에서 제외(대부분 이미 stopPropagation이지만 방어)
+  if(e.target.closest('button, .occupant-seat, .home-bubble, #openSign, .sign, .panel, [data-invite]')) return;
+  const r=stage.getBoundingClientRect();
+  homeClickMove((e.clientX-r.left)/r.width, (e.clientY-r.top)/r.height);
 });
 
 // ====== 클릭 = 작업을 큐에 쌓음 (다이너대시식) ======
@@ -3765,7 +4003,7 @@ function updateQueueBadges(){
 function execShelf(shelfIdx){
   const sh=shelves[shelfIdx];
   if(!sh){ actionDone(); return; }
-  moveTo(sh.ax, sh.ay, ()=>{ pickDish(shelfIdx); actionDone(); });
+  moveAlong(aislePath(sh.ax, sh.ay), ()=>{ pickDish(shelfIdx); actionDone(); });
 }
 function execTable(tableIdx){
   const t=tables[tableIdx];
@@ -3821,7 +4059,7 @@ function execTable(tableIdx){
   // 손님 있는 테이블 → 서빙하러 이동
   const oc=t.occupant;
   if(oc && (oc.state==='waiting' || oc.state==='waitingSide')) popBubble(t, false);
-  moveTo(stand.x, stand.y, ()=>{ serveTable(tableIdx); actionDone(); });
+  moveAlong(aislePath(stand.x, stand.y), ()=>{ serveTable(tableIdx); actionDone(); });
 }
 
 // ====== 동작: 줍기 / 서빙 ======
@@ -4792,7 +5030,7 @@ function tick(ts){
   if(hero.moving){
     const dx=hero.tx-hero.x, dy=hero.ty-hero.y;
     const dist=Math.hypot(dx,dy);
-    const step=(wandering ? WANDER_SPEED : heroSpeed())*dt;
+    const step=(homeStroll ? HOME_MOVE_SPEED : wandering ? WANDER_SPEED : heroSpeed())*dt;
     if(dist<=step||dist<0.005){
       hero.x=hero.tx; hero.y=hero.ty;
       if(hero.path && hero.path.length>0){
@@ -4811,25 +5049,19 @@ function tick(ts){
   }
   // 점원 깊이: 발 y 기준. 화면 아래에 설수록 앞(큰 z). 테이블과 같은 zFor 기준.
   heroEl.style.zIndex=zFor(hero.y);
+  heroEl.classList.toggle('walking', hero.moving && phase==='home');   // 홈 이동 중 걸음 bob
 
   // 아웃게임(home) 표시 토글 → 쟁반 UI 숨김(CSS body.outgame)
   document.body.classList.toggle('outgame', phase==='home');
   // 유휴 배회: home이고 점원이 이동·작업 중이 아니면 홀을 느긋이 거닒
   if(phase==='home' && !hero.moving && !hero.busy && !pendingAction){
     if(idleWanderAt===0){ idleWanderAt=gameNow+1200+Math.random()*2000; }   // 진입 후 잠깐 텀
-    else if(gameNow>=idleWanderAt){
-      const dest=pickWanderCell();
-      if(dest){
-        wandering=true; hero.speed=WANDER_SPEED;
-        moveTo(dest.x, dest.y, ()=>{                 // 도착 콜백: 속도 원복 + 다음 배회 예약
-          hero.speed=HERO_BASE_SPEED; wandering=false;
-          idleWanderAt=gameNow+2500+Math.random()*3500;   // 2.5~6초 멈춰 쉬었다 다음
-        });
-      } else { idleWanderAt=gameNow+1500; }
-    }
+    else if(gameNow>=idleWanderAt){ doIdleActivity(); }
   } else if(phase!=='home'){
     if(wandering){ wandering=false; hero.speed=HERO_BASE_SPEED; }  // home 벗어나면 배회 종료
+    homeStroll=false;                                             // 홈 클릭 이동 플래그도 해제
     idleWanderAt=0;                                                // 재진입 시 텀부터 다시
+    const hb=heroEl.querySelector('.hero-bubble'); if(hb) hb.remove();   // 혼잣말 말풍선 정리
   }
 
   // 선반 재고 생산 + 쿨타임 오버레이(위→아래로 걷힘) — 모든 선반 동일
@@ -4971,8 +5203,9 @@ function clearBoard(){
   waitingQueue.forEach(c=>{ if(c.el&&c.el.parentNode) c.el.remove(); });
   waitingQueue=[];
   tray=[]; renderTrayHud();
-  hero.x=hero.tx=0.5; hero.y=hero.ty=0.74; hero.moving=false; hero.busy=false; hero.path=null; pendingAction=null; hero.speed=HERO_BASE_SPEED; wandering=false;
-  heroEl.classList.remove('wiping');
+  hero.x=hero.tx=0.5; hero.y=hero.ty=0.74; hero.moving=false; hero.busy=false; hero.path=null; pendingAction=null; hero.speed=HERO_BASE_SPEED; wandering=false; homeStroll=false;
+  heroEl.classList.remove('wiping','walking');
+  clearTimeout(heroEl._bubbleTimer); clearTimeout(heroEl._wipeTimer); clearTimeout(heroEl._wipeSparkle); clearTimeout(heroEl._stockTimer); clearTimeout(heroEl._stockTap); { const hb=heroEl.querySelector('.hero-bubble'); if(hb) hb.remove(); }   // 혼잣말/닦기/재고체크 정리
   actionQueue=[]; currentAction=null; updateQueueBadges();   // 큐도 비움
   heroEl.style.left='50%'; heroEl.style.top='74%';
 }
@@ -5014,6 +5247,7 @@ function openDay(){
   // (특별 손님 등장은 시작 시점이 아니라 마감 후/레벨업 후로 이동 — 영업 흐름 유지)
   clearDayState();
   clearHomeGuests();   // 영업 시작 → 홈 초대 친구 좌석 정리 (Phase 3)
+  stopHomeDropIns();   // 랜덤 방문객 순환 정지 + 정리 (Phase 3-D)
   phase='briefing';            // 영업 카드 표시 중 — 타이머/손님 행동 정지
   paused=false;
   document.getElementById('pauseBanner').classList.add('hidden');
