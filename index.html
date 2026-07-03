@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v32_011</title>
+<title>포근한 디저트 가게 — v34_009</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -641,8 +641,9 @@
     0%,100%{ transform:scale(var(--staff-scale)) translateY(0); }
     50%    { transform:scale(var(--staff-scale)) translateY(-0.5cqw); }
   }
-  /* 점원 혼잣말 말풍선(플레이버, 클릭 X) */
-  #hero .hero-bubble{
+  /* 점원 혼잣말 말풍선(플레이버, 클릭 X) — 연인 꽁냥 말풍선도 공유 */
+  #hero .hero-bubble,
+  #partnerWalker .hero-bubble{
     position:absolute; left:50%; bottom:100%; transform:translateX(-50%);
     background:rgba(255,255,255,.94); border:0.2cqw solid var(--floor-line); border-radius:1.1cqw;
     padding:0.35cqw 0.8cqw; margin-bottom:0.4cqw; box-shadow:0 0.2cqw 0.5cqw rgba(0,0,0,.1);
@@ -672,6 +673,40 @@
     display:flex; align-items:center; justify-content:center; font-size:1.7cqw;
   }
   #hero .mini-tray .slot.full{ background:#fbfdff; }
+
+  /* R5 연인 홈 배회 엔티티 — 점원과 독립. 손님 크기(guest-scale), 걸음 bob은 heroWalkBob 재사용. */
+  #partnerWalker{
+    position:absolute; width:10cqw; height:10cqw; transform:translate(-50%,-70%);
+    z-index:19; transition:none; pointer-events:none;
+  }
+  #partnerWalker .body{
+    width:10cqw; height:10cqw;
+    display:flex; align-items:flex-end; justify-content:center;
+    margin:0 auto; position:relative;
+    transform:scale(var(--staff-scale)); transform-origin:bottom center;
+  }
+  #partnerWalker.walking .body{ animation:heroWalkBob .5s ease-in-out infinite; }
+  #partnerWalker.wiping .body{ animation:heroWipe .25s ease-in-out infinite; }
+  #partnerWalker .body .guest-img{
+    width:100%; height:100%; object-fit:contain; object-position:bottom;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  }
+  #partnerWalker .body .guest-emoji{
+    width:4.6cqw; height:4.6cqw; border-radius:50%; background:var(--hero);
+    border:3px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,.2);
+    align-items:center; justify-content:center; font-size:2.4cqw;
+  }
+  /* 마주침 하트 뿅뿅 — 위로 떠오르며 페이드(글로우/블러 없음) */
+  .couple-heart{
+    position:absolute; width:3cqw; height:3cqw; pointer-events:none;
+    z-index:200; opacity:0; will-change:transform,opacity;
+    animation:coupleHeartFloat 1.3s ease-out forwards;
+  }
+  @keyframes coupleHeartFloat{
+    0%{   transform:translate(-50%,0) scale(.4); opacity:0; }
+    22%{  transform:translate(-50%,-1.4cqw) scale(1); opacity:1; }
+    100%{ transform:translate(-50%,-5.2cqw) scale(.75); opacity:0; }
+  }
 
   .toast{
     position:absolute; left:50%; transform:translateX(-50%);
@@ -2991,7 +3026,8 @@ function showHeroBubble(text, dur){
   const old=heroEl.querySelector('.hero-bubble'); if(old) old.remove();
   const b=document.createElement('div'); b.className='hero-bubble'; b.textContent=text;
   heroEl.appendChild(b);
-  heroEl._bubbleTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); }, dur||2500);
+  heroEl._hasBubble=true;
+  heroEl._bubbleTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); heroEl._hasBubble=false; }, dur||2500);
 }
 // 유휴 배회(통로 경유)
 function startWander(){
@@ -3056,6 +3092,137 @@ function heroCheckStock(){
     }, 1600);
   });
 }
+// ====== R5 연인 홈 배회 (Phase 2 · 휘발성 · SEATED/초대석/드롭인 전부 무관) ======
+// 점원(hero)과 완전 독립 엔티티. 홈에서만 등장, 저장 안 함. aislePath(hero 하드코딩) 미사용 —
+// 인접 빈 칸(isStandable, 의자칸은 OCCUPIED라 자동 제외)으로 한 칸씩 느릿하게만 이동 → 테이블/의자 관통 원천 차단.
+let partnerEl=null;
+let partner={x:0.5, y:0.5, tx:0.5, ty:0.5, moving:false, busy:false};
+let partnerWanderAt=0;                       // 다음 배회 시작 시각(gameNow). 0=미예약
+const PARTNER_SPEED=HERO_BASE_SPEED*0.22;    // 점원 배회와 동일한 느긋한 힐링 속도
+const PARTNER_WANDER_MIN=4000, PARTNER_WANDER_RAND=6000;   // 4~10초 텀
+// 현재 위치 기준 상하좌우 중 정지 가능한 인접 칸 하나(대각 금지 — 테이블 모서리 스침 방지)
+function pickPartnerAdjCell(){
+  const c=xyToCell(partner.x, partner.y);
+  const dirs=[[0,1],[0,-1],[-1,0],[1,0]];
+  const cand=[];
+  for(const [dc,dr] of dirs){
+    if(isStandable(c.col+dc, c.row+dr)) cand.push(cellToXY(c.col+dc, c.row+dr));
+  }
+  if(!cand.length) return null;
+  return cand[Math.floor(Math.random()*cand.length)];
+}
+// 연인 등장: partnerId(실제 R5는 loadGame에서 검증됨) 유효 시 빈 홀 칸에 세움
+function spawnPartner(){
+  clearPartner();
+  if(phase!=='home' || !partnerId) return;
+  const g=guestDef(partnerId); if(!g) return;
+  const cells=[];
+  for(let cc=HALL_COL_MIN;cc<=HALL_COL_MAX;cc++)
+    for(let rr=HALL_ROW_MIN;rr<=HALL_ROW_MAX;rr++)
+      if(isStandable(cc,rr)) cells.push(cellToXY(cc,rr));
+  if(!cells.length) return;
+  const p0=cells[Math.floor(Math.random()*cells.length)];
+  partner.x=partner.tx=p0.x; partner.y=partner.ty=p0.y; partner.moving=false; partner.busy=false;
+  partnerEl=document.createElement('div');
+  partnerEl.id='partnerWalker';
+  partnerEl.innerHTML=`<div class="body">${guestImg(g,'stand')}</div>`;
+  partnerEl.style.left=(partner.x*100)+'%';
+  partnerEl.style.top=(partner.y*100)+'%';
+  partnerEl.style.zIndex=zFor(partner.y);
+  stage.appendChild(partnerEl);
+  partnerWanderAt=gameNow+PARTNER_WANDER_MIN+Math.random()*PARTNER_WANDER_RAND;
+}
+function clearPartner(){
+  if(partnerEl){ clearTimeout(partnerEl._bubbleTimer); clearTimeout(partnerEl._wipeTimer); partnerEl.remove(); partnerEl=null; }
+  partner.moving=false; partner.busy=false; partnerWanderAt=0; coupleFxAt=0;
+  document.querySelectorAll('.couple-heart').forEach(h=>h.remove());   // 잔여 하트 정리
+}
+// ▼ 연인 정리 돕기 대사 — 작가(신민) 영역: 자유롭게 수정/추가.
+const PARTNER_WIPE=['정리 좀 도울게~','반짝반짝!','이건 여기 두고~','금방 치울게'];
+// 현재 위치 상하좌우에 오브젝트(선반/테이블/의자 등 OCCUPIED)가 있는지 — 정리할 대상이 옆에 있는지
+function hasAdjObject(){
+  const c=xyToCell(partner.x, partner.y);
+  return [[0,1],[0,-1],[-1,0],[1,0]].some(([dc,dr])=>OCCUPIED.has((c.col+dc)+','+(c.row+dr)));
+}
+// 정리 동작 연출 (heroWipe 포즈 + 대사). 순수 연출 — 재고/밸런스 영향 없음.
+function partnerWipe(){
+  partner.busy=true;
+  partnerEl.classList.add('wiping');
+  showPartnerBubble(PARTNER_WIPE[Math.floor(Math.random()*PARTNER_WIPE.length)], 2200);
+  partnerEl._wipeTimer=setTimeout(()=>{
+    if(!partnerEl) return;
+    partnerEl.classList.remove('wiping');
+    partner.busy=false;
+    partnerWanderAt=gameNow+PARTNER_WANDER_MIN+Math.random()*PARTNER_WANDER_RAND;
+  }, 1300);
+}
+// 배회 예약 도달 시: 옆에 오브젝트 있으면 가끔 정리, 아니면 인접 한 칸으로 이동
+function partnerWanderTick(){
+  if(!partnerEl || partner.moving || partner.busy) return;
+  if(gameNow < partnerWanderAt) return;
+  if(hasAdjObject() && Math.random()<0.3){ partnerWipe(); return; }   // 옆에 정리할 게 있으면 30% 정리 동작
+  const dest=pickPartnerAdjCell();
+  if(!dest){ partnerWanderAt=gameNow+1500; return; }   // 갇힘 → 잠시 후 재시도
+  partner.tx=dest.x; partner.ty=dest.y; partner.moving=true;
+}
+// 이동 스텝 (tick home 분기에서 매 프레임 호출)
+function partnerMoveStep(dt){
+  if(partner.moving){
+    const dx=partner.tx-partner.x, dy=partner.ty-partner.y;
+    const dist=Math.hypot(dx,dy);
+    const step=PARTNER_SPEED*dt;
+    if(dist<=step || dist<0.005){
+      partner.x=partner.tx; partner.y=partner.ty; partner.moving=false;
+      partnerWanderAt=gameNow+PARTNER_WANDER_MIN+Math.random()*PARTNER_WANDER_RAND;
+    } else {
+      partner.x+=dx/dist*step; partner.y+=dy/dist*step;
+    }
+    partnerEl.style.left=(partner.x*100)+'%';
+    partnerEl.style.top=(partner.y*100)+'%';
+    partnerEl.style.zIndex=zFor(partner.y);
+  }
+  partnerEl.classList.toggle('walking', partner.moving);
+}
+// ▼ 연인 꽁냥 대사 — 작가(신민) 영역: 자유롭게 수정/추가. 특정 연인 voice에 맞춰 다듬어도 됨(현재는 범용 초안).
+const COUPLE_LINES=['같이 있으니 좋다~','오늘도 힘내!','내가 도와줄게','잠깐 쉬었다 해','너 보러 왔어','헤헤, 바쁘네?'];
+const COUPLE_FX_MIN=6000, COUPLE_FX_RAND=5000;   // 마주침 연출 쿨타임 6~11초
+let coupleFxAt=0;
+// 연인 머리 위 말풍선(꽁냥). hero-bubble 스타일 공유. 자동 소멸.
+function showPartnerBubble(text, dur){
+  if(!partnerEl) return;
+  clearTimeout(partnerEl._bubbleTimer);
+  const old=partnerEl.querySelector('.hero-bubble'); if(old) old.remove();
+  const b=document.createElement('div'); b.className='hero-bubble'; b.textContent=text;
+  partnerEl.appendChild(b);
+  partnerEl._bubbleTimer=setTimeout(()=>{ if(b.parentNode) b.remove(); }, dur||2400);
+}
+// 연인 머리 위에 하트 2~3개 뿅뿅
+function spawnCoupleHearts(){
+  const mx=partner.x, my=partner.y;   // 연인한테서 나오는 느낌
+  const n=2+Math.floor(Math.random()*2);
+  for(let i=0;i<n;i++){
+    const h=document.createElement('img');
+    h.className='couple-heart'; h.src=DECO_HEART; h.alt='';
+    h.style.left=(mx*100+(Math.random()-0.5)*6)+'%';
+    h.style.top=(my*100-15)+'%';        // 머리 위
+    h.style.animationDelay=(i*0.12)+'s';
+    stage.appendChild(h);
+    setTimeout(()=>h.remove(), 1500+i*130);
+  }
+}
+// 점원↔연인 근접 시 꽁냥 연출 (tick home 분기에서 호출)
+function coupleMeetTick(){
+  if(!partnerEl || partner.busy) return;
+  if(coupleFxAt===0){ coupleFxAt=gameNow+COUPLE_FX_MIN; return; }   // 진입 직후 텀
+  if(gameNow < coupleFxAt) return;
+  if(hero.moving || partner.moving) return;                        // 둘 다 멈춰 마주 선 순간에만(스쳐가며 발동 방지)
+  const d=Math.hypot(hero.x-partner.x, hero.y-partner.y);
+  if(d > 0.12) return;                                             // 약 1.5칸 이내에서만
+  spawnCoupleHearts();
+  if(Math.random()<0.5) showPartnerBubble(COUPLE_LINES[Math.floor(Math.random()*COUPLE_LINES.length)], 2400);
+  coupleFxAt=gameNow+COUPLE_FX_MIN+Math.random()*COUPLE_FX_RAND;
+}
+
 let tray=[];                   // 담은 dish id 배열 (최대 4)
 const TRAY_MAX=4;
 let shelves=[];                // {dishId, ready:bool, readyAt}
@@ -3090,8 +3257,15 @@ const BOUQUET_COST=100;   // 꽃다발 1송이 비용
 let partnerId=null;       // R5 단 1명(독점) — Phase 2에서 사용. 기본 null. 영구 저장
 // ── Phase 3: 홈 초대 방치형 ── 홈에 초대한 친구 id 배열. home 단계에서 테이블에 앉음. 영구 저장.
 let invited=[];           // 초대한 친구 id 목록 (최대 homeInviteCap())
-// 초대석 캡. 지금은 4 고정. 나중에 "조건 충족 시 +1" 확장은 이 함수 내부만 교체하면 됨(참조처 전부 이 함수만 봄).
-function homeInviteCap(){ return 4; }
+let pendingInviteToast=null;   // 특별손님(15/16) 등장 팝업 닫은 뒤 띄울 초대 확장 안내(런타임 전용)
+// 초대석 캡: 15·16 등장으로 점진 해금(1→2→3). 4번째 자리는 늘 랜덤 드롭인 몫으로 남김.
+// friends.guest_15/16은 기존 저장값이라 새 저장 필드 없이 로드 후에도 유지됨.
+function homeInviteCap(){
+  let cap=1;
+  if(friends.guest_15) cap=2;   // 메뉴 거의 다 해금한 기념
+  if(friends.guest_16) cap=3;   // 모든 친구와 친해진 기념
+  return cap;
+}
 function isInvited(id){ return invited.includes(id); }
 function canInviteMore(){ return invited.length < homeInviteCap(); }
 function inviteFriend(id){
@@ -3609,6 +3783,7 @@ function renderHomeGuests(){
   });
   reconcileDropIns();   // 초대가 새로 차지한 칸의 방문객만 정리 (Phase 3-D-2)
   startHomeDropIns();   // 빈 초대석에 랜덤 방문객 순환 시작 (Phase 3-D)
+  spawnPartner();       // R5 연인 배회 등장 (partnerId 유효 시. 내부에서 clearPartner 선행)
 }
 // 다음 말풍선 예약 (대기 후 표시)
 function scheduleHomeBubble(seat){
@@ -3805,6 +3980,28 @@ function moveAlong(points, action){
 // 통로 규칙(손님과 동일): 가로 이동은 row5에서만. 세로 이동은 col13(7행까지 OK) 또는
 // 빈 통로 열에서만. 금지: (3,7)~(12,7) 가로 줄, 테이블·의자 점유 칸.
 function aislePath(tx, ty){
+  if(Math.hypot(tx-hero.x, ty-hero.y) < 0.01) return [{x:tx, y:ty}];   // 이미 목표 지점 → 통로 왕복 생략(연속 클릭 헛걸음 방지)
+  // 같은 행 + 사이 칸 전부 비어 있음 → 통로 안 내려가고 옆걸음 (주방 선반 연속 클릭 등)
+  {
+    const a=xyToCell(hero.x, hero.y), b=xyToCell(tx, ty);
+    if(Math.abs(ty-hero.y) < 0.01 && a.row===b.row && b.row>=2 && b.row<=HALL_ROW_MAX
+       && Math.min(a.col,b.col)>=HALL_COL_MIN && Math.max(a.col,b.col)<=HALL_COL_MAX){
+      let clear=true;
+      for(let c=Math.min(a.col,b.col); c<=Math.max(a.col,b.col); c++){
+        if(OCCUPIED.has(c+','+b.row)){ clear=false; break; }
+      }
+      if(clear) return [{x:tx, y:ty}];
+    }
+    // 같은 열 + 사이 칸 전부 비어 있음 → 세로로만 이동 (음료/스위츠 스테이션 연속 클릭 등)
+    if(Math.abs(tx-hero.x) < 0.01 && a.col===b.col && Math.min(a.row,b.row)>=2 && Math.max(a.row,b.row)<=HALL_ROW_MAX
+       && b.col>=HALL_COL_MIN && b.col<=HALL_COL_MAX){
+      let clear=true;
+      for(let r=Math.min(a.row,b.row); r<=Math.max(a.row,b.row); r++){
+        if(OCCUPIED.has(b.col+','+r)){ clear=false; break; }
+      }
+      if(clear) return [{x:tx, y:ty}];
+    }
+  }
   const AISLE_ROW=5, DOOR_COL=13;
   const aisleY=(AISLE_ROW+0.5)/GRID_ROWS;
   const doorX=(DOOR_COL+0.5)/GRID_COLS;
@@ -5061,7 +5258,16 @@ function tick(ts){
     if(wandering){ wandering=false; hero.speed=HERO_BASE_SPEED; }  // home 벗어나면 배회 종료
     homeStroll=false;                                             // 홈 클릭 이동 플래그도 해제
     idleWanderAt=0;                                                // 재진입 시 텀부터 다시
-    const hb=heroEl.querySelector('.hero-bubble'); if(hb) hb.remove();   // 혼잣말 말풍선 정리
+    if(heroEl._hasBubble){ const hb=heroEl.querySelector('.hero-bubble'); if(hb) hb.remove(); heroEl._hasBubble=false; }   // 혼잣말 말풍선 정리(플래그로 매 프레임 탐색 방지)
+  }
+
+  // R5 연인 배회 (home 전용 · 점원과 독립)
+  if(phase==='home' && partnerEl){
+    partnerWanderTick();
+    partnerMoveStep(dt);
+    coupleMeetTick();   // 점원과 마주치면 하트 뿅뿅 + 가끔 꽁냥 대사
+  } else if(phase!=='home' && partnerEl){
+    clearPartner();   // 홈 벗어나면 즉시 정리(휘발성)
   }
 
   // 선반 재고 생산 + 쿨타임 오버레이(위→아래로 걷힘) — 모든 선반 동일
@@ -5079,7 +5285,7 @@ function tick(ts){
         sh.cooking=false;
       }
     }
-    const fill=sh.el.querySelector('.cd-fill');
+    const fill=(sh._fill && sh._fill.isConnected) ? sh._fill : (sh._fill=sh.el.querySelector('.cd-fill'));   // 매 프레임 DOM 탐색 제거(재렌더 시 자동 재취득)
     if(fill){
       if(sh.cooking){
         const total=dishCd(sh.dishId);
@@ -5183,11 +5389,8 @@ function updateTimerDisplay(){
   const s=Math.ceil(timeLeft);
   const mm=Math.floor(s/60), ss=s%60;
   // 막판 10초: 카운트다운 강조 (갑작스러운 종료 방지)
-  if(phase==='playing' && s<=10 && s>0){
-    elTimer.textContent=`마감 ${s}초`;
-  } else {
-    elTimer.textContent=`영업 ${mm}:${String(ss).padStart(2,'0')}`;
-  }
+  const txt=(phase==='playing' && s<=10 && s>0) ? `마감 ${s}초` : `영업 ${mm}:${String(ss).padStart(2,'0')}`;
+  if(txt!==elTimer._t){ elTimer._t=txt; elTimer.textContent=txt; }   // 초가 바뀔 때만 DOM 쓰기
   elTimer.classList.toggle('low', s<=15);
   elTimer.classList.toggle('urgent', phase==='playing' && s<=10 && s>0);
 }
@@ -5247,6 +5450,7 @@ function openDay(){
   // (특별 손님 등장은 시작 시점이 아니라 마감 후/레벨업 후로 이동 — 영업 흐름 유지)
   clearDayState();
   clearHomeGuests();   // 영업 시작 → 홈 초대 친구 좌석 정리 (Phase 3)
+  clearPartner();      // 영업 시작 → R5 연인 배회 정리
   stopHomeDropIns();   // 랜덤 방문객 순환 정지 + 정리 (Phase 3-D)
   phase='briefing';            // 영업 카드 표시 중 — 타이머/손님 행동 정지
   paused=false;
@@ -7066,6 +7270,8 @@ function meetSpecialGuest(id, msg){
   saveGame();
   if(msg) toast(msg);
   showNewFriendPopup(id);
+  // 15·16 등장 = 초대석 +1. 등장 팝업 닫은 직후 안내(등장 토스트와 안 겹치게).
+  if(id==='guest_15' || id==='guest_16') pendingInviteToast='친구 1명 더 카페에 초대할 수 있게 되었어요!';
 }
 // 마감(영업 종료) 시 호출. guest_15(하루) 등장 판정 전용.
 // 조건: 메뉴 12종 전부 해금 + 그 다음 날 영업 종료.
@@ -7089,6 +7295,7 @@ function checkGuest16(){
 function closeNewFriendPopup(){
   document.getElementById('newFriendOverlay').classList.add('hidden');
   document.body.classList.remove('shop-open');
+  if(pendingInviteToast){ const m=pendingInviteToast; pendingInviteToast=null; toast(m); }
 }
 document.getElementById('newFriendOk').onclick=(e)=>{ e.stopPropagation(); closeNewFriendPopup(); };
 document.getElementById('newFriendOverlay').onclick=()=>{ closeNewFriendPopup(); };
