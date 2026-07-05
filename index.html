@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v40_001</title>
+<title>포근한 디저트 가게 — v40_002</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -19,8 +19,8 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   /* 드래그 시 브라우저 기본 텍스트/요소 선택(파란 하이라이트) 방지 — 게임은 탭/클릭 전용 */
   html, body{
-    height:100%; overflow:hidden;              /* (v39) iOS 페이지 스크롤/밀림 차단 */
-    overscroll-behavior:none;                  /* 오버스크롤(고무줄) 바운스 억제 */
+    /* (v40) v39_005의 height:100%/overflow:hidden/overscroll-behavior:none 제거
+       — 페이지 스크롤을 살려야 사파리가 주소창을 접음. standalone엔 영향 없음. */
     -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
     -webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent;
@@ -32,7 +32,7 @@
   body{
     font-family:'Segoe UI','Apple SD Gothic Neo',sans-serif;
     background:var(--bg); color:var(--ink);
-    padding:0;                                 /* (v40) position:fixed;inset:0 제거 — iOS 잘못된 고정 버그. height:100%(html)로 뷰포트 채움 */
+    min-height:100vh; padding:0;               /* (v40) min-height:100vh 복원 — 세로 중앙정렬 유지 */
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
   }
   h1{ font-size:20px; font-weight:700; display:flex; gap:8px; align-items:center; }
@@ -2142,6 +2142,23 @@
     h1{ font-size:13px; }
     .hud{ font-size:10px; }
   }
+  /* (v40) iOS 사파리 탭 전용 '홈 화면에 추가' 유도 배너 — glow/blur 없이 sharp */
+  .a2hs-banner{
+    position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+    z-index:400; max-width:min(92vw, 460px);
+    display:flex; align-items:center; gap:10px;
+    padding:11px 12px 11px 16px;
+    background:#FFF4E2; color:var(--ink);
+    border:2px solid var(--accent, #E89AB8); border-radius:14px;
+    font-size:14px; line-height:1.35;
+  }
+  .a2hs-banner.hidden{ display:none; }
+  .a2hs-txt{ flex:1; }
+  .a2hs-close{
+    flex:0 0 auto; width:26px; height:26px; border:none;
+    border-radius:50%; background:rgba(74,59,46,0.10); color:var(--ink);
+    font-size:15px; line-height:1; cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -2504,6 +2521,12 @@
       <button class="ds-start" id="dsStartBtn">준비 완료!</button>
     </div>
   </div>
+</div>
+
+<!-- (v40) iOS 사파리 탭 전용 홈화면 추가 유도 배너 — 문구 임시 -->
+<div class="a2hs-banner hidden" id="a2hsBanner">
+  <span class="a2hs-txt">공유 → '홈 화면에 추가'하면 전체화면으로 즐길 수 있어요 📲</span>
+  <button class="a2hs-close" id="a2hsClose" aria-label="닫기">✕</button>
 </div>
 
 <script>
@@ -8036,6 +8059,22 @@ requestAnimationFrame(tick);
 // 레이아웃이 잡힌 뒤 슬롯 접근 좌표 재계산 + 리사이즈 대응
 requestAnimationFrame(()=>computeShelfApproach());
 window.addEventListener('resize', ()=>computeShelfApproach());
+
+// (v40) iOS 사파리 탭에서만 '홈 화면에 추가' 유도 배너. standalone/안드로이드/PC 제외.
+(function initA2HS(){
+  try{
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+    const standalone = (navigator.standalone===true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    const dismissed = (()=>{ try{ return localStorage.getItem('cozyA2HSDismissed')==='1'; }catch(e){ return false; } })();
+    if(!isIOS || standalone || dismissed) return;
+    const b = document.getElementById('a2hsBanner');
+    if(!b) return;
+    const c = document.getElementById('a2hsClose');
+    setTimeout(()=>{ b.classList.remove('hidden'); }, 2500);
+    if(c) c.onclick = ()=>{ b.classList.add('hidden'); try{ localStorage.setItem('cozyA2HSDismissed','1'); }catch(e){} };
+  }catch(e){}
+})();
 
 // ====== 레벨 에디터 ======
 (function(){
