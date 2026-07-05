@@ -19,6 +19,8 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   /* 드래그 시 브라우저 기본 텍스트/요소 선택(파란 하이라이트) 방지 — 게임은 탭/클릭 전용 */
   html, body{
+    height:100%; overflow:hidden;              /* (v39) iOS 페이지 스크롤/밀림 차단 */
+    overscroll-behavior:none;                  /* 오버스크롤(고무줄) 바운스 억제 */
     -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
     -webkit-touch-callout:none;
     -webkit-tap-highlight-color:transparent;
@@ -30,7 +32,7 @@
   body{
     font-family:'Segoe UI','Apple SD Gothic Neo',sans-serif;
     background:var(--bg); color:var(--ink);
-    min-height:100vh; padding:0;
+    position:fixed; inset:0; padding:0;        /* (v39) 뷰포트 고정 — 스크롤로 안 밀림 */
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
   }
   h1{ font-size:20px; font-weight:700; display:flex; gap:8px; align-items:center; }
@@ -1115,7 +1117,7 @@
     display:flex; align-items:center; justify-content:center;
   }
   .shop-close:active{ transform:scale(.92); }
-  .shop-body{ padding:2cqw; overflow-y:auto; }
+  .shop-body{ padding:2cqw; overflow-y:auto; overscroll-behavior:contain; }
   /* 친구 명부 하단 스크롤 힌트 (더 있을 때 페이드 + 화살표) */
   .shop-panel{ position:relative; }
   .scroll-fade{
@@ -1223,7 +1225,7 @@
     position:relative; width:52cqw; max-width:52cqw; max-height:82%;
     background:rgba(255,251,243,.99); border:0.4cqw solid var(--accent);
     border-radius:2cqw; box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.32);
-    padding:3cqw 2.4cqw 2.4cqw; overflow-y:auto;
+    padding:3cqw 2.4cqw 2.4cqw; overflow-y:auto; overscroll-behavior:contain;
     display:flex; flex-direction:column; align-items:center; gap:0.7cqw;
     animation:shopPop .25s ease-out;
   }
@@ -1482,7 +1484,7 @@
   .gift-sub .gift-fav-ico{ display:inline-block; width:2cqw; height:2cqw; vertical-align:middle; }
   .gift-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:1cqw;
-    width:100%; max-height:34cqw; overflow-y:auto; padding:0.3cqw;
+    width:100%; max-height:34cqw; overflow-y:auto; overscroll-behavior:contain; padding:0.3cqw;
   }
   .gift-dish{
     position:relative; cursor:pointer;
@@ -1961,12 +1963,12 @@
     position:absolute; top:0; right:0; bottom:0; width:210px; z-index:160;
     background:rgba(38,30,22,.92); color:#f3ece0; display:none;
     flex-direction:column; font-size:12px; padding:10px; box-sizing:border-box;
-    font-family:system-ui,sans-serif; overflow-y:auto; overflow-x:hidden;
+    font-family:system-ui,sans-serif; overflow-y:auto; overscroll-behavior:contain; overflow-x:hidden;
   }
   #edPanel.left{ right:auto; left:0; }
   body.editing #edPanel{ display:flex; }
   #edPanel h3{ margin:0 0 8px; font-size:13px; font-weight:700; }
-  #edPanel .ed-list{ flex:0 0 auto; max-height:170px; overflow-y:auto; margin-bottom:8px;
+  #edPanel .ed-list{ flex:0 0 auto; max-height:170px; overflow-y:auto; overscroll-behavior:contain; margin-bottom:8px;
     border:1px solid rgba(255,255,255,.15); border-radius:6px; }
   #edPanel .ed-item{ padding:5px 8px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.07);
     display:flex; justify-content:space-between; gap:6px; }
@@ -2001,6 +2003,7 @@
   .waiter{
     position:absolute; width:4.2cqw; height:4.2cqw; transform:translate(-50%,-50%);
     transition:left 1.8s linear, top 1.8s linear; z-index:15;
+    touch-action:none;                 /* (v39) 드래그 시 페이지 스크롤 제스처 차단(탭은 유지) */
     -webkit-touch-callout:none;        /* 길게 눌러도 iOS 저장/공유 메뉴 안 뜨게 */
     -webkit-user-select:none; user-select:none;
     cursor:grab;
