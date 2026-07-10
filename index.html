@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v43_001</title>
+<title>포근한 디저트 가게 — v43_003</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -133,6 +133,8 @@
     box-shadow:0 0.2cqw 0.4cqw rgba(120,90,60,.3);
   }
   .slot .lv.lv-empty, .shelf .lv.lv-empty{ background:#e0524c; }   /* 재고 0 + 생산 중 = 빨간 */
+  /* (v43_003) 아웃게임(홈)에서는 재고 배지 숨김 — 영업/파티 중에만 표시 */
+  body.outgame .slot .lv, body.outgame .shelf .lv{ display:none; }
 
   /* 게임 정보 오버레이 (stage 안 우측 상단) */
   .game-info{
@@ -1605,10 +1607,11 @@
     animation:badgeAlive 4s ease-in-out infinite;
   }
   .fb-badge.hidden{ display:none; }
-  /* (v43_001) 이야기(스토리 퀘) 간판 — 홈 하단 칩. glow/blur 금지, 솔리드 섀도만 */
+  /* (v43_001) 이야기(스토리 퀘) 간판 — glow/blur 금지, 솔리드 섀도만 */
+  /* (v43_002) 위치 이동: 홈 하단 → 우상단 12,1~14,1 (주방 오른쪽, 신민 지정) */
   .quest-btn-pos{
     position:absolute; z-index:115;
-    left:calc(7.2/16*100%); top:calc(8/9*100%);
+    left:calc(13.5/16*100%); top:calc(1.5/9*100%);
     transform:translate(-50%,-50%);
   }
   .quest-btn-pos.hidden{ display:none; }
