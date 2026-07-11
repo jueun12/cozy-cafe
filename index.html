@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v43_010</title>
+<title>포근한 디저트 가게 — v44_006</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -135,6 +135,10 @@
   .slot .lv.lv-empty, .shelf .lv.lv-empty{ background:#e0524c; }   /* 재고 0 + 생산 중 = 빨간 */
   /* (v43_003) 아웃게임(홈)에서는 재고 배지 숨김 — 영업/파티 중에만 표시 */
   body.outgame .slot .lv, body.outgame .shelf .lv{ display:none; }
+  /* (v44_006) 재고 배지가 음식을 덜 가리게 — 주방 아래로, 음료(좌) 오른쪽, 스위츠(우) 왼쪽 (v44_005에서 한 단계 더) */
+  .slot .lv{ bottom:-0.7cqw; }
+  #stationLeft .shelf .lv{ left:calc(50% + 2.2cqw); }
+  #stationRight .shelf .lv{ left:calc(50% - 2.2cqw); }
 
   /* 게임 정보 오버레이 (stage 안 우측 상단) */
   .game-info{
@@ -548,6 +552,16 @@
   }
   /* 서빙 성공: 말풍선 크게 펑 */
   .want-bubble.served-burst{ animation:servedBurst .5s cubic-bezier(.3,1.8,.5,1); transform-origin:bottom center; }
+  /* (v44_004) 주문 일치 선반 바운스 — 기다리는 손님의 주문과 일치하고 재고가 있는 음식만 통통.
+     아이콘(.dish)만 튀고 선반·쿨다운 게이지는 고정. glow·blur 없음. */
+  @keyframes wantedBounce{
+    0%,100%{ transform:translateY(0); }
+    30%{ transform:translateY(-18%); }
+    50%{ transform:translateY(0); }
+    65%{ transform:translateY(-7%); }
+    80%{ transform:translateY(0); }
+  }
+  .slot.wanted .dish, .shelf.wanted .dish{ animation:wantedBounce 1.6s ease-in-out infinite; }
   @keyframes servedBurst{
     0%{ transform:scale(1); }
     30%{ transform:scale(1.5) translateY(-0.6cqw); }
@@ -3907,6 +3921,40 @@ const STORY_QUESTS=[
       '일주일 뒤, 원고에 마지막 장이 생겼다. 아무도 죽지 않는 결말이었다 — 사라진 줄 알았던 사람은, 먼 동네에서 작은 가게를 열고 잘 지내고 있었다.',
       '지금 그 원고는 노아의 서점 창가, 「밤의 서가」라 이름 붙은 작은 코너에 꽂혀 있다. 파는 책은 아니다. 다만 누구든, 그 자리에서 끝까지 읽고 갈 수 있다.',
       '유키는 요즘도 창가에서 무언가를 쓴다. 다만 이제는, 마지막 장부터 쓴다고 한다.'
+    ] },
+  { id:'story_crois_1', emoji:'🥐', title:'두 개의 크루아상 · 1장 — 오늘은 여기서', guest:'guest_10',
+    unlock:{ friend:'guest_10', level:1 },
+    hint:'한나와 친구가 되면 열려요',
+    goal:{ type:'serveFav', guest:'guest_10', count:2 },
+    reward:100,
+    intro:[
+      '늘 크루아상을 여러 개 포장해 가는 손님이 있다.',
+      '"다 같이 나눠 먹으려고. 여기 크루아상, 다들 정말 좋아하거든."',
+      '봉투는 언제나 금방 채워진다.'
+    ],
+    done:[
+      '"크루아상 하나… 아니, 두 개. 오늘은 여기서 먹고 갈래."',
+      '늘 포장을 기다리던 자리 대신, 그녀는 처음으로 의자를 골랐다.',
+      '"오늘은… 왠지 그러고 싶으니까."',
+      '접시가 비워지기까지는, 꽤 오랜 시간이 걸렸다.'
+    ] },
+  { id:'story_crois_2', emoji:'☕', title:'두 개의 크루아상 · 2장 — 같은 테이블', guest:'guest_3',
+    unlock:{ quest:'story_crois_1', friend:'guest_3', level:1 },
+    hint:'1장을 읽고, 엠마와 친구가 되면 열려요',
+    goal:{ type:'serveEach', guests:['guest_10','guest_3'], count:1 },
+    reward:180,
+    intro:[
+      '늘 같은 시간, 같은 자리에서 아메리카노를 마시는 손님이 있다.',
+      '오늘은 그 자리에, 먼저 앉은 사람이 있다.',
+      '"…흐음."'
+    ],
+    done:[
+      '"여기 자리 비었는데, 같이 앉을래?"',
+      '트레이 위의 크루아상 하나가, 아메리카노 옆으로 옮겨졌다.',
+      '"…난 빵은 별론데."',
+      '"그럼 작게 한 조각만 잘라 줄게. 커피랑 정말 잘 어울리거든."',
+      '마지못해 입에 넣는가 싶더니, 커다란 크루아상이 순식간에 사라졌다.',
+      '마지막 조각을 삼킨 두 사람은, 마주 보며 웃음을 터트렸다.'
     ] }
 ];
 let storyDone=[];          // 완료한 퀘스트 id 배열 (저장됨)
@@ -4666,6 +4714,7 @@ function buildShelves(){
   // 쓰레기통·OPEN 버튼을 칸 좌표로 배치
   placeFixtures();
   applyThemeSparkle();   // (v42_003) 선반 재생성 시 테마 ✨ 재적용 (openDay 이후 rebuild로 유실되던 버그 수정)
+  refreshWantedShelves();   // (v44_004) 재생성으로 날아간 .wanted 클래스 복원 (같은 함정 패턴)
 }
 
 // 쓰레기통·OPEN 버튼 등 단일 오브젝트를 칸 좌표(left/top)로 배치
@@ -5262,7 +5311,9 @@ function execTable(tableIdx){
   const t=tables[tableIdx];
   if(!t){ actionDone(); return; }
   // 점원이 멈출 위치: 테이블 아래 칸 기준, 오브젝트 없는 가장 가까운 빈 홀 칸
-  const stand = nearestStand(t.col, t.row+1);
+  // (v44_002) 하단(row6) 테이블은 아래 칸(row7)이 홀 밖 → 인접 폴백이 (9,6)을 잡고
+  //           aislePath 입구 분기(col13 우회)를 타던 버그. 아래가 못 서는 칸이면 위(row5)에서 서빙.
+  const stand = isStandable(t.col, t.row+1) ? nearestStand(t.col, t.row+1) : nearestStand(t.col, t.row-1);
   // 더러운 테이블 → 점원이 가서 치움 (안내/서빙보다 우선)
   if(t.dirty){
     if(autoCleanActive()){ actionDone(); return; }   // 자동 세척 켜짐 → 점원은 청소하러 가지 않음 (서빙 집중)
@@ -5347,6 +5398,22 @@ function updateStockBadge(sh){
     }
   }
   sh.el.classList.toggle('empty', sh.stock<=0);
+  refreshWantedShelves();   // (v44_004) 재고 변동 = wanted 바운스 재판정 (모든 재고 변경이 이 함수를 지남)
+}
+
+// (v44_004) 주문 일치 선반 바운스 — 기다리는 손님의 주문(want/sideWant)과 일치 + 재고 있음 → .wanted 토글.
+// 이벤트 시점(주문 발생/재고 변동/서빙/이탈/선반 재생성)에만 호출. tick 매 프레임 아님.
+function refreshWantedShelves(){
+  const wanted=new Set();
+  tables.forEach(t=>{
+    const c=t.occupant; if(!c) return;
+    if(c.state==='waiting' && c.want) wanted.add(c.want);
+    else if(c.state==='waitingSide' && c.sideWant) wanted.add(c.sideWant);
+  });
+  shelves.forEach(sh=>{
+    if(!sh.el || sh.maxStock==null) return;
+    sh.el.classList.toggle('wanted', wanted.has(sh.dishId) && (sh.stock||0)>0);
+  });
 }
 
 // 쟁반에 담긴 dishId를 기다리는 손님들 말풍선 강조
@@ -5376,6 +5443,7 @@ function serveTable(tableIdx){
     updateSeat(t);
     serveBurst(t);
     toast('맛있게 드세요! 🍽️');
+    refreshWantedShelves();   // (v44_004) 주문 소멸 → 바운스 재판정
     if(!tutorFirstServeDone) clearTutorHint();
     return;
   }
@@ -5392,6 +5460,7 @@ function serveTable(tableIdx){
     updateSeat(t);
     serveBurst(t);
     toast('고마워요! 😊');
+    refreshWantedShelves();   // (v44_004) 사이드 주문 소멸 → 바운스 재판정
     return;
   }
 }
@@ -6237,6 +6306,7 @@ function customerLeaves(t, satisfied){
   const gid = (c.guest && c.guest.id) ? c.guest.id : c.guest;  // guest는 객체 → id로 변환
   setTableMenuIcon(t, false);   // 퇴장 시 메뉴판 아이콘 확실히 제거
   t.occupant=null;
+  refreshWantedShelves();   // (v44_004) 대기 중 이탈 → 바운스 재판정
   // 퇴장 리액션: 좌석을 바로 지우지 않고, 캐릭터 모션 + 머리위 심볼을 보여준 뒤 제거
   playLeaveReaction(t, satisfied);
   if(satisfied){
@@ -6461,7 +6531,7 @@ function tick(ts){
   tables.forEach(t=>{
     const c=t.occupant; if(!c) return;
     if(c.state==='thinking'){
-      if(gameNow>=c.thinkUntil){ c.state='waiting'; c._lastHearts=heartsCount(c); updateSeat(t); tutorOnMenuDecided(); }
+      if(gameNow>=c.thinkUntil){ c.state='waiting'; c._lastHearts=heartsCount(c); updateSeat(t); tutorOnMenuDecided(); refreshWantedShelves(); }
     } else if(c.state==='waiting'){
       c.patience-=dt*1000/c.patienceMs;
       refreshHearts(t,c);
@@ -6480,6 +6550,7 @@ function tick(ts){
           c.patience=1;                 // 사이드 대기 인내심 리셋
           c._lastHearts=heartsCount(c);
           updateSeat(t);
+          refreshWantedShelves();   // (v44_004) 사이드 주문 발생 → 바운스 재판정
         } else {
           customerLeaves(t,true);
         }
@@ -7047,7 +7118,9 @@ function refreshHomeSigns(){
   // (v43_001) 이야기(스토리 퀘) 간판 — 보여줄 이야기가 생기면 등장 (친구 명부 해금 이후)
   const qb=document.getElementById('questBtn');
   if(qb){
-    const vis = featuresUnlocked.friends && storyFeatureVisible();
+    // (v44_003) 다이어리는 Day 4부터 — Day1 튜토리얼~Day3 상점과 겹치지 않게 하루 하나 리듬.
+    //           이미 데뷔한 기존 세이브(storyIntroShown)는 일차와 무관하게 유지.
+    const vis = featuresUnlocked.friends && storyFeatureVisible() && (dayCount>=4 || storyIntroShown);
     qb.classList.toggle('hidden', !vis);
     if(vis && !storyIntroShown){
       // (v43_010) 해금 연출 순차 처리 — 다른 짜잔 토스트(친구 리스트 등)가 떠 있으면 끝난 뒤에 재생
