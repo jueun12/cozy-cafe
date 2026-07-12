@@ -116,7 +116,7 @@
   .slot .dish, .shelf .dish{
     font-size:6cqw; line-height:1; width:88%; height:88%;
     display:flex; align-items:center; justify-content:center;
-    transition:opacity .2s; position:relative; z-index:1;
+    transition:opacity .2s, transform .25s ease-out; position:relative; z-index:1;   /* (v45_004) wanted 진입 시 확대 트랜지션 */
   }
   .slot .dish img, .shelf .dish img{
     width:100%; height:100%; object-fit:contain; display:block;
@@ -514,6 +514,7 @@
   /* 맥락별 크기 조정 */
   .friend-fav .dish-ico-img, .friend-cond .dish-ico-img{ width:2cqw; height:2cqw; }
   .shop-item .si-ico .dish-ico-img{ width:5cqw; height:5cqw; }
+  #dayBadge .dish-ico-img, #themeDayBadge .dish-ico-img{ width:1.3em; height:1.3em; }   /* (v45_007) 배지용: 글자 높이 맞춤 */
   .want-bubble.eating{ border-color:var(--ok); }
   .want-bubble.thinking{ color:var(--ink-soft); letter-spacing:1px; font-size:13px; }
   .want-bubble.side{ border-color:var(--accent); background:rgba(255,246,236,.78); font-size:14px; }
@@ -554,14 +555,23 @@
   .want-bubble.served-burst{ animation:servedBurst .5s cubic-bezier(.3,1.8,.5,1); transform-origin:bottom center; }
   /* (v44_004) 주문 일치 선반 바운스 — 기다리는 손님의 주문과 일치하고 재고가 있는 음식만 통통.
      아이콘(.dish)만 튀고 선반·쿨다운 게이지는 고정. glow·blur 없음. */
-  @keyframes wantedBounce{
-    0%,100%{ transform:translateY(0); }
-    30%{ transform:translateY(-18%); }
-    50%{ transform:translateY(0); }
-    65%{ transform:translateY(-7%); }
-    80%{ transform:translateY(0); }
+  /* (v45_004) 주문 일치 선반 강조 — 말풍선 .ready와 같은 '상태 기반' 문법.
+     펄스·사각 링 제거 → 노란 실루엣 아웃라인(안내 손님 청록 패턴과 동일 기법, 블러 0) + scale(1.1) 유지.
+     (v45_005) 켜지는 순간 1회 '팡통'(pop-strong과 같은 곡선: scale 팡 + 위로 미세하게) 후 1.1에 안착. 반복 모션 없음. */
+  @keyframes wantedPop{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.35) translateY(-0.4cqw); }
+    65%{ transform:scale(1.02); }
+    100%{ transform:scale(1.1); }
   }
-  .slot.wanted .dish, .shelf.wanted .dish{ animation:wantedBounce 1.6s ease-in-out infinite; }
+  .slot.wanted .dish, .shelf.wanted .dish{
+    transform:scale(1.1);
+    animation:wantedPop .45s cubic-bezier(.34,1.7,.6,1);
+    filter:drop-shadow(0.16cqw 0 0 #ffd54a) drop-shadow(-0.16cqw 0 0 #ffd54a)
+           drop-shadow(0 0.16cqw 0 #ffd54a) drop-shadow(0 -0.16cqw 0 #ffd54a)
+           drop-shadow(0.19cqw 0 0 #d19016) drop-shadow(-0.19cqw 0 0 #d19016)
+           drop-shadow(0 0.19cqw 0 #d19016) drop-shadow(0 -0.19cqw 0 #d19016);
+  }
   @keyframes servedBurst{
     0%{ transform:scale(1); }
     30%{ transform:scale(1.5) translateY(-0.6cqw); }
@@ -3770,10 +3780,13 @@ function ensureThemeSchedule(){
 function updateThemeBadge(){
   const b=document.getElementById('themeDayBadge');
   if(!b) return;
-  const left=themeNextDay-dayCount;
-  if(!themeNextDay || !themeFood || !DISH[themeFood] || left>THEME_COUNTDOWN){ b.classList.add('hidden'); return; }
+  // (v45_001) 마감 후엔 다음 OPEN에 열릴 날 기준으로 계산 — 테마 당일 마감 후 "오늘!" 잔존 버그 수정
+  const effDay=dayCount+(pendingNextDay?1:0);
+  const left=themeNextDay-effDay;
+  if(!themeNextDay || !themeFood || !DISH[themeFood] || left>THEME_COUNTDOWN || left<0){ b.classList.add('hidden'); return; }
   const d=DISH[themeFood];
-  b.textContent = left<=0 ? `${d.ico} ${d.nm} 데이 오늘!` : `${d.ico} ${d.nm} 데이 D-${left}`;
+  const ic=dishIcoInline(d);   // (v45_007) 이모지 → 실제 아트, 선반과 통일
+  b.innerHTML = left<=0 ? `${ic} ${d.nm} 데이 오늘!` : `${ic} ${d.nm} 데이 D-${left}`;
   b.classList.remove('hidden');
 }
 // 테마 데이 당일 착석 손님 대사 (공용 임시 초안, 30% 확률 1줄) — 최종 확정: 신민
@@ -4121,6 +4134,17 @@ function questReaderHTML(q, kind, claim){
 function renderQuest(){
   const body=document.getElementById('questBody');
   if(!body) return;
+  // (v45_006) 스크롤 관리 — innerHTML 교체 시 scrollTop이 남아 본문이 중간부터 보이던 버그 수정.
+  // 목록→본문: 목록 위치 저장 후 0부터 / 본문→목록: 복원 / 탭 전환: 리셋
+  const prevMode=body._qmode||'list', prevTab=body._qtab||questTab;
+  const mode=(questView && questView.mode)||'list';
+  if(prevMode==='list' && mode==='read') body._listScroll=body.scrollTop;
+  body._qmode=mode; body._qtab=questTab;
+  const applyScroll=()=>{
+    if(questTab!==prevTab) body.scrollTop=0;
+    else if(mode==='read') body.scrollTop=0;
+    else if(prevMode==='read' && mode==='list') body.scrollTop=body._listScroll||0;
+  };
   document.querySelectorAll('.q-tab').forEach(x=>x.classList.toggle('active', x.dataset.tab===questTab));
   refreshQuestBadge();   // (v43_010) 탭 느낌표 동기화
   if(questTab==='daily'){
@@ -4138,11 +4162,12 @@ function renderQuest(){
       toast(`🪙${q.reward}을 받았어요!`);
       renderQuest(); refreshQuestBadge();
     }; });
+    applyScroll();   // (v45_006)
     return;
   }
   if(questView.mode==='read'){
     const q=storyQuest(questView.id);
-    if(q){ body.innerHTML=questReaderHTML(q, questView.kind, questView.claim); bindQuestActions(body); return; }
+    if(q){ body.innerHTML=questReaderHTML(q, questView.kind, questView.claim); bindQuestActions(body); applyScroll(); return; }   // (v45_006)
     questView={ mode:'list' };
   }
   // (v44_010) 액션 가능 카드 우선 정렬 — 수령 가능(0) > 시작 가능(1) > 나머지(2, 원래 순서 유지)
@@ -4156,6 +4181,7 @@ function renderQuest(){
     .map(x=>questCardHTML(x.q)).join('') ||
     `<div class="quest-empty">아직 이야기가 없어요</div>`;
   bindQuestActions(body);
+  applyScroll();   // (v45_006)
 }
 function bindQuestActions(root){
   root.querySelectorAll('[data-start]').forEach(b=>{ b.onclick=(e)=>{ e.stopPropagation(); questView={mode:'read', id:b.dataset.start, kind:'intro', claim:false}; renderQuest(); }; });
@@ -4532,8 +4558,19 @@ const PARTY_LULL_MULT = 1.9;    // 숨고르기 = 스폰 간격 길게(브레이
 const PARTY_MILESTONE = 10;     // 웨이브 1단계 = 서빙 N명
 const PARTY_ESC       = 0.30;   // 상승 강도(√ 곡선 — 초반 완만)
 const PARTY_ESC_CAP   = 9;      // 상승 상한(밀도 수렴 — 절대 불가능해지지 않음)
+// (v45_008) 웨이브 다양화 3종 — 인기 메뉴(CSD형)·예고 버스트(PvZ형)·사이드 증가(디너대시형)
+const PARTY_HOT_RATIO   = 0.6;   // 인기 메뉴 주문 집중 비율
+const PARTY_BURST_DELAY = 2500;  // 웨이브업 예고 → 버스트 시작까지(가상ms)
+const PARTY_BURST_LEN   = 3000;  // 버스트 지속(가상ms)
+const PARTY_BURST_MULT  = 0.3;   // 버스트 중 스폰 간격 배수(짧게=밀집)
+const PARTY_SIDE_STEP   = 0.05;  // 웨이브당 사이드 주문 확률 증가폭
+const PARTY_SIDE_CAP    = 0.85;  // 사이드 확률 상한
 let partyStartAt=0;             // 런타임 전용 — 파티 시작 gameNow 스탬프(주기 시계 기준)
 let partyWaveLevel=0;           // 런타임 전용 — 현재 상승 단계(전환 감지·표시용)
+let partyHotDish=null;          // (v45_008) 런타임 전용 — 이번 웨이브 인기 메뉴
+let partyBurstAt=0;             // (v45_008) 런타임 전용 — 버스트 시작 시각(예고 후)
+let partyBurstUntil=0;          // (v45_008) 런타임 전용 — 버스트 종료 시각
+let partyBurst=false;           // (v45_008) 런타임 전용 — 버스트 구간 여부(전환 감지용)
 let partyRush=false;            // 런타임 전용 — 현재 러시 구간 여부(전환 감지용)
 let pendingPartyToast=null;     // 모든 메뉴 해금(마지막 메뉴 친구 등장) 팝업 닫은 뒤 띄울 파티 해금 안내(런타임 전용)
 let giftToday=[];               // 오늘 선물 준 친구 id 목록 — 하루 친구당 1회 제한, 매 새 날 리셋, 영구 저장
@@ -5517,8 +5554,10 @@ function pickUnlockedSide(){
 function spawnCustomer(){
   if(waitingQueue.length>=QUEUE_MAX) return;   // 줄 꽉 차면 안 옴
   const mainPool = MAIN_DISHES.filter(d=>unlockedDishes.includes(d.id)).map(d=>d.id);  const pool = mainPool.length ? mainPool : MAIN_DISHES.map(d=>d.id);
-  // (v42_001) 테마 데이: 75% 확률로 테마 음식 주문 (미해금이면 기존 랜덤 폴백)
-  const want = (isThemeDay() && pool.includes(themeFood) && Math.random()<THEME_RATIO)
+  // (v45_008) 파티: 웨이브 인기 메뉴 60% 집중 / (v42_001) 테마 데이: 75% 테마 음식 (미해금이면 랜덤 폴백)
+  const want = (phase==='party' && partyHotDish && pool.includes(partyHotDish) && Math.random()<PARTY_HOT_RATIO)
+    ? partyHotDish
+    : (isThemeDay() && pool.includes(themeFood) && Math.random()<THEME_RATIO)
     ? themeFood
     : pool[Math.floor(Math.random()*pool.length)];
   // 등장 손님은 "이미 아는" 손님(기본 친구 + 해금된 친구)만. 미해금 캐릭터는 해금 전까지 안 옴.
@@ -5711,7 +5750,7 @@ function seatInstant(c, tableIdx){
   if(c.el && c.el.parentNode) c.el.remove();   // 줄에 있던 손님 요소 제거
   layoutQueue();
   showSeatHints(false);
-  const sideWant = Math.random()<SIDE_CHANCE ? pickUnlockedSide() : null;
+  const sideWant = Math.random()<sideChance() ? pickUnlockedSide() : null;   // (v45_008) 파티 웨이브 스케일
   free.occupant={ guest:c.guest, want:c.want, sideWant,
                   sideServed:false, sideRequested:false,
                   state:'thinking', thinkUntil:gameNow+2200,
@@ -5783,7 +5822,7 @@ function seatAtTable(tableIdx, forceGuest){
     if(c.el && c.el.parentNode) c.el.remove();
     free.reserved=false;
     // 절반 확률로 사이드 추가 주문 (메인 먹는 도중에 뜸)
-    const sideWant = Math.random()<SIDE_CHANCE ? pickUnlockedSide() : null;
+    const sideWant = Math.random()<sideChance() ? pickUnlockedSide() : null;   // (v45_008) 파티 웨이브 스케일
     free.occupant={ guest:c.guest, want:c.want, sideWant,
                     sideServed:false, sideRequested:false,
                     state:'thinking', thinkUntil:gameNow+2200,
@@ -6108,9 +6147,12 @@ function loadGame(){
 function updateDayBadge(){
   const el=document.getElementById('dayBadge');
   if(!el) return;
-  // (v42_003) 테마 당일엔 "Day N · 🍰 데이"로 플레이 중에도 표시
-  const themeTag = (isThemeDay() && DISH[themeFood]) ? (' · '+DISH[themeFood].ico+' 데이') : '';
-  el.textContent = (phase==='party') ? ('🎉 웨이브 '+(partyWaveLevel+1)) : ('Day '+dayCount+themeTag);
+  // (v42_003) 테마 당일엔 "Day N · 데이"로 플레이 중에도 표시 / (v45_001) 마감 후 잔존 제거
+  // (v45_007) 아이콘을 이모지(ico) → 실제 아트(dishIcoInline)로 — 선반 그림과 통일
+  const themeTag = (isThemeDay() && !pendingNextDay && DISH[themeFood]) ? (' · '+dishIcoInline(DISH[themeFood])+' 데이') : '';
+  el.innerHTML = (phase==='party')
+    ? ('🎉 웨이브 '+(partyWaveLevel+1) + (partyHotDish&&DISH[partyHotDish] ? ' · '+dishIcoInline(DISH[partyHotDish]) : ''))   // (v45_008) 인기 메뉴 표시
+    : ('Day '+dayCount+themeTag);
 }
 function updateWalletHud(){
   const el=document.getElementById('coinNum');
@@ -6505,13 +6547,20 @@ function tick(ts){
     const cycleT = (gameNow - partyStartAt) % PARTY_CYCLE_MS;
     const rushNow = cycleT < PARTY_RUSH_MS;
     const wlNow   = Math.min(Math.floor(served/PARTY_MILESTONE), PARTY_ESC_CAP);
-    if(rushNow!==partyRush || wlNow!==partyWaveLevel){
+    const burstNow = gameNow>=partyBurstAt && gameNow<partyBurstUntil;   // (v45_008)
+    if(rushNow!==partyRush || wlNow!==partyWaveLevel || burstNow!==partyBurst){
       const leveled = wlNow>partyWaveLevel;
-      partyRush=rushNow; partyWaveLevel=wlNow;
+      partyRush=rushNow; partyWaveLevel=wlNow; partyBurst=burstNow;
+      if(leveled){
+        // (v45_008) 웨이브업: 인기 메뉴 교체 + 예고 → 잠시 후 스폰 버스트 (PvZ 리듬)
+        partyHotDish=pickPartyHot();
+        partyBurstAt=gameNow+PARTY_BURST_DELAY; partyBurstUntil=partyBurstAt+PARTY_BURST_LEN;
+        const d=DISH[partyHotDish];
+        toast('☕ 웨이브 ' + (wlNow+1) + '! 손님들이 몰려와요! 인기 메뉴: ' + (d?d.nm:''));   // 문구 임시 — 확정: 신민
+      }
       restartSpawnTimer();   // 새 간격 반영
       if(elTimer) elTimer.classList.toggle('rush', rushNow);   // 러시=색조 신호(폭 불변)
       updateDayBadge();                                         // Day 자리 웨이브 배지 갱신
-      if(leveled) toast('☕ 웨이브 ' + (wlNow+1) + '!');         // 마일스톤 순간 축하 — 문구 임시
     }
   }
   // 유휴 배회: home이고 점원이 이동·작업 중이 아니면 홀을 느긋이 거닒
@@ -6919,6 +6968,16 @@ function clearTutorHint(){
 }
 // 손님 등장 주기 타이머 (배속 반영). 배속이 바뀌면 다시 호출해 간격 갱신.
 // 파티 전용 스폰 간격: 기본간격(업글반영) ÷ 밀도(서빙수 √상승·수렴) × 러시/숨고르기 배수(시간 톱니)
+// (v45_008) 웨이브 인기 메뉴 뽑기 — 직전 인기 메뉴는 제외해 매 웨이브 교체 보장
+function pickPartyHot(){
+  const pool=MAIN_DISHES.filter(d=>unlockedDishes.includes(d.id)).map(d=>d.id).filter(id=>id!==partyHotDish);
+  if(!pool.length) return partyHotDish;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+// (v45_008) 사이드 주문 확률 — 파티에선 웨이브당 +STEP, 상한 CAP (뒤로 갈수록 '더 많이 시키는' 손님)
+function sideChance(){
+  return phase==='party' ? Math.min(PARTY_SIDE_CAP, SIDE_CHANCE + partyWaveLevel*PARTY_SIDE_STEP) : SIDE_CHANCE;
+}
 function partySpawnMs(){
   const base = spawnIntervalMs();
   const wl   = Math.min(Math.floor(served/PARTY_MILESTONE), PARTY_ESC_CAP);
@@ -6926,7 +6985,8 @@ function partySpawnMs(){
   const cycleT  = (gameNow - partyStartAt) % PARTY_CYCLE_MS;
   const rush = cycleT < PARTY_RUSH_MS;
   const mult = rush ? PARTY_RUSH_MULT : PARTY_LULL_MULT;   // 러시=짧게 / 숨고르기=길게
-  return (base / density) * mult;
+  const burst = gameNow>=partyBurstAt && gameNow<partyBurstUntil;   // (v45_008) 웨이브업 버스트
+  return (base / density) * mult * (burst ? PARTY_BURST_MULT : 1);
 }
 function restartSpawnTimer(){
   if(spawnTimer) clearInterval(spawnTimer);
@@ -6982,6 +7042,8 @@ function startParty(){
   // 카운터 초기화 (파티 전용 — coins도 0에서 시작해 이번 파티 벌이 집계)
   served=0; missed=0; coins=0; goalReachedToday=false;
   partyStartAt=gameNow; partyWaveLevel=0; partyRush=true;   // 리듬 웨이브 시계 초기화(러시로 시작)
+  partyHotDish=null; partyHotDish=pickPartyHot();           // (v45_008) 첫 인기 메뉴 선정 (이전 파티 잔존값 무시)
+  partyBurstAt=0; partyBurstUntil=0; partyBurst=false;      // (v45_008) 버스트 리셋
   visitedFriendsToday.clear();
   // 선반 재고 가득 채워 시작
   shelves.forEach(sh=>{
@@ -7374,6 +7436,7 @@ function dismissResult(){
   giftToday=[];   // 새 날 → 선물 다시 가능
   updateDayBadge();
   document.getElementById('openSign').classList.remove('hidden');
+  updateThemeBadge();   // (v45_001) 마감 후 배지 갱신 — 지난 테마 "오늘!" 숨김 / 다음 예약 D-카운트 표시
   checkFeatureUnlocks();   // 새 기능 해금 + 간판 표시 갱신 (상점/친구 간판은 여기서 켜짐)
   saveGame();
   resetCounters();
