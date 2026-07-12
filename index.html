@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v44_010</title>
+<title>포근한 디저트 가게 — v46_006</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -172,9 +172,10 @@
   }
   .game-info .timer{ font-size:1.9cqw; font-weight:700; color:var(--ink); }
   .game-info .timer.hidden{ display:none; }
+  .game-info .timer.rush{ color:#d8722e; }
+  .game-info .timer.dusk{ color:#e07a2a; font-weight:800; }   /* (v46_004) 마감 30초 노을 동기화 — rush보다 우선 */
   .game-info .timer.low{ color:#c0492f; }
   .game-info .timer.urgent{ color:#e8503a; font-weight:900; }
-  .game-info .timer.rush{ color:#d8722e; }
   .hud-btn.party-exit{
     border-color:#E06A8B; color:#E06A8B; background:#FFF0F5;   /* (v40) 파티 마감 — 분홍 강조, glow 없이 sharp */
   }
@@ -186,6 +187,38 @@
   }
   .hud-btn:hover{ background:#FFF6EC; }
   .hud-btn:disabled{ opacity:.35; cursor:default; }
+  /* (v46_003) 마감 임박 노을 비네트 — 중앙은 투명, 가장자리만 노을색이 안쪽으로 번짐(inset shadow 블러).
+     남은 30초부터 opacity 램프(전면 틴트 폐기 — v46_002 "뿌옇다" 피드백). 조작 무관,
+     스프라이트(≤140) 위 · 일시정지(190)/드래그(200)/플로트(230) 아래. */
+  #duskOverlay{
+    position:absolute; inset:0; z-index:150; pointer-events:none;
+    border-radius:inherit;
+    opacity:0; transition:opacity .8s linear;
+  }
+  #duskOverlay::before{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    box-shadow: inset 0 0 9cqw 1cqw rgba(255,84,26,.95),
+                inset 0 0 3.5cqw 0 rgba(255,158,66,.85);
+  }
+  /* 마지막 10초: 가장자리 숨쉬기 펄스 (부드럽게 두근두근) */
+  #duskOverlay.breath::before{ animation:duskBreath 1.6s ease-in-out infinite; }
+  @keyframes duskBreath{ 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
+  /* (v46_003) 마감 임박 중앙 팝 — 1회성, 1.5초 후 자동 페이드아웃. 하단 토스트는 시선 밖이라 교체. */
+  #duskPop{
+    position:absolute; left:50%; top:36%; transform:translate(-50%,-50%) scale(.4);
+    z-index:220; pointer-events:none; display:none;
+    font-weight:900; font-size:4.4cqw; color:#fff; white-space:nowrap;
+    background:rgba(214,96,34,.72); padding:1.3cqw 3.2cqw;   /* (v46_005) 반투명 — 뒤 화면 비침 */
+    border:0.4cqw solid rgba(255,255,255,.8); border-radius:2.2cqw;
+  }
+  #duskPop.show{ display:block; animation:duskPopIn 1.5s cubic-bezier(.34,1.7,.6,1) both; }
+  @keyframes duskPopIn{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.4); }
+    16%{ opacity:.9; transform:translate(-50%,-50%) scale(1.1); }   /* (v46_005) 피크도 살짝 투명 */
+    28%{ transform:translate(-50%,-50%) scale(1); }
+    72%{ opacity:.9; }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1); }
+  }
   /* 일시정지 배너 */
   /* 일시정지: 전체 화면 오버레이 — 아무 곳이나 탭하면 재개 */
   .pause-banner{
@@ -813,6 +846,8 @@
   @keyframes tapPulse{
     0%{ transform:scale(1); } 45%{ transform:scale(1.28); } 100%{ transform:scale(1); }
   }
+  /* (v47_005) 홈 손님 탭 리액션 — 음식 tapPulse와 동일 팝. home-bob(특이도 0,0,4,0)·인라인 duration보다 우선하도록 매치 + !important. 끝나면 home-bob으로 복귀 */
+  .occupant-seat.home-seat .who.home-tapped{ animation:tapPulse .35s cubic-bezier(.34,1.56,.64,1) !important; }
   /* 테이블·상판은 translate로 위치를 잡으므로 펄스 제외. 이미지에만 스케일 펄스 */
   .table.tapped{ animation:none; }
   .table.tapped .top{ animation:none; }
@@ -1335,6 +1370,24 @@
     transform-origin:bottom center;
   }
   @keyframes homeBob{ 0%,100%{ transform:rotate(-2.6deg); } 50%{ transform:rotate(2.6deg); } }
+  /* (v46_001) 랜덤 드롭인 등장 팡통 — 캐릭터 img만 scale 팝 (who의 homeBob과 충돌 없음). glow/blur 없음. */
+  .home-seat.drop-pop .guest-img,
+  .home-seat.drop-pop .guest-emoji{
+    animation:dropinPop .5s cubic-bezier(.34,1.7,.6,1) both;
+    transform-origin:50% 100%;
+  }
+  @keyframes dropinPop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
+  /* (v46_001) 드롭인 등장 ✨ 파티클 — 위쪽 부채꼴로 팡 튀며 페이드. 순수 장식, 자동 제거. */
+  .drop-spark{
+    position:absolute; left:50%; top:38%;
+    font-size:1.7cqw; pointer-events:none; z-index:26;
+    animation:dropSpark .6s ease-out both;
+  }
+  @keyframes dropSpark{
+    0%{ transform:translate(-50%,-50%) scale(.4); opacity:0; }
+    25%{ opacity:1; }
+    100%{ transform:translate(calc(-50% + var(--sx,0cqw)), calc(-50% + var(--sy,-3cqw))) scale(1); opacity:0; }
+  }
   /* 홈 말풍선 (Phase 3-C) — 클릭 시 보너스 호감도 */
   .home-bubble{
     position:absolute; left:72%; bottom:68%; transform:translateX(-10%);
@@ -2110,6 +2163,53 @@
   }
   .bin img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
   .bin::after{ content:'쓰레기통'; position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--ink-soft); white-space:nowrap; }
+  /* (v46_006) 전화 주문 가구 — 전화 선반(12,1)·포장선반(13,1). 아트는 임시 이모지, 신민 에셋 오면 교체 */
+  .fixture{
+    position:absolute; width:6cqw; height:6cqw; z-index:12; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    background:#9c7350; border:0.28cqw solid #6b4a2f; border-radius:0.8cqw;
+    box-shadow:0 3px 6px rgba(0,0,0,.18);
+  }
+  .fixture .fx-emoji{ font-size:3.2cqw; line-height:1; }
+  .fixture::after{ position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--ink-soft); white-space:nowrap; }
+  #phoneShelf::after{ content:'전화기'; }
+  #packShelf::after{ content:'포장선반'; }
+  /* (v47_002) 벨: 팡통 1회 → scale 1.15 유지 + 큰 달랑달랑 + 노란 실루엣 아웃라인(.wanted .dish 기법, 블러 0) + 요란한 ♪♫ */
+  @keyframes phonePopIn{
+    0%{ transform:scale(1); } 35%{ transform:scale(1.4) translateY(-0.4cqw); }
+    65%{ transform:scale(1.05); } 100%{ transform:scale(1.15); }
+  }
+  @keyframes phoneRingBig{
+    0%,100%{ transform:scale(1.15) rotate(0); }
+    25%{ transform:scale(1.15) rotate(-14deg); }
+    75%{ transform:scale(1.15) rotate(14deg); }
+  }
+  #phoneShelf.ringing .fx-emoji{
+    animation: phonePopIn .45s cubic-bezier(.34,1.7,.6,1),
+               phoneRingBig .5s ease-in-out .45s infinite;
+    filter:drop-shadow(0.16cqw 0 0 #ffd54a) drop-shadow(-0.16cqw 0 0 #ffd54a)
+           drop-shadow(0 0.16cqw 0 #ffd54a) drop-shadow(0 -0.16cqw 0 #ffd54a)
+           drop-shadow(0.19cqw 0 0 #d19016) drop-shadow(-0.19cqw 0 0 #d19016)
+           drop-shadow(0 0.19cqw 0 #d19016) drop-shadow(0 -0.19cqw 0 #d19016);
+  }
+  #phoneShelf.ringing::before{
+    content:'♪♫'; position:absolute; top:-3.2cqw; right:-1.6cqw;
+    font-size:3.2cqw; font-weight:900; color:#e07a2a;
+    letter-spacing:0.3cqw;
+    animation:phoneNote .7s ease-in-out infinite;
+  }
+  @keyframes phoneNote{
+    0%,100%{ opacity:.4; transform:translateY(0) rotate(-8deg); }
+    50%{ opacity:1; transform:translateY(-1.2cqw) rotate(8deg); }
+  }
+  /* 포장 티켓: 주문 메뉴 뱃지 (선반 위) */
+  .pack-ticket{
+    position:absolute; top:-2.6cqw; left:50%; transform:translateX(-50%);
+    display:flex; gap:0.3cqw; align-items:center;
+    background:#fff8ee; border:0.24cqw solid #d3a06c; border-radius:0.8cqw;
+    padding:0.3cqw 0.5cqw; z-index:13; pointer-events:none; white-space:nowrap;
+  }
+  .pack-ticket .dish-ico-img{ width:4cqw; height:4cqw; }   /* (v47_003) 손님 말풍선과 동일 크기 */
   #verBadge{
     position:absolute; left:6px; bottom:5px; z-index:50;
     font-size:10px; color:var(--ink-soft); opacity:.5;
@@ -2236,6 +2336,8 @@
     70% { transform:translateX(-50%) translateY(var(--q-y,0cqw)) scale(.97); }
     100%{ transform:translateX(-50%) translateY(var(--q-y,0cqw)) scale(1); }
   }
+  /* (v47_006) 착석 손님 탭 팝 — 음식 tapPulse와 동일. react-* 상태 애니메이션 위에 1회 얹힘 */
+  .occupant-seat .who.seat-tapped{ animation:tapPulse .35s cubic-bezier(.34,1.56,.64,1) !important; transform-origin:bottom center; }
   .waiter .wbody .guest-img{
     width:100%; height:100%; object-fit:contain; object-position:bottom;
     filter:drop-shadow(0.08cqw 0 0 #6b4a2e) drop-shadow(-0.08cqw 0 0 #6b4a2e)
@@ -2297,9 +2399,10 @@
 
   /* 영업 타이머 */
   .timer{ font-size:14px; font-weight:700; color:var(--accent-deep); transition:color .2s; }
+  .timer.rush{ color:#d8722e; }
+  .timer.dusk{ color:#e07a2a; font-weight:800; }   /* (v46_004) 마감 30초 노을 동기화 — rush보다 우선 */
   .timer.low{ color:#c0492f; }
   .timer.urgent{ color:#e8503a; font-weight:900; animation:timerPulse .6s ease-in-out infinite; }
-  .timer.rush{ color:#d8722e; }
   @keyframes timerPulse{
     0%,100%{ transform:scale(1); opacity:1; }
     50%    { transform:scale(1.18); opacity:.6; }
@@ -2365,6 +2468,8 @@
 </div>
 
 <div id="stage">
+  <div id="duskOverlay"></div><!-- (v46_002) 마감 임박 노을 틴트 -->
+  <div id="duskPop">🌇 마감 시간이 다가와요!</div><!-- (v46_004) 문구 순화 (확정: 신민) -->
   <button id="edToggle" title="레벨 에디터 (E)">🔧</button>
   <div id="verBadge">v1.2</div>
   <div id="edGrid"></div>
@@ -2676,6 +2781,8 @@
     </div>
   </div>
   <div class="bin" id="bin"><img src="data:image/webp;base64,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" alt="쓰레기통"></div>
+  <div class="fixture" id="phoneShelf"><span class="fx-emoji">☎️</span></div><!-- (v46_006) 전화 주문 -->
+  <div class="fixture" id="packShelf"><span class="fx-emoji">📦</span></div><!-- (v46_006) 포장선반 -->
   <div class="toast" id="toast"></div>
 
   <div class="pause-banner hidden" id="pauseBanner">
@@ -3218,6 +3325,9 @@ const STATION_LEFT_CELLS=[ {col:1,row:3}, {col:1,row:4}, {col:1,row:5} ];
 const STATION_RIGHT_CELLS=[ {col:14,row:3}, {col:14,row:4}, {col:14,row:5} ];
 // 쓰레기통: col 1, row 5 아래쪽 — 음료 바로 아래줄
 const BIN_CELL={col:1, row:6};
+// (v46_006) 전화 주문: 전화 선반·포장선반 — 주방(col5~10) 오른쪽 한 칸 띔
+const PHONE_CELL={col:12, row:1};
+const PACK_CELL={col:13, row:1};
 // OPEN 버튼: col 14, row 7 (곁들임 아래쪽 열, 우하단)
 const OPEN_CELL={col:12, row:7, w:3};   // 우하단 START (하단 띠 정렬)
 // 파티 타임 버튼: OPEN 왼쪽 col9~11, row7 (하단 띠 정렬). partyUnlocked일 때만 표시.
@@ -3274,6 +3384,8 @@ function buildOccupied(){
   STATION_LEFT_CELLS.forEach(c=>add(c.col,c.row));
   STATION_RIGHT_CELLS.forEach(c=>add(c.col,c.row));
   add(BIN_CELL.col,BIN_CELL.row);
+  add(PHONE_CELL.col,PHONE_CELL.row);   // (v46_006)
+  add(PACK_CELL.col,PACK_CELL.row);     // (v46_006)
   add(OPEN_CELL.col,OPEN_CELL.row,OPEN_CELL.w||1);
   TABLE_CELLS.forEach(t=>{
     add(t.col,t.row);
@@ -4556,8 +4668,9 @@ const PARTY_RUSH_MS   = 13000;  // 그중 러시 구간(나머지=숨고르기 �
 const PARTY_RUSH_MULT = 0.72;   // 러시 = 스폰 간격 짧게(밀집)
 const PARTY_LULL_MULT = 1.9;    // 숨고르기 = 스폰 간격 길게(브레이크)
 const PARTY_MILESTONE = 10;     // 웨이브 1단계 = 서빙 N명
-const PARTY_ESC       = 0.30;   // 상승 강도(√ 곡선 — 초반 완만)
-const PARTY_ESC_CAP   = 9;      // 상승 상한(밀도 수렴 — 절대 불가능해지지 않음)
+const PARTY_ESC       = 0.13;   // (v47_004) 상승 강도 — √ → 선형, 완만해지지 않고 계속 오름
+const PARTY_ESC_CAP   = 30;     // (v47_004) 상한 9→30, 사실상 무한 램프(인간 한계 도전)
+const PARTY_SPAWN_FLOOR_MS = 700;  // (v47_004) 최종 스폰 간격 바닥 — 러시·버스트와 곱해 0 수렴 방지(게임 붕괴 방지). 이 바닥이 곧 한계 지점
 // (v45_008) 웨이브 다양화 3종 — 인기 메뉴(CSD형)·예고 버스트(PvZ형)·사이드 증가(디너대시형)
 const PARTY_HOT_RATIO   = 0.6;   // 인기 메뉴 주문 집중 비율
 const PARTY_BURST_DELAY = 2500;  // 웨이브업 예고 → 버스트 시작까지(가상ms)
@@ -4784,6 +4897,14 @@ function placeFixtures(){
     bin.style.top=(ctr.y*100)+'%';
     bin.style.transform='translate(-50%,-50%)';
   }
+  // (v46_006) 전화 선반·포장선반 — bin과 동일 배치 방식
+  [['phoneShelf',PHONE_CELL],['packShelf',PACK_CELL]].forEach(([id,cell])=>{
+    const el=document.getElementById(id); if(!el) return;
+    const ctr=cellToXY(cell.col, cell.row+0.5); // (v47_001) 반 칸 아래 — 말풍선 상단 UI 잘림 방지
+    el.style.left=(ctr.x*100)+'%';
+    el.style.top=(ctr.y*100)+'%';
+    el.style.transform='translate(-50%,-50%)';
+  });
   const openSign=document.getElementById('openSign');
   if(openSign){
     const w=OPEN_CELL.w||1;
@@ -4882,7 +5003,7 @@ function buildTables(){
     el.style.top=(t.y*100)+'%';
     el.style.zIndex=zFor(t.y);
     el.innerHTML=`<div class="top"><img class="table-img" src="${furnImg('table')}" alt=""><span class="tnum">${i+1}번</span></div>`;
-    el.onclick=(e)=>{ e.stopPropagation(); goToTable(i); };
+    el.onclick=(e)=>{ e.stopPropagation(); popSeatedGuest(tables[i]); goToTable(i); };   // (v47_007) 서빙 클릭 → 손님 리액션
     stage.appendChild(el);
     // 의자들 — 각각 독립 DOM, 칸 좌표로 배치
     const chairEls=[];
@@ -4894,7 +5015,7 @@ function buildTables(){
       ce.style.top=(c.y*100)+'%';
       ce.style.zIndex=zFor(c.y)-1;   // 의자는 같은 행 테이블보다 살짝 뒤
       ce.innerHTML=`<img class="chair-img" src="${furnImg('chairL')}" alt="">`;
-      ce.onclick=(e)=>{ e.stopPropagation(); goToTable(i); };
+      ce.onclick=(e)=>{ e.stopPropagation(); popSeatedGuest(tables[i]); goToTable(i); };   // (v47_007) 서빙 클릭 → 손님 리액션
       stage.appendChild(ce);
       chairEls.push({side:ch.side, el:ce, col:ch.col, row:ch.row});
     });
@@ -4932,7 +5053,13 @@ function renderHomeGuests(){
     seat.innerHTML=`<div class="who home-bob" style="animation-duration:${dur}s;animation-delay:${delay}s;">${guestImg(g,'sit')}</div>`;
     applySeatPos(seat, 'left');
     seat._guestId=id; seat._tx=t.x; seat._ty=t.y;   // 보상 좌표/대상
-    seat.onclick=(e)=>{ e.stopPropagation(); openFriendDetail(id); };   // 탭 → 상세
+    seat.onclick=(e)=>{
+      e.stopPropagation();
+      const who=seat.querySelector('.who');   // (v47_005) 탭 팝 리액션
+      if(who){ who.classList.remove('home-tapped'); void who.offsetWidth; who.classList.add('home-tapped');
+        who.addEventListener('animationend',()=>who.classList.remove('home-tapped'),{once:true}); }
+      openFriendDetail(id);
+    };   // 탭 → 팝 + 상세
     host.appendChild(seat);
     homeGuestEls.push(seat);
     scheduleHomeBubble(seat);   // 말풍선 사이클 시작
@@ -5029,11 +5156,18 @@ function spawnHomeDropIn(){
   seat.innerHTML=`<div class="who home-bob" style="animation-duration:${dur}s;animation-delay:${delay}s;">${guestImg(g,'sit')}</div>`;
   applySeatPos(seat,'left');
   seat._guestId=id; seat._tx=t.x; seat._ty=t.y; seat._seatIdx=seatIdx; seat._dropIn=true;
-  seat.onclick=(e)=>{ e.stopPropagation(); openFriendDetail(id); };
+  seat.onclick=(e)=>{
+    e.stopPropagation();
+    const who=seat.querySelector('.who');   // (v47_005) 탭 팝 리액션 — 드롭인 방문객도 동일
+    if(who){ who.classList.remove('home-tapped'); void who.offsetWidth; who.classList.add('home-tapped');
+      who.addEventListener('animationend',()=>who.classList.remove('home-tapped'),{once:true}); }
+    openFriendDetail(id);
+  };
   seat.style.opacity='0'; seat.style.transition=`opacity ${HOME_DROP_FADE}ms ease`;
+  seat.classList.add('drop-pop');   // (v46_001) 등장 팡통 (img scale 팝)
   host.appendChild(seat);
   homeDropEls.push(seat);
-  requestAnimationFrame(()=>{ if(seat.isConnected) seat.style.opacity='1'; });
+  requestAnimationFrame(()=>{ if(seat.isConnected){ seat.style.opacity='1'; dropinSparkle(seat); } });   // (v46_001) ✨ 파티클
   // 등장 인사(플레이버) → 잠시 후 일반 보상 말풍선 사이클 시작
   const hello=HOME_DROP_HELLO[Math.floor(Math.random()*HOME_DROP_HELLO.length)];
   const hb=showHomeFlavor(seat, hello);
@@ -5042,6 +5176,20 @@ function spawnHomeDropIn(){
     if(seat.isConnected && homeDropEls.includes(seat) && !seat._leaving) scheduleHomeBubble(seat);
   }, HOME_DROP_HELLO_SHOW);
   seat._stayTimer=setTimeout(()=>leaveHomeDropIn(seat), HOME_DROP_STAY_MIN + Math.random()*HOME_DROP_STAY_RAND);
+}
+// (v46_001) 드롭인 등장 ✨ 파티클 3개 — 위쪽 부채꼴 랜덤 각도/반경, 스태거 60ms, 자동 제거. SEATED 무관 순수 장식.
+function dropinSparkle(seat){
+  for(let i=0;i<3;i++){
+    const s=document.createElement('span');
+    s.className='drop-spark'; s.textContent='✨';
+    const a=(-90 + (i-1)*55 + (Math.random()*20-10)) * Math.PI/180;
+    const r=3.2 + Math.random()*1.4;
+    s.style.setProperty('--sx', (Math.cos(a)*r).toFixed(2)+'cqw');
+    s.style.setProperty('--sy', (Math.sin(a)*r).toFixed(2)+'cqw');
+    s.style.animationDelay=(i*60)+'ms';
+    seat.appendChild(s);
+    setTimeout(()=>{ if(s.parentNode) s.remove(); }, 900+i*60);
+  }
 }
 function leaveHomeDropIn(seat, silent){
   if(!seat || seat._leaving) return;
@@ -5266,6 +5414,11 @@ function enqueueAction(type, idx){
     const dupBin = (currentAction && currentAction.type==='bin' ? 1 : 0)
       + actionQueue.filter(a=>a.type==='bin').length;
     if(dupBin>=1) return;
+  } else if(type==='phone' || type==='pack'){
+    // (v46_006) 전화/포장 — bin과 동일: 같은 타입 중복만 차단
+    const dupF = (currentAction && currentAction.type===type ? 1 : 0)
+      + actionQueue.filter(a=>a.type===type).length;
+    if(dupF>=1) return;
   } else if(type==='shelf'){
     // 사전 차단 없음 — 중간에 서빙으로 쟁반이 비므로 미리 막으면 과하게 막힘.
     // 실제로 집는 순간(pickDish)에만 쟁반이 꽉 찼는지 검사한다.
@@ -5290,11 +5443,23 @@ function enqueueAction(type, idx){
   if(type==='shelf' && shelves[idx]) tapFeedback(shelves[idx].el);
   if(type==='table' && tables[idx]) tapFeedback(tables[idx].el);
   if(type==='bin'){ const b=document.getElementById('bin'); if(b) tapFeedback(b); }
+  if(type==='phone'){ const el=document.getElementById('phoneShelf'); if(el) tapFeedback(el); }   // (v46_006)
+  if(type==='pack'){ const el=document.getElementById('packShelf'); if(el) tapFeedback(el); }     // (v46_006)
   updateQueueBadges();
   processQueue();
 }
 function goToShelf(shelfIdx){ enqueueAction('shelf', shelfIdx); }
 function goToTable(tableIdx){ enqueueAction('table', tableIdx); }
+// (v47_007) 착석 손님 팝 리액션 — 테이블/의자/손님 클릭 공용. 서빙 액션큐가 생기는 클릭에서 손님이 반응
+function popSeatedGuest(t){
+  if(!t || !t.occupant) return;
+  const chair = t.chairs ? (t.chairs.find(ch=>ch.side==='left') || t.chairs[0]) : null;
+  const host = chair ? chair.el : t.el;
+  const who = host ? host.querySelector('.occupant-seat .who') : null;
+  if(!who) return;
+  who.classList.remove('seat-tapped'); void who.offsetWidth; who.classList.add('seat-tapped');
+  who.addEventListener('animationend',(ev)=>{ if(ev.animationName==='tapPulse') who.classList.remove('seat-tapped'); }, {once:true});
+}
 
 // (v44_007) 쓰레기통 실행 — 기존 원시 onclick(하드코딩 moveTo)을 큐 액션으로 편입.
 //  스탠드는 쓰레기통 위 칸(1,5) 기준, aislePath 경유. 쟁반 검사는 도착 시점(대기 중 상황이 바뀔 수 있음).
@@ -5306,6 +5471,100 @@ function execBin(){
       tray=[];
       renderTrayHud();
       toast('쟁반을 비웠어요 🗑️');
+    }
+    actionDone();
+  });
+}
+
+// ====== (v46_006) 전화 주문 — 옵트인 포장 주문 스트림 ======
+// 손님 엔티티·SEATED 무관. 티켓은 런타임 전용(저장 안 함, 마감 시 소멸).
+// 벨/쿨다운은 timeLeft 기준 → 일시정지·배속 자동 대응. 동시 티켓 1개(티켓 살아있는 동안 벨 없음).
+const PHONE_RING_SEC=6;                       // 벨 지속(초) — 안 받으면 조용히 끊김, 패널티 없음
+const PHONE_COIN_MULT=1.5;                    // 포장 보상 배율 (수치 확정: 신민)
+const PHONE_COOL_MIN=12, PHONE_COOL_MAX=20;   // 벨 사이 쿨다운(초)
+const PHONE_FIRST_DELAY=10;                   // 영업 시작 후 첫 벨까지(초)
+const PHONE_LAST_CALL=8;                      // 남은 시간이 이보다 적으면 새 벨 없음
+let phoneNextRingAt=-1;   // 다음 벨이 울릴 timeLeft 기준점 (-1=예약 없음)
+let phoneRingEndAt=-1;    // 울림이 끊길 timeLeft 기준점 (-1=안 울리는 중)
+let phoneHeld=false;      // 받으러 가는 중 (벨 시각 유지, 만료 무시)
+let phoneTicket=null;     // {items:[dishId,...]}
+const elPhoneShelf=document.getElementById('phoneShelf');
+const elPackShelf=document.getElementById('packShelf');
+
+function scheduleNextRing(){
+  phoneNextRingAt = timeLeft - (PHONE_COOL_MIN + Math.random()*(PHONE_COOL_MAX-PHONE_COOL_MIN));
+  if(phoneNextRingAt < PHONE_LAST_CALL) phoneNextRingAt = -1;
+}
+function stopPhoneRing(){ phoneRingEndAt=-1; elPhoneShelf.classList.remove('ringing'); }
+function resetPhoneDay(schedule){
+  phoneHeld=false; phoneTicket=null; stopPhoneRing();
+  phoneNextRingAt = schedule ? Math.max(PHONE_LAST_CALL, timeLeft-PHONE_FIRST_DELAY) : -1;
+  renderPackTicket();
+}
+function phoneTick(){
+  // 벨 시작 (티켓·홀드·이미 울리는 중이면 보류 — 예약은 소모하지 않고 상태 해제 후 재개)
+  if(phoneNextRingAt>=0 && timeLeft<=phoneNextRingAt && !phoneTicket && !phoneHeld && phoneRingEndAt<0){
+    phoneNextRingAt=-1;
+    phoneRingEndAt=Math.max(0, timeLeft-PHONE_RING_SEC);
+    elPhoneShelf.classList.add('ringing');
+  }
+  // 벨 만료 (안 받음 → 조용히 끊고 다음 벨 예약)
+  if(phoneRingEndAt>=0 && !phoneHeld && timeLeft<=phoneRingEndAt){
+    stopPhoneRing();
+    scheduleNextRing();
+  }
+}
+// 포장 티켓 뱃지 렌더 (포장선반 위)
+function renderPackTicket(){
+  if(!elPackShelf) return;
+  let w=elPackShelf.querySelector('.pack-ticket');
+  if(!phoneTicket || !phoneTicket.items.length){ if(w) w.remove(); return; }
+  if(!w){ w=document.createElement('div'); w.className='pack-ticket'; elPackShelf.appendChild(w); }
+  w.innerHTML=phoneTicket.items.map(id=>dishIcoInline(DISH[id])).join('');
+}
+function execPhone(){
+  // 주방 슬롯과 동일: 한 칸 아래(row2) 좌표 직접 접근 (nearestStand는 row2를 거부하는 함정)
+  const ax=cellToXY(PHONE_CELL.col, PHONE_CELL.row).x, ay=cellToXY(PHONE_CELL.col, PHONE_CELL.row+1).y;
+  moveAlong(aislePath(ax, ay), ()=>{
+    if(phoneHeld && !phoneTicket && isServing()){
+      phoneHeld=false; stopPhoneRing();
+      // 주문 생성: 해금 메인 1~2개 (중복 허용 — 같은 메뉴 2개 주문 가능)
+      const pool=MAIN_DISHES.filter(d=>unlockedDishes.includes(d.id)).map(d=>d.id);
+      const n=(Math.random()<0.4 && pool.length>0)?2:1;
+      const items=[]; for(let i=0;i<n;i++) items.push(pool[Math.floor(Math.random()*pool.length)]);
+      phoneTicket={items};
+      renderPackTicket();
+      toast('📞 포장 주문이 들어왔어요!');   // 문구 임시 — 확정: 신민
+    } else {
+      phoneHeld=false; stopPhoneRing();
+      toast('전화가 끊겼어요…');            // 문구 임시 — 확정: 신민
+      scheduleNextRing();
+    }
+    actionDone();
+  });
+}
+function execPack(){
+  const ax=cellToXY(PACK_CELL.col, PACK_CELL.row).x, ay=cellToXY(PACK_CELL.col, PACK_CELL.row+1).y;
+  moveAlong(aislePath(ax, ay), ()=>{
+    if(!phoneTicket){ actionDone(); return; }
+    let earned=0, delivered=0;
+    phoneTicket.items=phoneTicket.items.filter(id=>{
+      const k=tray.indexOf(id);
+      if(k>=0){ tray.splice(k,1); delivered++; earned+=Math.round(dishPrice(id)*PHONE_COIN_MULT); return false; }
+      return true;
+    });
+    if(delivered>0){
+      renderTrayHud();
+      const p=cellToXY(PACK_CELL.col, PACK_CELL.row);
+      earnCoins(earned, p.x, p.y);
+      if(phoneTicket.items.length===0){
+        phoneTicket=null;
+        toast('📦 포장 완료! 다음에 또 주문할게요~');   // 문구 임시 — 확정: 신민
+        scheduleNextRing();
+      }
+      renderPackTicket();
+    } else {
+      toast('주문한 디저트가 쟁반에 없어요');
     }
     actionDone();
   });
@@ -5344,6 +5603,8 @@ function processQueue(){
   if(next.type==='shelf') execShelf(next.idx);
   else if(next.type==='table') execTable(next.idx);
   else if(next.type==='bin') execBin();   // (v44_007)
+  else if(next.type==='phone') execPhone();   // (v46_006)
+  else if(next.type==='pack') execPack();     // (v46_006)
 }
 // 한 작업이 끝나면(도착 콜백 종료 후) 호출 — 다음 작업으로 넘어감
 function actionDone(){
@@ -5366,6 +5627,10 @@ function updateQueueBadges(){
       host = sh.el; isShelf=true;   // 선반 박스에 붙이고, CSS로 음식 카드 위에 맞춤
     } else if(a.type==='bin'){
       host = document.getElementById('bin'); if(!host) return;   // (v44_007)
+    } else if(a.type==='phone'){
+      host = document.getElementById('phoneShelf'); if(!host) return;   // (v46_006)
+    } else if(a.type==='pack'){
+      host = document.getElementById('packShelf'); if(!host) return;    // (v46_006)
     } else {
       const t=tables[a.idx]; if(!t||!t.el) return;
       host = t.el;
@@ -5419,6 +5684,7 @@ function execTable(tableIdx){
   if(!t.occupant && !t.reserved){
     // 빈 테이블 클릭 → 점원이 먼저 입구로 가서 손님을 부른 뒤, 함께 테이블로 안내
     if(waitingQueue.length===0){ tableToast(t, '대기 중인 손님이 없어요'); actionDone(); return; }
+    if(!firstArrivedGuest()){ tableToast(t, '손님이 걸어오는 중이에요~ 잠시만 기다려주세요!'); actionDone(); return; }  // (v47_003) 큐에 있으나 아직 걸어오는 중
     t.reserved=true; t.reservedAt=gameNow; // 가는 동안 다른 손님 배정 방지 (스탬프: 유령 예약 워치독용)
     showSeatHints(false);                  // 자리 표시 끔
     // 예약 시점의 희망 손님(선택된 손님). 도착 시 다시 확정한다.
@@ -5432,7 +5698,7 @@ function execTable(tableIdx){
       //  - 아니면 대기열 맨 앞 손님으로 대체 (A안: 헛걸음 대신 다른 손님 안내)
       //  - 아무도 없으면 깔끔히 취소 + 테이블에 안내
       let g = (want && waitingQueue.indexOf(want)>=0 && want.arrived) ? want : firstArrivedGuest();
-      if(!g){ t.reserved=false; showSeatHints(true); tableToast(t, '대기 중인 손님이 없어요'); actionDone(); return; }
+      if(!g){ t.reserved=false; showSeatHints(true); tableToast(t, waitingQueue.length>0 ? '손님이 걸어오는 중이에요~ 잠시만 기다려주세요!' : '대기 중인 손님이 없어요'); actionDone(); return; }  // (v47_003)
       pokeGuest(g);                         // 손님 폴짝(부르는 느낌)
       // 점원이 문에 닿는 순간, 손님도 바로 뒤따라 출발 + 점원도 테이블로 (나란히 이동)
       seatAtTable(tableIdx, g);
@@ -5980,12 +6246,12 @@ function updateSeat(t){
   seat.innerHTML=inner;
   // 주문 말풍선(묶음)을 눌러도 서빙되게 — 손님이 음식 받으면 말풍선이 강조돼 자연스레 누르게 됨
   const stackEl=seat.querySelector('.bubble-stack');
-  if(stackEl){ stackEl.onclick=(e)=>{ e.stopPropagation(); goToTable(t.idx); }; }
+  if(stackEl){ stackEl.onclick=(e)=>{ e.stopPropagation(); popSeatedGuest(t); goToTable(t.idx); }; }   // (v47_007) 말풍선 서빙 클릭도 손님 리액션
   // 앉은 손님(캐릭터 그림)을 눌러도 서빙되게
   const whoEl=seat.querySelector('.who');
   if(whoEl){
     whoEl.style.cursor='pointer';
-    whoEl.onclick=(e)=>{ e.stopPropagation(); goToTable(t.idx); };
+    whoEl.onclick=(e)=>{ e.stopPropagation(); popSeatedGuest(t); goToTable(t.idx); };   // (v47_007) 헬퍼로 통일
     if(c.state==='eating') whoEl.classList.add('react-eat');  // 먹는 중 까딱까딱
     else if(c.state==='thinking') whoEl.classList.add('react-think');  // 주문 고민 중 갸웃갸웃
     else if(c.state==='waiting' || c.state==='waitingSide') whoEl.classList.add('react-wait');  // 음식 대기 중 잔잔히 들썩
@@ -6512,6 +6778,7 @@ function tick(ts){
     timeLeft-=dt;
     if(timeLeft<=0){ timeLeft=0; closeDay(); }
     updateTimerDisplay();
+    phoneTick();   // (v46_006) 전화 벨 스케줄 (timeLeft 기준 — 일시정지·배속 자동 대응)
   }
 
   // 캐릭터 이동 (항상 — 마감 후 정리 동선도 자연스럽게)
@@ -6556,7 +6823,10 @@ function tick(ts){
         partyHotDish=pickPartyHot();
         partyBurstAt=gameNow+PARTY_BURST_DELAY; partyBurstUntil=partyBurstAt+PARTY_BURST_LEN;
         const d=DISH[partyHotDish];
-        toast('☕ 웨이브 ' + (wlNow+1) + '! 손님들이 몰려와요! 인기 메뉴: ' + (d?d.nm:''));   // 문구 임시 — 확정: 신민
+        const wv=wlNow+1;
+        // (v47_004) 웨이브 5+부터 🔥 러시 톤으로 강조 — 무한 램프 "한계 접근" 체감(뱀서 강도 언어 점증)
+        const head = (wv>=5) ? ('🔥 웨이브 '+wv+' · 러시 타임!') : ('☕ 웨이브 '+wv+'! 손님들이 몰려와요!');
+        toast(head + ' 인기 메뉴: ' + (d?d.nm:''));   // 문구 임시 — 확정: 신민
       }
       restartSpawnTimer();   // 새 간격 반영
       if(elTimer) elTimer.classList.toggle('rush', rushNow);   // 러시=색조 신호(폭 불변)
@@ -6709,6 +6979,20 @@ document.getElementById('bin').onclick=(e)=>{
   e.stopPropagation();
   enqueueAction('bin', 0);
 };
+// (v46_006) 전화기: 벨 울릴 때 탭 → 받으러 감 (홀드 — 걸어가는 동안 끊기지 않음). 조용할 땐 무반응.
+document.getElementById('phoneShelf').onclick=(e)=>{
+  e.stopPropagation();
+  if(!isServing() || phoneTicket) return;
+  if(phoneRingEndAt<0 && !phoneHeld) return;
+  phoneHeld=true;
+  enqueueAction('phone', 0);
+};
+// (v46_006) 포장선반: 티켓 있을 때 탭 → 쟁반의 주문 메뉴 배달
+document.getElementById('packShelf').onclick=(e)=>{
+  e.stopPropagation();
+  if(!isServing() || !phoneTicket) return;
+  enqueueAction('pack', 0);
+};
 
 // ====== 영업 단계 흐름 ======
 function updateTimerDisplay(){
@@ -6717,8 +7001,34 @@ function updateTimerDisplay(){
   // 막판 10초: 카운트다운 강조 (갑작스러운 종료 방지)
   const txt=(phase==='playing' && s<=10 && s>0) ? `마감 ${s}초` : `영업 ${mm}:${String(ss).padStart(2,'0')}`;
   if(txt!==elTimer._t){ elTimer._t=txt; elTimer.textContent=txt; }   // 초가 바뀔 때만 DOM 쓰기
+  elTimer.classList.toggle('dusk', phase==='playing' && s<=DUSK_START && s>0);   // (v46_004) 노을 동기화 (15초부턴 low/urgent가 덮음)
   elTimer.classList.toggle('low', s<=15);
   elTimer.classList.toggle('urgent', phase==='playing' && s<=10 && s>0);
+  updateDusk(s);   // (v46_003) 노을 비네트 램프 + 중앙 팝
+}
+
+// (v46_003) 마감 임박 노을 비네트 — DUSK_START초부터 0초까지 opacity 0→DUSK_MAX 선형 램프.
+// 마지막 DUSK_BREATH초는 가장자리 숨쉬기 펄스. 시작 순간 중앙 팝 1회 (duskWarned, openDay에서 리셋).
+const DUSK_START=30, DUSK_MAX=0.9, DUSK_BREATH=10;
+let duskWarned=false;
+const elDusk=document.getElementById('duskOverlay');
+const elDuskPop=document.getElementById('duskPop');
+function showDuskPop(){
+  elDuskPop.classList.remove('show'); void elDuskPop.offsetWidth;
+  elDuskPop.classList.add('show');
+  clearTimeout(elDuskPop._t);
+  elDuskPop._t=setTimeout(()=>elDuskPop.classList.remove('show'), 1600);
+}
+function updateDusk(s){
+  let op=0;
+  if(phase==='playing' && timeLeft<=DUSK_START){
+    op=Math.min(DUSK_MAX, DUSK_MAX*(1 - timeLeft/DUSK_START));
+    if(!duskWarned){ duskWarned=true; showDuskPop(); }   // "🌇 마감 임박!" — 문구 임시, 확정은 신민
+  }
+  const v=op.toFixed(3);
+  if(elDusk._op!==v){ elDusk._op=v; elDusk.style.opacity=v; }
+  const breath = phase==='playing' && s<=DUSK_BREATH && s>0;
+  if(elDusk._br!==breath){ elDusk._br=breath; elDusk.classList.toggle('breath', breath); }
 }
 
 function clearBoard(){
@@ -6779,6 +7089,8 @@ function openDay(){
   briefingAdvancedDay=false;   // (v40) 취소 원복 플래그 초기화
   // 마감 후 '영업 준비'에서 OPEN을 누른 경우에만 날짜를 넘긴다 (첫 영업은 그대로 Day1).
   if(pendingNextDay){ dayCount++; pendingNextDay=false; briefingAdvancedDay=true; updateDayBadge(); saveGame(); }
+  duskWarned=false; if(elDusk){ elDusk._op='0.000'; elDusk.style.opacity='0'; elDusk._br=false; elDusk.classList.remove('breath'); }   // (v46_003) 노을 리셋
+  resetPhoneDay(true);   // (v46_006) 전화 리셋 + 첫 벨 예약
   ensureThemeSchedule();   // (v42_001) 테마 데이 예약 확인/배지 갱신 — 당일 지났으면 다음 테마 재예약
   ensureDailyQuests();     // (v43_005) 영업 시작 시 자정 롤오버 체크
   applyThemeSparkle();     // (v42_002) 테마 당일 해당 선반 ✨ 켜기 / 아닌 날 끄기
@@ -6981,12 +7293,13 @@ function sideChance(){
 function partySpawnMs(){
   const base = spawnIntervalMs();
   const wl   = Math.min(Math.floor(served/PARTY_MILESTONE), PARTY_ESC_CAP);
-  const density = 1 + PARTY_ESC * Math.sqrt(wl);          // 상승(√) — 상한에서 수렴
+  const density = 1 + PARTY_ESC * wl;                     // (v47_004) 선형 — 계속 가팔라짐(무한 램프)
   const cycleT  = (gameNow - partyStartAt) % PARTY_CYCLE_MS;
   const rush = cycleT < PARTY_RUSH_MS;
   const mult = rush ? PARTY_RUSH_MULT : PARTY_LULL_MULT;   // 러시=짧게 / 숨고르기=길게
   const burst = gameNow>=partyBurstAt && gameNow<partyBurstUntil;   // (v45_008) 웨이브업 버스트
-  return (base / density) * mult * (burst ? PARTY_BURST_MULT : 1);
+  const raw = (base / density) * mult * (burst ? PARTY_BURST_MULT : 1);
+  return Math.max(PARTY_SPAWN_FLOOR_MS, raw);             // (v47_004) 바닥 클램프 — 0 수렴 방지
 }
 function restartSpawnTimer(){
   if(spawnTimer) clearInterval(spawnTimer);
@@ -7148,6 +7461,9 @@ function closeDay(){
   elTimer.textContent='영업 종료';
   elTimer.classList.remove('low');
   elTimer.classList.remove('urgent');
+  elTimer.classList.remove('dusk');   // (v46_004)
+  if(elDusk){ elDusk._op='0.000'; elDusk.style.opacity='0'; elDusk._br=false; elDusk.classList.remove('breath'); }   // (v46_003) 노을 페이드아웃 + 펄스 정지
+  resetPhoneDay(false);   // (v46_006) 벨·티켓 정리 (티켓은 이월 없음)
   // 정산 숫자 표시 후 화면(손님·쟁반)은 바로 비움
   const goal=dayGoal(goalStage);
   const reached=served>=goal;
