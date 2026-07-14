@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v46_006</title>
+<title>포근한 디저트 가게 — v48_002</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -4668,7 +4668,7 @@ const PARTY_RUSH_MS   = 13000;  // 그중 러시 구간(나머지=숨고르기 �
 const PARTY_RUSH_MULT = 0.72;   // 러시 = 스폰 간격 짧게(밀집)
 const PARTY_LULL_MULT = 1.9;    // 숨고르기 = 스폰 간격 길게(브레이크)
 const PARTY_MILESTONE = 10;     // 웨이브 1단계 = 서빙 N명
-const PARTY_ESC       = 0.13;   // (v47_004) 상승 강도 — √ → 선형, 완만해지지 않고 계속 오름
+const PARTY_ESC       = 0.45;   // (v48_001) 기울기 0.13→0.45 — 러시 700ms 바닥을 웨이브 8(≈실제 5분)에 도달시켜 지루 구간 제거. 임시값(실플레이 조정 대기)
 const PARTY_ESC_CAP   = 30;     // (v47_004) 상한 9→30, 사실상 무한 램프(인간 한계 도전)
 const PARTY_SPAWN_FLOOR_MS = 700;  // (v47_004) 최종 스폰 간격 바닥 — 러시·버스트와 곱해 0 수렴 방지(게임 붕괴 방지). 이 바닥이 곧 한계 지점
 // (v45_008) 웨이브 다양화 3종 — 인기 메뉴(CSD형)·예고 버스트(PvZ형)·사이드 증가(디너대시형)
@@ -5478,7 +5478,7 @@ function execBin(){
 
 // ====== (v46_006) 전화 주문 — 옵트인 포장 주문 스트림 ======
 // 손님 엔티티·SEATED 무관. 티켓은 런타임 전용(저장 안 함, 마감 시 소멸).
-// 벨/쿨다운은 timeLeft 기준 → 일시정지·배속 자동 대응. 동시 티켓 1개(티켓 살아있는 동안 벨 없음).
+// (v48_002) 벨/쿨다운은 gameNow 기준(증가·ms) → playing/party 공용, 일시정지·배속 자동 대응. 동시 티켓 1개(티켓 살아있는 동안 벨 없음).
 const PHONE_RING_SEC=6;                       // 벨 지속(초) — 안 받으면 조용히 끊김, 패널티 없음
 const PHONE_COIN_MULT=1.5;                    // 포장 보상 배율 (수치 확정: 신민)
 const PHONE_COOL_MIN=12, PHONE_COOL_MAX=20;   // 벨 사이 쿨다운(초)
@@ -5492,24 +5492,27 @@ const elPhoneShelf=document.getElementById('phoneShelf');
 const elPackShelf=document.getElementById('packShelf');
 
 function scheduleNextRing(){
-  phoneNextRingAt = timeLeft - (PHONE_COOL_MIN + Math.random()*(PHONE_COOL_MAX-PHONE_COOL_MIN));
-  if(phoneNextRingAt < PHONE_LAST_CALL) phoneNextRingAt = -1;
+  // (v48_002) gameNow(증가·ms) 기준 — playing/party 공용. gameNow는 일시정지 시 정지·배속 스케일이 timeLeft와 동일.
+  const cd = PHONE_COOL_MIN + Math.random()*(PHONE_COOL_MAX-PHONE_COOL_MIN);
+  phoneNextRingAt = gameNow + cd*1000;
+  // 마감 임박(8초 전) 벨 없음 — playing 전용(파티는 마감 개념 없음)
+  if(phase==='playing' && (timeLeft - cd) < PHONE_LAST_CALL) phoneNextRingAt = -1;
 }
 function stopPhoneRing(){ phoneRingEndAt=-1; elPhoneShelf.classList.remove('ringing'); }
 function resetPhoneDay(schedule){
   phoneHeld=false; phoneTicket=null; stopPhoneRing();
-  phoneNextRingAt = schedule ? Math.max(PHONE_LAST_CALL, timeLeft-PHONE_FIRST_DELAY) : -1;
+  phoneNextRingAt = schedule ? gameNow + PHONE_FIRST_DELAY*1000 : -1;   // (v48_002) gameNow 기준 첫 벨
   renderPackTicket();
 }
 function phoneTick(){
   // 벨 시작 (티켓·홀드·이미 울리는 중이면 보류 — 예약은 소모하지 않고 상태 해제 후 재개)
-  if(phoneNextRingAt>=0 && timeLeft<=phoneNextRingAt && !phoneTicket && !phoneHeld && phoneRingEndAt<0){
+  if(phoneNextRingAt>=0 && gameNow>=phoneNextRingAt && !phoneTicket && !phoneHeld && phoneRingEndAt<0){   // (v48_002) gameNow 기준
     phoneNextRingAt=-1;
-    phoneRingEndAt=Math.max(0, timeLeft-PHONE_RING_SEC);
+    phoneRingEndAt=gameNow + PHONE_RING_SEC*1000;   // (v48_002) 벨 종료 시각(gameNow)
     elPhoneShelf.classList.add('ringing');
   }
   // 벨 만료 (안 받음 → 조용히 끊고 다음 벨 예약)
-  if(phoneRingEndAt>=0 && !phoneHeld && timeLeft<=phoneRingEndAt){
+  if(phoneRingEndAt>=0 && !phoneHeld && gameNow>=phoneRingEndAt){   // (v48_002) gameNow 기준
     stopPhoneRing();
     scheduleNextRing();
   }
@@ -6778,8 +6781,8 @@ function tick(ts){
     timeLeft-=dt;
     if(timeLeft<=0){ timeLeft=0; closeDay(); }
     updateTimerDisplay();
-    phoneTick();   // (v46_006) 전화 벨 스케줄 (timeLeft 기준 — 일시정지·배속 자동 대응)
   }
+  if(isServing()) phoneTick();   // (v48_002) 전화 벨 스케줄 — playing/party 공용 (gameNow 기준). closeDay 후엔 phase 바뀌어 자동 제외
 
   // 캐릭터 이동 (항상 — 마감 후 정리 동선도 자연스럽게)
   if(hero.moving){
@@ -7373,6 +7376,7 @@ function startParty(){
   spawnCustomer();
   setTimeout(()=>{ if(phase==='party') spawnCustomer(); }, 800/gameSpeed);
   restartSpawnTimer();
+  resetPhoneDay(true);   // (v48_002) 파티도 전화 벨 스케줄 시작 (첫 벨 예약)
 }
 function endParty(reason){
   if(phase!=='party') return;
@@ -7391,6 +7395,7 @@ function endParty(reason){
   // (v40) 직전 파티 기록 저장 — 다음 파티 브리핑에서 표시(Step3). partyPlayed로 최초/재입장 판정.
   partyLastServed=finalServed; partyLastCoins=finalCoins; partyLastDuration=finalDuration;
   partyPlayed=true;
+  resetPhoneDay(false);   // (v48_002) 전화 벨·티켓 정리 (파티 종료 시, 티켓 이월 없음)
   clearBoard();
   setServedVisible(false);
   elTimer.classList.remove('low','urgent','party','rush');
