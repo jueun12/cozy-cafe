@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v53_006</title>
+<title>포근한 디저트 가게 — v57_001</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1860,6 +1860,7 @@
   /* (v43_006) 일일 퀘 카드 3열 레이아웃 — 보상 상시 노출 */
   .quest-card.daily{ display:flex; align-items:center; gap:1.6cqw; }
   .quest-card.daily.claimed{ opacity:.55; }
+  .quest-card.daily-bonus{ border-color:#f3c9d8; background:#fff5f8; }   /* (v56_001) 올클 보너스 상자 행 — 분홍 톤, glow 없음 */
   .quest-card.daily .qc-emoji{ font-size:3.6cqw; flex:none; }
   .qc-mid{ flex:1; min-width:0; }
   .quest-card.daily .qc-title{ font-size:2.05cqw; }
@@ -2010,6 +2011,26 @@
     background:#fff; border:0.3cqw solid var(--accent); border-radius:1.4cqw;
     padding:1cqw 1.6cqw;
   }
+  /* (v57_001) 엔딩 후속 — 할머니의 편지 (손편지 종이 톤, glow/blur 없음) */
+  .gm-letter-panel{
+    position:relative; background:linear-gradient(#FFFBEF,#F6E9D0);
+    border:0.5cqw solid #C9A86C; border-radius:1.8cqw;
+    width:62cqw; max-width:62cqw; padding:2.2cqw 2.8cqw 2cqw;
+    box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.34);
+    display:flex; flex-direction:column; align-items:center; gap:1.2cqw;
+    animation:levelUpPop .6s cubic-bezier(.34,1.7,.6,1) both;
+  }
+  .gm-letter-head{ font-size:2.4cqw; font-weight:900; color:#8a6a3b; }
+  .gm-letter-body{
+    width:100%; max-height:40cqw; overflow-y:auto;
+    font-size:1.7cqw; font-weight:700; color:#5c4630; line-height:1.6; text-align:left;
+    background:rgba(255,255,255,.55); border:0.3cqw dashed #C9A86C; border-radius:1.2cqw;
+    padding:1.3cqw 1.7cqw;
+  }
+  .gm-letter-body p{ margin:0 0 1cqw; }
+  .gm-letter-body p:last-child{ margin-bottom:0; }
+  .gm-letter-body .gm-sign{ text-align:right; color:#8a6a3b; }
+  .gm-letter-body .gm-ps{ margin-top:1.3cqw; font-size:1.6cqw; color:#7a5f3e; }
   .levelup-banner{
     font-size:2.8cqw; font-weight:900; color:var(--accent-deep); text-align:center;
     -webkit-text-stroke:0.12cqw #fff;
@@ -2068,6 +2089,16 @@
   }
   .set-reset:active{ transform:translateY(0.3cqw); box-shadow:0 0.1cqw 0 #a84a3d; }
   .set-reset.confirm{ background:#c0392b; box-shadow:0 0.4cqw 0 #8e2a20; }
+  /* (v55_001) 세이브 가져오기 오버레이 */
+  .imp-desc{ font-size:1.7cqw; color:var(--ink-soft); line-height:1.5; margin-bottom:1.2cqw; }
+  .imp-ta{
+    width:100%; box-sizing:border-box; height:14cqw; resize:none;
+    border:0.25cqw solid #ecdcc2; border-radius:1.2cqw; background:#fff;
+    padding:1.2cqw; font-size:1.5cqw; color:var(--ink); font-family:inherit;
+    word-break:break-all;
+  }
+  .imp-ta:focus{ outline:none; border-color:#d9b98a; }
+  .imp-actions{ display:flex; justify-content:flex-end; margin-top:1.2cqw; }
   /* 상점 상품 카드 */
   .shop-item{
     position:relative; overflow:hidden;
@@ -2323,6 +2354,11 @@
   .fixture::after{ position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); font-size:9px; color:var(--ink-soft); white-space:nowrap; }
   #phoneShelf::after{ content:'전화기'; }
   #packShelf::after{ content:'포장선반'; }
+  /* (v54_003) 전화 Day3 해금 — 그 전엔 잠금 표시 (메뉴 선반과 같은 시각 언어: 자리는 보이고 자물쇠). blur·glow 금지 준수 */
+  #phoneShelf.phone-locked{ filter:grayscale(.75) brightness(.94); }
+  #phoneShelf.phone-locked::before{ content:'🔒'; position:absolute; top:-1cqw; right:-0.9cqw; font-size:2.3cqw; line-height:1; z-index:2; }
+  @keyframes phoneLockShake{ 0%,100%{ transform:translate(-50%,-50%) rotate(0deg); } 25%{ transform:translate(-50%,-50%) rotate(-4deg); } 75%{ transform:translate(-50%,-50%) rotate(4deg); } }
+  #phoneShelf.locked-shake{ animation:phoneLockShake .3s ease; }
   /* (v47_002) 벨: 팡통 1회 → scale 1.15 유지 + 큰 달랑달랑 + 노란 실루엣 아웃라인(.wanted .dish 기법, 블러 0) + 요란한 ♪♫ */
   @keyframes phonePopIn{
     0%{ transform:scale(1); } 35%{ transform:scale(1.4) translateY(-0.4cqw); }
@@ -2804,10 +2840,46 @@
       <div class="shop-body">
         <div class="set-row">
           <div class="set-info">
+            <div class="set-nm">효과음</div>
+            <div class="set-desc">벨·코인·서빙 소리</div>
+          </div>
+          <button class="set-reset" id="btnSfx">켜짐 🔊</button>
+        </div>
+        <div class="set-row">
+          <div class="set-info">
+            <div class="set-nm">세이브 내보내기</div>
+            <div class="set-desc">진행 기록을 복사해서 안전하게 보관해요</div>
+          </div>
+          <button class="set-reset" id="btnExport">복사하기</button>
+        </div>
+        <div class="set-row">
+          <div class="set-info">
+            <div class="set-nm">세이브 가져오기</div>
+            <div class="set-desc">보관해둔 기록을 붙여넣어 되살려요</div>
+          </div>
+          <button class="set-reset" id="btnImport">가져오기</button>
+        </div>
+        <div class="set-row">
+          <div class="set-info">
             <div class="set-nm">게임 초기화</div>
             <div class="set-desc">코인·해금 메뉴 등 모든 진행이 사라져요</div>
           </div>
           <button class="set-reset" id="btnReset">초기화</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="shop-overlay hidden" id="importOverlay">
+    <div class="shop-panel" id="importPanel">
+      <div class="shop-head">
+        <span class="shop-title">세이브 가져오기</span>
+        <button class="shop-close" id="importClose" aria-label="닫기">✕</button>
+      </div>
+      <div class="shop-body">
+        <div class="imp-desc">보관해둔 기록을 아래 칸에 붙여넣어 주세요.<br>적용하면 <b>지금 진행 중인 기록은 사라져요.</b></div>
+        <textarea class="imp-ta" id="importTa" placeholder="여기에 붙여넣기" spellcheck="false"></textarea>
+        <div class="imp-actions">
+          <button class="set-reset" id="btnImpApply">적용하기</button>
         </div>
       </div>
     </div>
@@ -2880,6 +2952,36 @@
     </div>
   </div>
 
+  <!-- (v57_001) 엔딩 후속 ① 레시피북 회상 카드 — gift-intro 스타일 재사용 (신규 CSS 0) -->
+  <div class="shop-overlay hidden" id="endingRecallOverlay">
+    <div class="gift-intro-panel">
+      <div class="gift-intro-emoji">📖</div>
+      <div class="gift-intro-title">할머니의 레시피북</div>
+      <div class="gift-intro-msg">
+        레시피북 마지막 장을 넘기다가,<br>
+        낯익은 글씨를 발견했다.<br>
+        페이지 사이에 <b>접힌 편지</b>가 끼워져 있다.
+      </div>
+      <button class="newfriend-ok" id="endingRecallOk">펼쳐보기 💌</button>
+    </div>
+  </div>
+
+  <!-- (v57_001) 엔딩 후속 ② 할머니의 편지 — 본문 June 확정(v57_001). 재열람: 스토리북 12장 카드 -->
+  <div class="shop-overlay hidden" id="grandmaLetterOverlay">
+    <div class="gm-letter-panel">
+      <div class="gm-letter-head">💌 할머니의 편지</div>
+      <div class="gm-letter-body">
+        <p>우리 강아지들 보아라.</p>
+        <p>이 편지를 찾았다는 건 레시피북이 끝까지 다 찼다는 뜻이지. 거봐라, 할미가 뭐랬니. 이 마을은 달콤한 거에 사족을 못쓴다니까.</p>
+        <p>할미 허리가 다 낫는 동안, 이렇게 모두와 친해질 줄은 몰랐단다. 할미가 몇 십 년 걸린 걸 한 계절 만에 하다니, 정말 대견하구나.</p>
+        <p>이 책은 오늘부터 너희 거란다.</p>
+        <p class="gm-sign">— 할머니가</p>
+        <p class="gm-ps">추신. 오븐 왼쪽 다리 밑에 접어둔 종이는 절대 빼지 마렴. 그거 빼면 마들렌이 죄다 삐딱하게 나온단다.</p>
+      </div>
+      <button class="newfriend-ok" id="grandmaLetterOk">소중히 간직하기</button>
+    </div>
+  </div>
+
   <!-- (v49_003) 연인 약속 일러스트 컷 — R5 성사 순간 -->
   <div class="shop-overlay hidden" id="promiseCutOverlay">
     <div class="promise-cut-panel">
@@ -2911,6 +3013,21 @@
         <b>좋아하는 메뉴</b>를 선물하면 더 기뻐해요 💗
       </div>
       <button class="newfriend-ok" id="giftIntroOk">알겠어요 🎁</button>
+    </div>
+  </div>
+
+  <!-- (v54_003) 전화 첫 해금 안내 카드 — gift-intro 스타일 재사용 (신규 CSS 0). 문구 (v56_002) 확정 -->
+  <div class="shop-overlay hidden" id="phoneIntroOverlay">
+    <div class="gift-intro-panel" id="phoneIntroPanel">
+      <div class="gift-intro-emoji">📞</div>
+      <div class="gift-intro-title">전화 주문이 열렸어요!</div>
+      <div class="gift-intro-msg">
+        영업 중에 따르릉 벨이 울리면<br>
+        전화기를 탭해 주문을 받아요.<br>
+        완성된 포장은 <b>포장선반</b>에서 건네요 —<br>
+        보상이 매장보다 <b>넉넉해요</b> 🪙
+      </div>
+      <button class="newfriend-ok" id="phoneIntroOk">알겠어요 📞</button>
     </div>
   </div>
 
@@ -4187,6 +4304,41 @@ const STORY_QUESTS=[
       '"내일 봐요."',
       '…내일 보자는 말이, 조금 좋았다.'
     ] },
+  // ── 아크 3 「두 개의 크루아상」 1~2장 — 첫 우정 파트 (v55_003 타임라인 재배열로 서가 앞으로 이동) ──
+  { id:'story_crois_1', emoji:'🥐', title:'두 개의 크루아상 · 1장 — 오늘은 여기서', guest:'guest_10',
+    unlock:{ friend:'guest_10', level:1 },
+    hint:'한나와 친구가 되면 열려요',
+    goal:{ type:'serveFav', guest:'guest_10', count:2 },
+    reward:100,
+    intro:[
+      '늘 크루아상을 여러 개 포장해 가는 손님이 있다.',
+      '"다 같이 나눠 먹으려고. 여기 크루아상, 다들 정말 좋아하거든."',
+      '봉투는 언제나 금방 채워진다.'
+    ],
+    done:[
+      '"크루아상 하나… 아니, 두 개. 오늘은 여기서 먹고 갈래."',
+      '늘 포장을 기다리던 자리 대신, 그녀는 처음으로 의자를 골랐다.',
+      '"오늘은… 왠지 그러고 싶으니까."',
+      '접시가 비워지기까지는, 꽤 오랜 시간이 걸렸다.'
+    ] },
+  { id:'story_crois_2', emoji:'☕', title:'두 개의 크루아상 · 2장 — 같은 테이블', guest:'guest_3',
+    unlock:{ quest:'story_crois_1', friend:'guest_3', level:1 },
+    hint:'1장을 읽고, 엠마와 친구가 되면 열려요',
+    goal:{ type:'serveEach', guests:['guest_10','guest_3'], count:1 },
+    reward:180,
+    intro:[
+      '늘 같은 시간, 같은 자리에서 아메리카노를 마시는 손님이 있다.',
+      '오늘은 그 자리에, 먼저 앉은 사람이 있다.',
+      '"…흐음."'
+    ],
+    done:[
+      '"여기 자리 비었는데, 같이 앉을래?"',
+      '트레이 위의 크루아상 하나가, 아메리카노 옆으로 옮겨졌다.',
+      '"…난 빵은 별론데."',
+      '"그럼 작게 한 조각만 잘라 줄게. 커피랑 정말 잘 어울리거든."',
+      '마지못해 입에 넣는가 싶더니, 커다란 크루아상이 순식간에 사라졌다.',
+      '마지막 조각을 삼킨 두 사람은, 마주 보며 웃음을 터트렸다.'
+    ] },
   // ── 아크 2 「밤의 서가」 (v43_001) — 유키 해금 이후 후반 콘텐츠 ──
   { id:'story_shelf_1', emoji:'📜', title:'밤의 서가 · 1장 — 발신인 없는 원고', guest:'guest_1',
     unlock:{ friend:'guest_1', level:2 },
@@ -4245,39 +4397,112 @@ const STORY_QUESTS=[
       '지금 그 원고는 노아의 서점 창가, 「밤의 서가」라 이름 붙은 작은 코너에 꽂혀 있다. 파는 책은 아니다. 다만 누구든, 그 자리에서 끝까지 읽고 갈 수 있다.',
       '유키는 요즘도 창가에서 무언가를 쓴다. 다만 이제는, 마지막 장부터 쓴다고 한다.'
     ] },
-  { id:'story_crois_1', emoji:'🥐', title:'두 개의 크루아상 · 1장 — 오늘은 여기서', guest:'guest_10',
-    unlock:{ friend:'guest_10', level:1 },
-    hint:'한나와 친구가 되면 열려요',
-    goal:{ type:'serveFav', guest:'guest_10', count:2 },
-    reward:100,
-    intro:[
-      '늘 크루아상을 여러 개 포장해 가는 손님이 있다.',
-      '"다 같이 나눠 먹으려고. 여기 크루아상, 다들 정말 좋아하거든."',
-      '봉투는 언제나 금방 채워진다.'
-    ],
-    done:[
-      '"크루아상 하나… 아니, 두 개. 오늘은 여기서 먹고 갈래."',
-      '늘 포장을 기다리던 자리 대신, 그녀는 처음으로 의자를 골랐다.',
-      '"오늘은… 왠지 그러고 싶으니까."',
-      '접시가 비워지기까지는, 꽤 오랜 시간이 걸렸다.'
-    ] },
-  { id:'story_crois_2', emoji:'☕', title:'두 개의 크루아상 · 2장 — 같은 테이블', guest:'guest_3',
-    unlock:{ quest:'story_crois_1', friend:'guest_3', level:1 },
-    hint:'1장을 읽고, 엠마와 친구가 되면 열려요',
-    goal:{ type:'serveEach', guests:['guest_10','guest_3'], count:1 },
+  // ── 아크 2 후일담 (v55_002) — h_yuki 「마지막 장부터 쓰는 사람」 회수 ──
+  { id:'story_shelf_4', emoji:'✒️', title:'밤의 서가 · 후일담 — 마지막 장부터 쓰는 사람', guest:'guest_12',
+    unlock:{ quest:'story_shelf_3', friend:'guest_12', level:3 },
+    hint:'밤의 서가를 끝까지 읽고, 유키와 더 친해지면 열려요',
+    goal:{ type:'serveFav', guest:'guest_12', count:2 },
     reward:180,
     intro:[
-      '늘 같은 시간, 같은 자리에서 아메리카노를 마시는 손님이 있다.',
-      '오늘은 그 자리에, 먼저 앉은 사람이 있다.',
-      '"…흐음."'
+      '창가 자리, 체리파이 접시 옆.',
+      '유키의 노트는 오늘도 펼쳐져 있다.',
+      '"…궁금해? 후후. 다 쓰면, 제일 먼저 보여줄게."'
     ],
     done:[
-      '"여기 자리 비었는데, 같이 앉을래?"',
-      '트레이 위의 크루아상 하나가, 아메리카노 옆으로 옮겨졌다.',
-      '"…난 빵은 별론데."',
-      '"그럼 작게 한 조각만 잘라 줄게. 커피랑 정말 잘 어울리거든."',
-      '마지못해 입에 넣는가 싶더니, 커다란 크루아상이 순식간에 사라졌다.',
-      '마지막 조각을 삼킨 두 사람은, 마주 보며 웃음을 터트렸다.'
+      '"사실 나, 꽤 무서운 이야기를 써."',
+      '뜻밖의 말에, 접시 위 체리가 데굴 굴렀다.',
+      '"그래서 늘 마지막 장부터 써 두는 거야."',
+      '"결말이 따뜻하다는 걸 알고 있으면… 어떤 어두운 골목도, 인물들을 안심하고 걸어가게 할 수 있거든."',
+      '노트의 맨 뒤 페이지엔, 이렇게 적혀 있었다.',
+      '— 그리고 모두, 따뜻한 곳으로 돌아왔다.'
+    ] },
+  // ── 아크 3 완결 (v55_002) — h_hanna 「오늘은 두 개 다 내 몫」 회수 ──
+  { id:'story_crois_3', emoji:'🫖', title:'두 개의 크루아상 · 3장 — 오늘은 두 개 다', guest:'guest_10',
+    unlock:{ quest:'story_crois_2', friend:'guest_10', level:3 },
+    hint:'2장을 읽고, 한나와 더 친해지면 열려요',
+    goal:{ type:'serveFav', guest:'guest_10', count:2 },
+    reward:200,
+    intro:[
+      '오늘의 한나는, 어쩐지 조용하다.',
+      '"밥은 먹었어?"라는 인사도 없이, 창가 자리에 가만히 앉는다.',
+      '"크루아상… 두 개. 응, 늘 먹던 거."'
+    ],
+    done:[
+      '접시 위 크루아상 두 개는, 오늘은 누구에게도 건너가지 않았다.',
+      '따뜻한 우유를 슬쩍 곁에 놓아 주자, 한나가 작게 웃었다.',
+      '"…오늘은 두 개 다 내 몫이야. 그래도 되지?"',
+      '"당연하지. 천천히 먹어."',
+      '마지막 한 입까지, 그녀는 아주 천천히 먹었다.',
+      '돌아가는 길, 문 앞에서 한나가 돌아봤다.',
+      '"다음엔 또 나눠 먹자. 오늘… 고마웠어."'
+    ] },
+  // ── 아크 4 「골목의 여왕」 (v55_002) — h_nero 「문 닫을 시간의 창가」 회수 ──
+  { id:'story_nero_1', emoji:'😺', title:'골목의 여왕 · 1장 — 자리를 고르는 손님', guest:'guest_14',
+    unlock:{ friend:'guest_14', level:2 },
+    hint:'네로와 더 친해지면 열려요',
+    goal:{ type:'serveFav', guest:'guest_14', count:2 },
+    reward:120,
+    intro:[
+      '문이 열리고, 도도한 발걸음이 가게 안을 한 바퀴 돈다.',
+      '창가, 구석, 다시 창가.',
+      '"…흥. 오늘은 여기로 해 주지."'
+    ],
+    done:[
+      '"고양이 쿠키… 나쁘지 않네. 아주 조금, 마음에 든 것뿐이야."',
+      '접시엔 부스러기 하나 남지 않았다.',
+      '"착각하지 마. 쿠키가 맛있어서 오는 거니까."',
+      '그렇게 말하면서 고르는 자리는, 언제나 카운터가 잘 보이는 창가였다.'
+    ] },
+  { id:'story_nero_2', emoji:'🌙', title:'골목의 여왕 · 2장 — 문 닫을 시간', guest:'guest_14',
+    unlock:{ quest:'story_nero_1', friend:'guest_14', level:3 },
+    hint:'1장을 읽고, 네로와 더 친해지면 열려요',
+    goal:{ type:'serveAny', count:8 },
+    reward:180,
+    intro:[
+      '요즘, 마감 무렵이면 창밖에 낯익은 그림자가 어른거린다.',
+      '오늘은 문을 닫기 전에, 마지막 쿠키를 하나 남겨 두기로 했다.'
+    ],
+    done:[
+      '불을 반쯤 줄인 가게 앞, 네로가 창가에 서 있었다.',
+      '"…지, 지나가던 길이야. 착각하지 마."',
+      '"마침 잘 됐다. 오늘 마지막 쿠키, 같이 먹을래?"',
+      '못 이기는 척 들어온 그녀는, 닫힌 가게의 창가 자리에 앉았다.',
+      '"…내일도. 문 닫을 시간쯤, 지나가 주지."',
+      '골목의 여왕은, 오늘도 우연인 척 다정하다.'
+    ] },
+  // ── 아크 5 「머물 곳」 (v55_002) — h_sia 「그 애가 찾던 풍경」 회수, 감정축 1→2 ──
+  { id:'story_sia_1', emoji:'🍨', title:'머물 곳 · 1장 — 먼 데서 온 손님', guest:'guest_16',
+    unlock:{ friend:'guest_16', level:3 },
+    hint:'시아와 더 친해지면 열려요',
+    goal:{ type:'serveFav', guest:'guest_16', count:2 },
+    reward:150,
+    intro:[
+      '어디서 왔는지 잘 말하지 않는 손님이 있다.',
+      '"…여기는, 겨울에도 따뜻해?"',
+      '이상한 질문을, 시아는 진지한 얼굴로 물었다.'
+    ],
+    done:[
+      '아이스크림을 한 입 먹은 시아가, 아주 천천히 눈을 감았다.',
+      '"…이 맛, 알 것 같아."',
+      '"어딘가에서 먹어 본 적 있어. 아주… 오래전에."',
+      '어디였는지는, 끝내 말하지 않았다.'
+    ] },
+  { id:'story_sia_2', emoji:'🖼️', title:'머물 곳 · 2장 — 그 애가 찾던 풍경', guest:'guest_16',
+    unlock:{ quest:'story_sia_1', friend:'guest_16', level:4 },
+    hint:'1장을 읽고, 시아와 아주 가까워지면 열려요',
+    goal:{ type:'serveGuest', guest:'guest_16', count:3 },
+    reward:220,
+    intro:[
+      '해 질 무렵, 시아는 오래 창밖을 본다.',
+      '"…나, 사실은 오래 떠돌아다녔어."',
+      '"찾는 게 있었거든. 어떤… 풍경 같은 거."'
+    ],
+    done:[
+      '"오래전에, 참 좋아하던 가게가 있었어. 지금은 없지만."',
+      '"불빛이랑, 달콤한 냄새랑, 어서 오라는 목소리."',
+      '"똑같은 곳을 찾아다녔는데… 이상하지. 찾은 게 아니라, 찾아진 기분이야."',
+      '시아는 제 자리 — 이제는 정말 시아의 자리가 된 창가를, 가만히 쓰다듬었다.',
+      '"이제 어디도 안 갈래. 여기가, 내가 찾던 풍경이야."'
     ] }
 ];
 let storyDone=[];          // 완료한 퀘스트 id 배열 (저장됨)
@@ -4288,6 +4513,10 @@ function storyQuest(id){ return STORY_QUESTS.find(q=>q.id===id)||null; }
 function storyIsDone(id){ return storyDone.includes(id); }
 function storyUnlocked(q){
   if(storyIsDone(q.id)) return false;
+  // (v55_003) 전역 순차 해금 — 배열 순서가 곧 타임라인. 직전 장을 읽어야 다음 장이 열린다.
+  // 이미 읽은 장은 순서와 무관하게 완료 인정 — 구 세이브는 읽은 지점 이후부터 자연 합류(저장 포맷 불변)
+  const seq=STORY_QUESTS.indexOf(q);
+  if(seq>0 && !storyIsDone(STORY_QUESTS[seq-1].id)) return false;
   const u=q.unlock||{};
   if(u.quest && !storyIsDone(u.quest)) return false;
   if(u.friend){
@@ -4380,7 +4609,7 @@ const sbFriendCount=()=>sbFriends().filter(f=>(f.level||0)>=1).length;
 const STORYBOOK=[
   { id:'sb1', reward:200, emoji:'🚪', title:'낯선 마을의 첫날', cond:'첫날 튜토리얼을 끝내면',
     unlock:()=>!!tutorialDone,
-    line:'오늘부터 이 작은 가게가, 내가 머무는 자리다.' },   // 문구 임시 (이하 전부)
+    line:'오늘부터 이 작은 가게가, 내가 머무는 자리다.' },   // (v56_002) 12장 line 전부 확정 — June 승인
   { id:'sb2', reward:200, emoji:'🔔', title:'첫 번째 손님', cond:'손님 1명을 만족스럽게 배웅하면',
     unlock:null,   // 이벤트형 — customerLeaves 만족 분기
     line:'"잘 먹었어요"라는 말이 이렇게 기쁠 줄 몰랐다.' },
@@ -4388,7 +4617,7 @@ const STORYBOOK=[
     unlock:null,   // 이벤트형 — customerLeaves 만족 분기(최애 포함 시)
     line:'그 사람이 제일 좋아하는 맛을, 이제 나도 안다.' },
   { id:'sb4', reward:300, emoji:'🏷️', title:'첫 번째 이름', cond:'친구 1명이 Lv.1이 되면',
-    unlock:()=>sbFriendCount()>=1,   // ※ 기본 단골 5명 포함 여부(§8-2) 신민 대기 — 현행은 Lv.1 도달 기준(포함)
+    unlock:()=>sbFriendCount()>=1,   // (v56_002) 판정 확정 — 기본 단골 포함, Lv.1 도달 기준 (June 승인)
     line:'손님이 아니라, 이름으로 부르는 사이가 됐다.' },
   { id:'sb5', reward:300, emoji:'🪟', title:'창가 자리의 약속', cond:'친구 1명이 Lv.3이 되면',
     unlock:()=>sbFriends().some(f=>(f.level||0)>=3 || f.lv3day),
@@ -4410,7 +4639,7 @@ const STORYBOOK=[
     line:'오븐보다 얼굴이 더 뜨거웠던 날.' },
   { id:'sb11', reward:500, emoji:'💍', title:'오래 머물고 싶은 곳', cond:'누군가와 약속한 사이가 되면 (💞5)',   // 💍=명부 추억(약속) 아이콘과 통일
     unlock:()=>sbFriends().some(f=>(f.rel||0)>=5 || f.r5day),
-    line:'어른이 되어서도 나란히 디저트를 굽는 우리를, 잠깐 상상했다.' },   // 표현 수위 §8-4 신민 대기 — 열린 표현으로 임시
+    line:'어른이 되어서도 나란히 디저트를 굽는 우리를, 잠깐 상상했다.' },   // (v56_002) 수위 확정 — 열린 표현 (June 승인)
   { id:'sb12', reward:500, emoji:'🌇', title:'이제 더 이상 외롭지 않아', cond:'첫 번째 엔딩을 보면',
     unlock:()=>!!endingShown,
     line:'처음 이 마을에 오던 날의 나에게 말해주고 싶다. 괜찮아, 곧 좋아질 거야.' },
@@ -4418,7 +4647,7 @@ const STORYBOOK=[
   // ── (v53_003) 체인(after): 이전 단계 달성 전엔 목록 비노출 + 판정 보류. 배열은 반드시 체인 순서대로(같은 판정 패스 내 연쇄 해금) ──
   { id:'g_serve0', reward:100, kind:'rec', emoji:'🧾', title:'열 번의 배웅', cond:'손님 10명을 만족스럽게 배웅하면',
     unlock:()=>lifeStats.served>=10, prog:()=>[lifeStats.served,10],
-    line:'열 번째 "안녕히 가세요"는, 조금 덜 떨렸다.' },   // 제목·문구 임시 (기록형 전부)
+    line:'열 번째 "안녕히 가세요"는, 조금 덜 떨렸다.' },   // (v56_002) 기록형 제목·line·금액 전부 확정 — June 승인
   { id:'g_serve1', reward:300, kind:'rec', after:'g_serve0', emoji:'🧾', title:'백 번의 배웅', cond:'손님 100명을 만족스럽게 배웅하면',
     unlock:()=>lifeStats.served>=100, prog:()=>[lifeStats.served,100],
     line:'백 번의 "또 올게요"가 쌓였다.' },
@@ -4465,23 +4694,23 @@ const STORYBOOK=[
   { id:'g_recipe', reward:1000, kind:'rec', emoji:'📚', title:'두툼해진 레시피북', cond:'레시피북의 모든 칸을 채우면',
     unlock:()=>Array.isArray(unlockedDishes) && unlockedDishes.length>=[...MAIN_DISHES,...SIDE_DISHES].length,
     prog:()=>[unlockedDishes.length, [...MAIN_DISHES,...SIDE_DISHES].length],
-    line:'할머니의 레시피북에, 내 글씨가 가득해졌다.' },   // 할머니 언급 — 등장 방식 §8-3 신민 대기, 문구 임시
+    line:'할머니의 레시피북에, 내 글씨가 가득해졌다.' },   // (v56_002) 확정 — 할머니=편지+회상 결정과 정합
   // ── (v52_003) 히든 — §6 루프란식: 제목만 공개, 조건 ???. 제목 5종은 §8-1b 신민 확정 대기(임시) ──
   { id:'h_shelf', reward:500, kind:'hid', emoji:'🍒', title:'체리 냄새가 나는 원고', cond:'???',
     unlock:()=>storyDone.includes('story_shelf_3'),   // 밤의 서가 3장 완결 — 현행 스토리 퀘로 즉시 달성 가능
     line:'발신인 없는 원고의 마지막 장을, 함께 읽었다.' },
   { id:'h_yuki', reward:500, kind:'hid', emoji:'✒️', title:'마지막 장부터 쓰는 사람', cond:'???',
-    unlock:()=>false,   // 유키 아크 후일담 — 스토리 아크 미구현, 집필 시 연결 (로드맵 §8-1)
-    line:'(스토리 아크 집필 시 연결)' },
+    unlock:()=>storyDone.includes('story_shelf_4'),   // (v55_002) 밤의 서가 · 후일담 완결
+    line:'온화한 미소의 비밀은, 미리 써 둔 따뜻한 결말이었다.' },
   { id:'h_sia', reward:500, kind:'hid', emoji:'🖼️', title:'그 애가 찾던 풍경', cond:'???',
-    unlock:()=>false,   // 시아의 비밀 — 미구현, 연결 대기
-    line:'(스토리 아크 집필 시 연결)' },
+    unlock:()=>storyDone.includes('story_sia_2'),   // (v55_002) 머물 곳 2장 완결
+    line:'그 애가 오래 찾아 헤맨 풍경은, 오늘 네가 불을 켠 이 가게였다.' },
   { id:'h_hanna', reward:500, kind:'hid', emoji:'🍮', title:'오늘은 두 개 다 내 몫', cond:'???',
-    unlock:()=>false,   // 한나의 비밀 장면 — 미구현, 연결 대기
-    line:'(스토리 아크 집필 시 연결)' },
+    unlock:()=>storyDone.includes('story_crois_3'),   // (v55_002) 두 개의 크루아상 3장 완결
+    line:'늘 나누던 손이, 오늘 하루는 저를 위해 접시를 비웠다.' },
   { id:'h_nero', reward:500, kind:'hid', emoji:'🌙', title:'문 닫을 시간의 창가', cond:'???',
-    unlock:()=>false,   // 네로의 비밀 — 미구현, 연결 대기
-    line:'(스토리 아크 집필 시 연결)' },
+    unlock:()=>storyDone.includes('story_nero_2'),   // (v55_002) 골목의 여왕 2장 완결
+    line:'우연인 척 서 있던 창가에, 이제 그 애의 자리가 생겼다.' },
 ];
 function sbIsDone(id){ return storybookDone.some(e=>e && e.id===id); }
 function sbVisible(p){ return !p.after || sbIsGot(p.after); }   // (v53_003→v53_004) 체인 — 이전 단계 '수령([받기])' 전엔 비노출. 판정 게이트(checkStorybook)는 달성 기준 유지 — 뒤 단계도 백그라운드 기록되고, 수령 순간 이미 달성 상태면 받기 버튼째로 뿅 등장
@@ -4517,7 +4746,7 @@ function storybookMark(id){
 function sbAnnounce(){
   storybookNew=true;
   // 다이어리 데뷔(Day4) 전엔 조용히 기록만 — 데일리 팝업 억제(v49_001)와 동일 기준
-  if(storyIntroShown) toast('🏅 새 업적! 업적 탭에서 보상을 받아요');   // 문구 임시 (v53_002 클레임 안내)
+  if(storyIntroShown){ toast('🏅 새 업적! 업적 탭에서 보상을 받아요'); sfx('achieve'); }   // 문구 (v56_002) 확정 + 소리 (v54_004)
   if(typeof refreshQuestBadge==='function') refreshQuestBadge();
 }
 // (v52_002) 한 줄 카드 — 달성: 이모지+제목+Day✓+한 문장 / 미달성: 🔒+제목+조건(+진행). 버튼·읽기 뷰 없음.
@@ -4532,9 +4761,10 @@ function sbCardHTML(p){
         : `<span class="qc-reward"><img class="coin-ic" src="${COIN_IMG}" alt="코인">${p.reward}</span><button class="qc-btn claim small" data-sbclaim="${p.id}">받기</button>`;
     // (v53_004) 감성 문구 아래 달성 조건 병기 (June 요구 — 뭘로 딴 업적인지 보이게). 히든(cond='???')은 설계상 계속 비공개 — line이 내용 공개 역할
     const condRow=(p.cond && p.cond!=='???') ? `<div class="sb-cond">${p.cond}</div>` : '';
+    const letterBtn=(p.id==='sb12') ? `<button class="qc-btn ghost" data-gmletter>💌 할머니의 편지 다시 읽기</button>` : '';   // (v57_001)
     return `<div class="quest-card" data-sbid="${p.id}">
       <div class="qc-head"><span class="qc-emoji">${p.emoji}</span><span class="qc-title">${p.title}</span>${rchip}<span class="sb-day">${d?`Day ${d} `:''}✓</span></div>
-      <div class="qc-goal">${p.line}</div>${condRow}
+      <div class="qc-goal">${p.line}</div>${condRow}${letterBtn}
     </div>`;
   }
   if(p.kind==='hid'){
@@ -4558,7 +4788,7 @@ function storybookHTML(){
   return `<div class="sb-head">달성한 업적 <b>${doneN}</b> / ${vis.length}</div>`
     + grp('ch')
     + `<div class="sb-head">가게의 기록</div>` + grp('rec')
-    + `<div class="sb-head">아직 이름 없는 순간들</div>` + grp('hid');   // 그룹 헤더 문구 임시
+    + `<div class="sb-head">아직 이름 없는 순간들</div>` + grp('hid');   // 그룹 헤더 (v56_002) 확정
 }
 
 // ── 퀘스트 창 UI ──
@@ -4621,9 +4851,12 @@ function questCardHTML(q){
         : `<button class="qc-btn" data-start="${q.id}">이야기 시작</button>`}
     </div>`;
   }
+  // (v55_003) 잠금 사유별 힌트 — 직전 장 미독이면 순서 안내, 읽었다면 개별 게이트(친밀도) 힌트
+  const seq=STORY_QUESTS.indexOf(q);
+  const prevPending=seq>0 && !storyIsDone(STORY_QUESTS[seq-1].id);
   return `<div class="quest-card locked">
     <div class="qc-head"><span class="qc-emoji">🔒</span><span class="qc-title">???</span></div>
-    <div class="qc-goal">${q.hint||'아직 열리지 않은 이야기'}</div>
+    <div class="qc-goal">${prevPending ? '앞의 이야기를 읽으면 열려요' : (q.hint||'아직 열리지 않은 이야기')}</div>
   </div>`;
 }
 function questReaderHTML(q, kind, claim){
@@ -4659,6 +4892,7 @@ function renderQuest(){
   if(questTab==='daily'){
     ensureDailyQuests();
     body.innerHTML = dailyQuests.map(dailyCardHTML).join('')
+      + dailyBonusHTML()   // (v56_001) 올클 상자 행
       + `<div class="quest-empty" style="padding:1.5cqw 1cqw;" id="dailyResetInfo">${dailyResetLeftText()}</div>`;
     body.querySelectorAll('[data-dclaim]').forEach(b=>{ b.onclick=(e)=>{
       e.stopPropagation();
@@ -4671,6 +4905,17 @@ function renderQuest(){
       saveGame();
       renderQuest(); refreshQuestBadge();
     }; });
+    { const bb=body.querySelector('[data-dallclaim]');   // (v56_001) 올클 상자 수령
+      if(bb) bb.onclick=(e)=>{
+        e.stopPropagation();
+        if(dailyAllClaimed || !dailyAllDone()) return;
+        dailyAllClaimed=true;
+        wallet+=DAILY_ALL_BONUS;
+        updateWalletHud();
+        rewardPop(DAILY_ALL_BONUS, bb);
+        saveGame();
+        renderQuest(); refreshQuestBadge();
+      }; }
     applyScroll();   // (v45_006)
     return;
   }
@@ -4695,6 +4940,8 @@ function renderQuest(){
         if(el) el.classList.add('sb-pop');
       });
     }; });
+    const gb=body.querySelector('[data-gmletter]');   // (v57_001) 12장 편지 재열람
+    if(gb) gb.onclick=(e)=>{ e.stopPropagation(); showGrandmaLetter(); };
     applyScroll();
     // (v53_006) 느낌표 보고 들어온 진입 1회: 첫 수령 대기 카드로 자동 스크롤 (없으면 그대로)
     if(sbEnterScroll){
@@ -4720,7 +4967,11 @@ function renderQuest(){
     if(!storyIsDone(q.id) && storyUnlocked(q) && !storyActive) return 1;
     return 2;
   };
+  // (v55_003) 순차 해금 UI — 잠긴 장은 '바로 다음 1장'만 힌트와 함께 노출, 그 뒤 장들은 숨김(스포일러·목록 간결)
+  const qLocked=q=>!storyIsDone(q.id) && !(storyActive&&storyActive.id===q.id) && !storyUnlocked(q);
+  const firstLockedIdx=STORY_QUESTS.findIndex(qLocked);
   body.innerHTML = STORY_QUESTS.map((q,i)=>({q,i,r:qRank(q)}))
+    .filter(x=> !qLocked(x.q) || x.i===firstLockedIdx)
     .sort((a,b)=> a.r-b.r || a.i-b.i)
     .map(x=>questCardHTML(x.q)).join('') ||
     `<div class="quest-empty">아직 이야기가 없어요</div>`;
@@ -4766,8 +5017,11 @@ document.querySelectorAll('.q-tab').forEach(b=>{ b.onclick=(e)=>{ e.stopPropagat
 // ====== (v43_005) 일일 퀘스트 — 현실 날짜 기반 (인게임 Day 아님, 확정 스펙) ======
 // 로컬 날짜 문자열 키. 자정이 지나 처음 확인하는 시점에 템플릿 풀에서 3개 난수 생성.
 // 저장 필드: dailyQuests / questDate — loadGame 복원 동반(불변 규칙)
-const DAILY_COUNT=3;
-const DAILY_TYPES=['serveCount','serveDish','serveFav','earnCoins','clean'];
+// (v56_001) 미션 3→6개/일, 타입 5→10종, 보상 약 ×2, 올클 보너스 상자(원신식 단일 상자 — June 승인안)
+const DAILY_COUNT=6;
+const DAILY_TYPES=['serveCount','serveDish','serveFav','earnCoins','clean','gift','levelUp','variety','friendServe','closeDay'];
+const DAILY_ALL_BONUS=300;    // 오늘 미션 보상을 전부 받으면 열리는 상자 (v56_001)
+let dailyAllClaimed=false;    // 오늘 상자 수령 여부 (저장됨, 새 날 리셋) (v56_001)
 let dailyQuests=[];   // [{type, dish, goal, prog, reward, claimed}] (저장됨)
 let questDate='';     // 'YYYY-MM-DD' (저장됨)
 
@@ -4782,17 +5036,31 @@ function makeDailyQuest(type){
     if(!pool.length) return makeDailyQuest('serveCount');   // 폴백
     const d=pool[Math.floor(Math.random()*pool.length)];
     const goal=ri(3,5);
-    return { type, dish:d.id, goal, prog:0, reward:30+goal*5, claimed:false };
+    return { type, dish:d.id, goal, prog:0, reward:60+goal*10, claimed:false };   // (v56_001) 보상 ×2
   }
-  if(type==='serveCount'){ const goal=ri(8,12);  return { type, dish:null, goal, prog:0, reward:20+goal*2, claimed:false }; }
-  if(type==='serveFav'){   const goal=ri(2,3);   return { type, dish:null, goal, prog:0, reward:25+goal*10, claimed:false }; }
-  if(type==='earnCoins'){  const goal=ri(6,12)*10; return { type, dish:null, goal, prog:0, reward:20+Math.round(goal/4), claimed:false }; }
-  if(type==='clean'){      const goal=ri(5,8);   return { type, dish:null, goal, prog:0, reward:20+goal*3, claimed:false }; }
+  if(type==='serveCount'){ const goal=ri(8,12);  return { type, dish:null, goal, prog:0, reward:40+goal*4, claimed:false }; }
+  if(type==='serveFav'){   const goal=ri(2,3);   return { type, dish:null, goal, prog:0, reward:50+goal*20, claimed:false }; }
+  if(type==='earnCoins'){  const goal=ri(6,12)*10; return { type, dish:null, goal, prog:0, reward:40+Math.round(goal/2), claimed:false }; }
+  if(type==='clean'){      const goal=ri(5,8);   return { type, dish:null, goal, prog:0, reward:40+goal*6, claimed:false }; }
+  // (v56_001) 신규 5종 — 훅: gift=선물 3곳 / levelUp=levelUpFriend / variety·friendServe=기존 serve 이벤트 / closeDay=closeDay()
+  if(type==='gift'){       const goal=ri(1,2);   return { type, dish:null, goal, prog:0, reward:50+goal*50, claimed:false }; }   // 선물 비용(30~) 회수 + 마진 → 선물 줄 핑계
+  if(type==='levelUp'){    return { type, dish:null, goal:1, prog:0, reward:90, claimed:false }; }
+  if(type==='variety'){    const goal=Math.min(ri(4,6), unlockedDishes.length); return { type, dish:null, goal, prog:0, seen:[], reward:40+goal*10, claimed:false }; }
+  if(type==='friendServe'){const goal=ri(3,5);   return { type, dish:null, goal, prog:0, reward:40+goal*10, claimed:false }; }
+  if(type==='closeDay'){   const goal=ri(1,2);   return { type, dish:null, goal, prog:0, reward:30+goal*30, claimed:false }; }
   return null;
 }
 // (v43_006) 뽑기 가능한 타입 풀 — 자동 세척(cleanSpeed Lv4+) 단계에선 치우기 퀘 제외 (달성 불가 방지)
+// (v56_001) 신규 타입도 같은 원칙: 그날 달성 불가능한 타입은 풀에서 제외 (초반엔 풀이 6개 미만일 수 있음 — 미션 수가 자연히 적어질 뿐 상자 판정은 dailyQuests 기준이라 안전)
 function dailyTypePool(){
-  return DAILY_TYPES.filter(t=>t!=='clean' || !autoCleanActive());
+  return DAILY_TYPES.filter(t=>{
+    if(t==='clean')       return !autoCleanActive();
+    if(t==='gift')        return giftUnlocked();                                        // 선물 기능 해금 후
+    if(t==='levelUp')     return Object.keys(friends).length>0;                         // 명부에 친구 후보가 있어야
+    if(t==='friendServe') return Object.values(friends).some(f=>f&&(f.level||0)>=1);    // Lv1+ 친구 존재
+    if(t==='variety')     return unlockedDishes.length>=3;                              // 메뉴 3종 이상
+    return true;
+  });
 }
 function ensureDailyQuests(){
   const key=todayKey();
@@ -4818,6 +5086,7 @@ function ensureDailyQuests(){
   for(let i=types.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [types[i],types[j]]=[types[j],types[i]]; }
   dailyQuests=types.slice(0,DAILY_COUNT).map(makeDailyQuest).filter(Boolean);
   questDate=key;
+  dailyAllClaimed=false;   // (v56_001) 새 날 → 올클 상자 리셋
   saveGame();
   refreshQuestBadge();
 }
@@ -4827,11 +5096,16 @@ function dailyGoalText(q){
   if(q.type==='serveFav')   return `친구의 최애 메뉴 ${q.goal}번 대접하기`;
   if(q.type==='earnCoins')  return `코인 ${q.goal}개 벌기`;
   if(q.type==='clean')      return `테이블 ${q.goal}번 반짝반짝 치우기`;
+  if(q.type==='gift')       return `친구에게 선물 ${q.goal}번 하기`;                        // (v56_001)
+  if(q.type==='levelUp')    return `명부에서 친구 호감도 레벨업 ${q.goal}회`;               // (v56_001)
+  if(q.type==='variety')    return `서로 다른 메뉴 ${q.goal}종 대접하기`;                   // (v56_001)
+  if(q.type==='friendServe')return `친구 손님 ${q.goal}명 기분 좋게 배웅하기`;              // (v56_001)
+  if(q.type==='closeDay')   return `영업 ${q.goal}번 마감하기`;                             // (v56_001)
   return '';
 }
 function dailyEmoji(q){
   if(q.type==='serveDish'){ const d=DISH[q.dish]; return d?d.ico:'🍽️'; }
-  return { serveCount:'😊', serveFav:'💗', earnCoins:'🪙', clean:'🧽' }[q.type]||'📋';
+  return { serveCount:'😊', serveFav:'💗', earnCoins:'🪙', clean:'🧽', gift:'🎁', levelUp:'🌟', variety:'🍱', friendServe:'🤗', closeDay:'🌙' }[q.type]||'📋';
 }
 // 진행 훅 — type: 'serve'{gid, dishes[]} / 'coins'{amount} / 'clean'
 function dailyOnEvent(type, val){
@@ -4846,9 +5120,18 @@ function dailyOnEvent(type, val){
       if(q.type==='serveCount') add=1;
       else if(q.type==='serveDish') add=dishes.filter(id=>id===q.dish).length;
       else if(q.type==='serveFav'){ const fav=favOf(val.gid); add=(fav && dishes.includes(fav))?1:0; }
+      else if(q.type==='friendServe'){ const f=friends[val.gid]; add=(f && (f.level||0)>=1)?1:0; }   // (v56_001)
+      else if(q.type==='variety'){   // (v56_001) 서로 다른 메뉴 — q.seen에 처음 보는 메뉴만 누적, prog=고유 종수
+        if(!Array.isArray(q.seen)) q.seen=[];
+        dishes.forEach(id=>{ if(DISH[id] && !q.seen.includes(id)) q.seen.push(id); });
+        add=Math.min(q.goal, q.seen.length)-q.prog;
+      }
     }
     else if(type==='coins' && q.type==='earnCoins') add=(val&&val.amount)||0;
     else if(type==='clean' && q.type==='clean') add=1;
+    else if(type==='gift' && q.type==='gift') add=1;           // (v56_001)
+    else if(type==='levelUp' && q.type==='levelUp') add=1;     // (v56_001)
+    else if(type==='closeDay' && q.type==='closeDay') add=1;   // (v56_001)
     if(add>0){
       q.prog=Math.min(q.goal, q.prog+add);
       changed=true;
@@ -4857,7 +5140,29 @@ function dailyOnEvent(type, val){
   });
   if(changed){ saveGame(); refreshQuestBadge(); }
 }
-function dailyAnyClaimable(){ return dailyQuests.some(q=>q.prog>=q.goal && !q.claimed); }
+function dailyAnyClaimable(){ return dailyQuests.some(q=>q.prog>=q.goal && !q.claimed) || (dailyAllDone() && !dailyAllClaimed); }   // (v56_001) 상자도 뱃지 대상
+// (v56_001) 올클 상자 — 오늘 미션 보상을 '전부 수령'하면 열림 (원신식 단일 보너스)
+function dailyAllDone(){ return dailyQuests.length>0 && dailyQuests.every(q=>q.claimed); }
+function dailyBonusHTML(){
+  const total=dailyQuests.length;
+  if(!total) return '';
+  const n=dailyQuests.filter(q=>q.claimed).length;
+  const done=dailyAllDone();
+  const pct=Math.round(n/total*100);
+  const reward=`<span class="qc-reward"><img class="coin-ic" src="${COIN_IMG}" alt="코인">${DAILY_ALL_BONUS}</span>`;
+  let side;
+  if(dailyAllClaimed) side=`${reward}<span class="qc-done-mark">✓</span>`;
+  else if(done)       side=`${reward}<button class="qc-btn claim small" data-dallclaim="1">받기</button>`;
+  else                side=`${reward}<span class="qc-wait">진행 중</span>`;
+  return `<div class="quest-card daily daily-bonus${dailyAllClaimed?' claimed':''}">
+    <span class="qc-emoji">🎁</span>
+    <div class="qc-mid">
+      <div class="qc-title">오늘의 미션 모두 완료</div>
+      <div class="qc-prog2"><span style="width:${pct}%"></span><em>${n}/${total}</em></div>
+    </div>
+    <div class="qc-side">${side}</div>
+  </div>`;
+}
 // (v43_007) 다음 리셋(기기 로컬 자정)까지 남은 시간 — 서버 없음: 로컬 날짜 비교 방식이라 '자정 후 첫 확인 시' 갈아끼움
 function dailyResetLeftText(){
   const now=new Date();
@@ -5041,6 +5346,7 @@ function levelUpFriend(guestId){
   // 마일스톤 달성 day 기록 (추억 표기용). 한 번 찍히면 유지. 소급 X.
   if(f.level===3 && !f.lv3day) f.lv3day=dayCount;
   if(f.level===5 && !f.lv5day) f.lv5day=dayCount;
+  dailyOnEvent('levelUp');   // (v56_001) 데일리 미션 — 명부 수동 레벨업
   saveGame();
   return { newLevel:f.level, line:friendThankLine(f, guestId) };
 }
@@ -5337,6 +5643,7 @@ function placeFixtures(){
     bin.style.transform='translate(-50%,-50%)';
   }
   // (v46_006) 전화 선반·포장선반 — bin과 동일 배치 방식
+  updatePhoneLock();   // (v54_003) 배치 시점마다 잠금 표시 동기화 (초기 로드·레이아웃 재계산 포함)
   [['phoneShelf',PHONE_CELL],['packShelf',PACK_CELL]].forEach(([id,cell])=>{
     const el=document.getElementById(id); if(!el) return;
     const ctr=cellToXY(cell.col, cell.row+0.5); // (v47_001) 반 칸 아래 — 말풍선 상단 UI 잘림 방지
@@ -5918,6 +6225,67 @@ function execBin(){
 // ====== (v46_006) 전화 주문 — 옵트인 포장 주문 스트림 ======
 // 손님 엔티티·SEATED 무관. 티켓은 런타임 전용(저장 안 함, 마감 시 소멸).
 // (v48_002) 벨/쿨다운은 gameNow 기준(증가·ms) → playing/party 공용, 일시정지·배속 자동 대응. 동시 티켓 1개(티켓 살아있는 동안 벨 없음).
+const PHONE_OPEN_DAY=3;                       // (v54_003) 전화 해금 일차 — 커피(autoDay:2) 다음 날, 상점과 같은 날 (June 지정)
+function phoneAvailable(){ return dayCount>=PHONE_OPEN_DAY; }   // (v54_003) featuresUnlocked에 안 넣음 — 순수 dayCount 파생이라 저장 불필요
+function updatePhoneLock(){ const el=document.getElementById('phoneShelf'); if(el) el.classList.toggle('phone-locked', !phoneAvailable()); }   // (v54_003)
+let phoneIntroShown=false;                    // (v54_003) 전화 안내 카드 1회 — 영구 저장 (loadGame 복원 동반, 불변 규칙)
+
+// ====== (v54_004) 사운드 — Web Audio 신디사이즈 SFX (에셋 0바이트, 단일 HTML 유지. BGM은 의도적 제외 — 고도 버전 몫) ======
+let sfxOn=true;    // 설정 🔊 토글 — 영구 저장
+let _actx=null;    // AudioContext — 모바일 자동재생 정책상 첫 사용자 제스처 후에만 동작
+function _audio(){
+  if(!_actx){ try{ _actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(_actx && _actx.state==='suspended'){ try{ _actx.resume(); }catch(e){} }
+  return _actx;
+}
+document.addEventListener('pointerdown', function _wakeAudio(){ _audio(); }, {once:true, capture:true});   // 첫 탭에서 깨움
+// 공용 톤 — 짧은 어택/지수 감쇠 엔벨로프 (glow·blur 금지처럼 소리도 과장 금지: 볼륨 낮고 부드럽게)
+function _tone(ctx, o){
+  const f=o.f||440, type=o.type||'sine', t0=o.t0||0, dur=o.dur||0.18, vol=o.vol||0.1, attack=o.attack||0.008;
+  const osc=ctx.createOscillator(), g=ctx.createGain();
+  const now=ctx.currentTime + t0;
+  osc.type=type; osc.frequency.setValueAtTime(f, now);
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(vol, now+attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+  osc.connect(g); g.connect(ctx.destination);
+  osc.start(now); osc.stop(now+dur+0.05);
+}
+const SFX={
+  coin(ctx){   // 뾰로롱 — 맑은 사인 2음 상행 (E6→A6)
+    _tone(ctx,{f:1318.5, dur:.09, vol:.09});
+    _tone(ctx,{f:1760, t0:.07, dur:.14, vol:.09});
+  },
+  serve(ctx){   // 만족 배웅 — 포근한 목금 느낌 (C5 + G5 살짝 겹침)
+    _tone(ctx,{f:523.3, type:'triangle', dur:.16, vol:.11});
+    _tone(ctx,{f:784, type:'triangle', t0:.02, dur:.2, vol:.06});
+  },
+  heart(ctx){   // 선물/마음 — 따뜻한 2음, 느린 어택 (E5→G#5)
+    _tone(ctx,{f:659.3, dur:.22, vol:.08, attack:.03});
+    _tone(ctx,{f:830.6, t0:.12, dur:.28, vol:.08, attack:.03});
+  },
+  levelup(ctx){   // 레벨업·관계 진전 — 장3화음 아르페지오 (C-E-G-C)
+    [523.3,659.3,784,1046.5].forEach((f,i)=>_tone(ctx,{f, type:'triangle', t0:i*.09, dur:.18, vol:.09}));
+  },
+  achieve(ctx){   // 새 업적 — 높고 빠른 반짝 아르페지오
+    [1046.5,1318.5,1568,2093].forEach((f,i)=>_tone(ctx,{f, t0:i*.06, dur:.12, vol:.06}));
+  },
+  ring(ctx){   // 전화 따르릉 — 두 음 트릴 버스트 ×2 (G5/B5)
+    for(let b=0;b<2;b++){ const base=b*.5;
+      for(let i=0;i<6;i++) _tone(ctx,{f:i%2?987.8:784, type:'triangle', t0:base+i*.055, dur:.05, vol:.055});
+    }
+  },
+  close(ctx){   // 마감 종 — '댕—' 배음 2겹 긴 여운
+    _tone(ctx,{f:660, dur:1.1, vol:.09, attack:.005});
+    _tone(ctx,{f:1320, dur:.7, vol:.035, attack:.005});
+    _tone(ctx,{f:1980, dur:.4, vol:.018, attack:.005});
+  },
+};
+function sfx(name){
+  if(!sfxOn) return;
+  const ctx=_audio(); if(!ctx || ctx.state!=='running') return;   // 제스처 전엔 조용히 무시
+  try{ if(SFX[name]) SFX[name](ctx); }catch(e){}
+}
 const PHONE_RING_SEC=6;                       // 벨 지속(초) — 안 받으면 조용히 끊김, 패널티 없음
 const PHONE_COIN_MULT=1.5;                    // 포장 보상 배율 (수치 확정: 신민)
 const PHONE_EXP_MULT=1.5;                     // (v51_002) 전화 주문 호감도 배율 — 매장보다 보상 가산 (1.5~2 사이 조정 가능, June: 흐름 난이도 보상)
@@ -5979,6 +6347,7 @@ function phoneTick(){
     phoneNextRingAt=-1;
     phoneRingEndAt=gameNow + PHONE_RING_SEC*1000;   // (v48_002) 벨 종료 시각(gameNow)
     elPhoneShelf.classList.add('ringing');
+    sfx('ring');   // (v54_004)
     phoneCaller=pickPhoneCaller();   // (v51_003) 벨 울릴 때 발신자 배정 → 전화기 위 얼굴로 미리 보임
     renderPhoneCallerFace();
   }
@@ -6015,10 +6384,10 @@ function execPhone(){
       phoneTicket={items, ordered:[...items], caller};   // ordered: 완료 시 최애 판정용 원본 스냅샷
       renderPackTicket();
       const cg=caller ? guestDef(caller) : null;
-      toast(cg ? `📞 ${cg.name}: 포장 주문 부탁해요~` : '📞 포장 주문이 들어왔어요!');   // 문구 임시 — 확정: 신민
+      toast(cg ? `📞 ${cg.name}: 포장 주문 부탁해요~` : '📞 포장 주문이 들어왔어요!');   // (v56_002) 확정 — June 승인
     } else {
       phoneHeld=false; phoneCaller=null; stopPhoneRing();   // (v51_003) 끊긴 발신자 정리
-      toast('전화가 끊겼어요…');            // 문구 임시 — 확정: 신민
+      toast('전화가 끊겼어요…');            // (v56_002) 확정 — June 승인
       scheduleNextRing();
     }
     actionDone();
@@ -6053,9 +6422,9 @@ function execPack(){
             floatText(p.x, p.y-0.06, `+${res.gained} 💗`);
             if(res.pending) refreshFriendBadges();
           }
-          toast(`📦 ${cg.name}에게 포장 완료! 다음에 또 주문할게요~`);   // 문구 임시 — 확정: 신민
+          toast(`📦 ${cg.name}: "고마워요! 다음에 또 주문할게요~"`);   // (v56_002) 확정 — June 승인
         } else {
-          toast('📦 포장 완료! 다음에 또 주문할게요~');   // 문구 임시 — 확정: 신민
+          toast('📦 포장 완료! 다음에 또 주문할게요~');   // (v56_002) 확정 — June 승인
         }
         scheduleNextRing();
       }
@@ -6821,7 +7190,7 @@ const SAVE_KEY='cozyCafeSave_v2';
 function saveGame(){
   try{
     checkStorybook();   // (v52_001) 술어형 페이지 자동 판정 — checkStorybook은 saveGame을 부르지 않음(재귀 방지)
-    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, goalStage, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, partyUnlocked, partyBestServed, partyBestCoins, partyBestDuration, partyLastServed, partyLastCoins, partyLastDuration, partyPlayed, giftToday, giftIntroShown, partyIntroShown, tutorialDone, partnerId, invited, themeNextDay, themeFood, storyDone, storyActive, storyIntroShown, dailyQuests, questDate, storybookDone, lifeStats };
+    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, goalStage, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, partyUnlocked, partyBestServed, partyBestCoins, partyBestDuration, partyLastServed, partyLastCoins, partyLastDuration, partyPlayed, giftToday, giftIntroShown, phoneIntroShown, sfxOn, partyIntroShown, tutorialDone, partnerId, invited, themeNextDay, themeFood, storyDone, storyActive, storyIntroShown, dailyQuests, questDate, dailyAllClaimed, storybookDone, lifeStats };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   }catch(e){ /* 아티팩트 미리보기 등에서 localStorage 차단될 수 있음 — 무시 */ }
 }
@@ -6894,13 +7263,18 @@ function loadGame(){
     if(Array.isArray(data.dailyQuests)){
       dailyQuests=data.dailyQuests
         .filter(q=>q && typeof q==='object' && DAILY_TYPES.includes(q.type))
-        .map(q=>({ type:q.type,
-                   dish:(typeof q.dish==='string' && DISH[q.dish]) ? q.dish : null,
-                   goal:Math.max(1, Math.floor(q.goal||1)),
-                   prog:Math.max(0, Math.floor(q.prog||0)),
-                   reward:Math.max(0, Math.floor(q.reward||0)),
-                   claimed:!!q.claimed }));
+        .map(q=>{
+          const o={ type:q.type,
+                    dish:(typeof q.dish==='string' && DISH[q.dish]) ? q.dish : null,
+                    goal:Math.max(1, Math.floor(q.goal||1)),
+                    prog:Math.max(0, Math.floor(q.prog||0)),
+                    reward:Math.max(0, Math.floor(q.reward||0)),
+                    claimed:!!q.claimed };
+          if(q.type==='variety') o.seen=Array.isArray(q.seen) ? q.seen.filter(id=>typeof id==='string' && DISH[id]) : [];   // (v56_001)
+          return o;
+        });
     }
+    if(typeof data.dailyAllClaimed==='boolean') dailyAllClaimed=data.dailyAllClaimed;   // (v56_001) 올클 상자 — 같은 커밋에서 복원 (불변 규칙)
     if(typeof data.goalStage==='number' && data.goalStage>=1) goalStage=Math.floor(data.goalStage);
     if(typeof data.pendingNextDay==='boolean') pendingNextDay=data.pendingNextDay;
     if(typeof data.allMenuDay==='number' && data.allMenuDay>=0) allMenuDay=Math.floor(data.allMenuDay);
@@ -6947,6 +7321,8 @@ function loadGame(){
     if(typeof data.partyPlayed==='boolean') partyPlayed=data.partyPlayed;
     if(Array.isArray(data.giftToday)) giftToday=data.giftToday.slice();
     if(typeof data.giftIntroShown==='boolean') giftIntroShown=data.giftIntroShown;
+    if(typeof data.phoneIntroShown==='boolean') phoneIntroShown=data.phoneIntroShown;   // (v54_003)
+    if(typeof data.sfxOn==='boolean') sfxOn=data.sfxOn;   // (v54_004)
     if(typeof data.partyIntroShown==='boolean') partyIntroShown=data.partyIntroShown;
     if(typeof data.tutorialDone==='boolean') tutorialDone=data.tutorialDone;
     if(typeof data.partnerId==='string') partnerId=data.partnerId; else partnerId=null;
@@ -6989,6 +7365,7 @@ function updateWalletHud(){
 
 // (v53_004) 보상 수령 리액션 — 모든 보상 공통: 앵커 위 '+금액' 빰빰 + 이모지 스파크 방사 (glow·blur 없음)
 function rewardPop(amount, anchorEl){
+  sfx('coin');   // (v54_004) 클레임 보상은 earnCoins 미경유(v53_002) — 여기서 직접
   let x=window.innerWidth/2, y=window.innerHeight/2;
   if(anchorEl && anchorEl.getBoundingClientRect){
     const r=anchorEl.getBoundingClientRect();
@@ -7209,6 +7586,7 @@ function stopAutoCleanFx(t){
 }
 
 function earnCoins(amount, x, y){
+  sfx('coin');   // (v54_004)
   if(phase==='party') amount=Math.round(amount*PARTY_COIN_MULT);   // 파티는 벌이가 목적 — 약간 후하게 (밸런스 조정 가능)
   coins+=amount;       // 그날 매출 누계
   lifeStats.coins+=amount;   // (v52_003) 평생 수익 누계 (파티 배율 반영 후)
@@ -7251,6 +7629,7 @@ function customerLeaves(t, satisfied){
   playLeaveReaction(t, satisfied, !!c.sideTimedOut);
   if(satisfied){
     served++; updateServedDisplay();
+    sfx('serve');   // (v54_004)
     // 목표 달성 순간(딱 도달한 그 서빙) 1회 축하
     if(phase==='playing' && !goalReachedToday && served>=dayGoal(goalStage)){
       goalReachedToday=true;
@@ -7590,6 +7969,12 @@ document.getElementById('bin').onclick=(e)=>{
 // (v46_006) 전화기: 벨 울릴 때 탭 → 받으러 감 (홀드 — 걸어가는 동안 끊기지 않음). 조용할 땐 무반응.
 document.getElementById('phoneShelf').onclick=(e)=>{
   e.stopPropagation();
+  if(!phoneAvailable()){   // (v54_003) 잠금 중 탭 → 흔들림 + 안내 — 문구 (v56_002) 확정
+    const el=document.getElementById('phoneShelf');
+    el.classList.remove('locked-shake'); void el.offsetWidth; el.classList.add('locked-shake');
+    toast('📞 전화선을 연결하는 중이에요 — Day 3에 첫 벨이 울려요');
+    return;
+  }
   if(!isServing() || phoneTicket) return;
   if(phoneRingEndAt<0 && !phoneHeld) return;
   phoneHeld=true;
@@ -7645,6 +8030,7 @@ function clearBoard(){
     t.occupant=null; t.reserved=false;
     setTableMenuIcon(t, false);     // 메뉴판 아이콘 제거
     setTableDirty(t, false);     // 더러움도 정리
+    setTablePlate(t, null);      // (v54_001) 영업 종료 일괄 정리 시 먹던 접시+음식도 제거 — v51_001 별도 관리 요소라 여기도 배선 필요 (customerLeaves만으론 closeDay 경로 누락)
     removeOccupantSeat(t);
   });
   waitingQueue.forEach(c=>{ if(c.el&&c.el.parentNode) c.el.remove(); });
@@ -7698,7 +8084,8 @@ function openDay(){
   // 마감 후 '영업 준비'에서 OPEN을 누른 경우에만 날짜를 넘긴다 (첫 영업은 그대로 Day1).
   if(pendingNextDay){ dayCount++; pendingNextDay=false; briefingAdvancedDay=true; updateDayBadge(); saveGame(); }
   duskWarned=false; if(elDusk){ elDusk._op='0.000'; elDusk.style.opacity='0'; elDusk._br=false; elDusk.classList.remove('breath'); }   // (v46_003) 노을 리셋
-  resetPhoneDay(true);   // (v46_006) 전화 리셋 + 첫 벨 예약
+  resetPhoneDay(phoneAvailable());   // (v54_003) 전화는 Day3부터 벨 예약 — 그 전엔 조용 / (v46_006) 전화 리셋 + 첫 벨 예약
+  updatePhoneLock();                 // (v54_003) 날짜가 넘어갔을 수 있으니 잠금 표시 갱신
   ensureThemeSchedule();   // (v42_001) 테마 데이 예약 확인/배지 갱신 — 당일 지났으면 다음 테마 재예약
   ensureDailyQuests();     // (v43_005) 영업 시작 시 자정 롤오버 체크
   applyThemeSparkle();     // (v42_002) 테마 당일 해당 선반 ✨ 켜기 / 아닌 날 끄기
@@ -7734,6 +8121,8 @@ function openDay(){
   updateTimerDisplay();
   // "오늘의 영업" 카드 표시 — 준비 완료 버튼을 누르면 startDayPlay()로 실제 시작
   showDayStartCard();
+  // (v54_003) 전화 첫 해금 안내 — Day3 이후 첫 OPEN에서 1회 (브리핑 카드 위에 표시, 닫으면 브리핑으로). 구 세이브도 미표시였다면 1회 노출
+  if(phoneAvailable() && !phoneIntroShown){ setTimeout(showPhoneIntro, 300); }
 }
 // 영업 시작 카드 표시 (타이머/손님 스폰은 아직 시작 안 함)
 function showDayStartCard(){
@@ -8077,7 +8466,9 @@ function cancelCloseParty(){
 }
 
 function closeDay(){
+  sfx('close');   // (v54_004) 마감 종
   phase='closed';
+  dailyOnEvent('closeDay');   // (v56_001) 데일리 미션 — 영업 마감 (파티 종료는 미포함)
   if(spawnTimer){ clearInterval(spawnTimer); spawnTimer=null; }
   setServedVisible(false);
   elTimer.textContent='영업 종료';
@@ -9144,6 +9535,8 @@ function giftFriend(friendId, dishId, btn){
   f.exp = (f.exp||0) + gain;
   if(relOf(f)>=1) addRelExp(friendId, REL_GIFT_EXP);   // 선물 = 관계 진행 보조 소스
   giftToday.push(friendId); lifeStats.gift++;   // (v52_003)
+  dailyOnEvent('gift');   // (v56_001) 데일리 미션 — 선물 3경로 공통 훅
+  sfx('heart');   // (v54_004)
   saveGame();
   const g=GUESTS.find(x=>x.id===friendId);
   const nm=(g&&g.name)||'친구';
@@ -9167,6 +9560,8 @@ function giftBouquet(friendId, btn){
   updateWalletHud();
   f.bq=(f.bq||0)+1;
   giftToday.push(friendId); lifeStats.gift++;   // (v52_003)
+  dailyOnEvent('gift');   // (v56_001)
+  sfx('heart');   // (v54_004)
   const g=GUESTS.find(x=>x.id===friendId);
   const nm=(g&&g.name)||'친구';
   if(f.bq>=BOUQUET_NEED && relOf(f)===0){
@@ -9190,6 +9585,8 @@ function giftConfess(friendId, btn){
   wallet -= CONFESS_COST;
   updateWalletHud();
   giftToday.push(friendId); lifeStats.gift++;   // (v52_003)
+  dailyOnEvent('gift');   // (v56_001)
+  sfx('heart');   // (v54_004)
   saveGame();
   setTimeout(()=>{ closeGiftPicker(); showConfessEvent(friendId); }, 480);
 }
@@ -9245,6 +9642,7 @@ function giftRing(friendId, btn){
   wallet -= RING_COST;
   updateWalletHud();
   giftToday.push(friendId); lifeStats.gift++;   // (v52_003)
+  sfx('heart');   // (v54_004)
   saveGame();
   setTimeout(()=>{ closeGiftPicker(); showPromiseEvent(friendId); }, 480);
 }
@@ -9366,6 +9764,7 @@ function cancelBreakup(){
 }
 // 관계 모먼트 — 차분한 하트가 화면 중앙에서 떠오름(외곽선만, glow/blur 없음) + 알림. 진입/진전 공용.
 function relCelebrate(friendId, message, longToast){
+  sfx('levelup');   // (v54_004) 관계 진전 축하 공용 지점
   if(stage){
     const gr=stage.getBoundingClientRect();
     const cx=gr.width/2, cy=gr.height*0.5;
@@ -9513,6 +9912,16 @@ function closeGiftIntro(){
   if(ov) ov.classList.add('hidden');
   document.body.classList.remove('shop-open');
 }
+// (v54_003) 전화 안내 카드 — 브리핑 카드 위에 뜨므로 shop-open 미사용 (배경 dim은 오버레이 자체가 처리)
+function showPhoneIntro(){
+  const ov=document.getElementById('phoneIntroOverlay');
+  if(ov) ov.classList.remove('hidden');
+}
+function closePhoneIntro(){
+  const ov=document.getElementById('phoneIntroOverlay');
+  if(ov) ov.classList.add('hidden');
+  if(!phoneIntroShown){ phoneIntroShown=true; saveGame(); }   // 사용자 액션 지점 — 직접 저장 OK
+}
 // 친구 상세 페이지(3-b) — 명부 얼굴 탭 진입. guestDef(정적: 소개/이모지/일러스트) + friends[id](상태: 레벨/관계) 표시.
 // 새 저장 필드 없음(전부 기존 데이터 재활용). 추억(고백/약속) 섹션은 3-c에서 추가.
 function openFriendDetail(id){
@@ -9554,7 +9963,7 @@ function openFriendDetail(id){
     relRow=`<div class="rel-row"><div class="rel-row-label rel-max">💞 ${relTitle(rel)}</div></div>`;
   }
   document.getElementById('detailRelRow').innerHTML = relRow;
-  // (v49_002) 추억 — Lv0부터 상시 표시, 잠긴 슬롯은 힌트+수치 병기(문구 임시, 확정 신민).
+  // (v49_002) 추억 — Lv0부터 상시 표시, 잠긴 슬롯은 힌트+수치 병기 — 힌트 문구 (v56_002) 확정.
   // 고백/약속 슬롯은 연인 트랙(rel>=1) 진입 시에만 표시(스포일러 방지) — 현행 유지.
   const memItem=(unlocked,icon,label,line,day,hint)=> unlocked
     ? `<div class="mem-item"><div class="mem-key">${icon} ${label}${day?` <span class="mem-day">Day ${day}</span>`:''}</div><div class="mem-line">“${line}”</div></div>`
@@ -9566,6 +9975,10 @@ function openFriendDetail(id){
   if(rel>=1){
     items += memItem(rel>=3,'💌','고백',g.confess||'', f.r3day, '마음이 닿는 날에 (💞3)');
     items += memItem(rel>=5,'💍','약속',g.promise||'', f.r5day, '언젠가의 약속 (💞5)');
+  } else {
+    // (v54_002) 연인 트랙 존재 암시 — 추억 사다리 맨 아래 ??? 잠금 슬롯 (rel 진입 전에만).
+    // 레퍼: 스타듀밸리 회색 잠금 하트 — 내용은 숨기고 존재만 보인다. 고백/약속 라벨은 비공개 유지(스포일러 방지 취지 보존). 티저 문구 (v56_002) 확정
+    items += memItem(false,'','???','', 0, '베스트 프렌드가 되면, 조금 특별한 마음이 싹틀지도… (Lv.5~)');
   }
   const memHtml=`<div class="detail-memory"><div class="mem-title">📖 추억</div>`+items+`</div>`;
   document.getElementById('detailMemory').innerHTML = memHtml;
@@ -9789,6 +10202,7 @@ function updateFriendsScrollHint(){
 function doLevelUp(id){
   const res=levelUpFriend(id);
   if(!res) return;
+  sfx('levelup');   // (v54_004)
   const g=GUESTS.find(x=>x.id===id);
   const portrait=document.getElementById('levelUpPortrait');
   if(portrait){
@@ -9848,6 +10262,7 @@ function checkEnding(){
   showEndingCard();
 }
 function showEndingCard(){
+  pendingGrandmaLetter=true;   // (v57_001) 엔딩 카드 닫으면 회상→편지 연쇄 (메모리 플래그 — 저장 안 함, 재열람은 스토리북 12장)
   const grid=document.getElementById('endingGrid');
   if(grid){
     grid.innerHTML='';
@@ -9865,9 +10280,25 @@ function showEndingCard(){
   // 패널이 자리잡은 뒤 화려한 별·하트 대축포
   setTimeout(()=>{ celebrateEnding(); }, 280);
 }
+let pendingGrandmaLetter=false;   // (v57_001) 라이브 엔딩 직후에만 true
 function closeEndingCard(){
   document.getElementById('endingOverlay').classList.add('hidden');
+  if(pendingGrandmaLetter){   // (v57_001) 엔딩 → 📖 회상 카드로 연쇄 (shop-open 유지)
+    pendingGrandmaLetter=false;
+    document.getElementById('endingRecallOverlay').classList.remove('hidden');
+    return;
+  }
   document.body.classList.remove('shop-open');
+}
+// (v57_001) 할머니의 편지 — 엔딩 연쇄와 스토리북 재열람 공용
+function showGrandmaLetter(){
+  document.body.classList.add('shop-open');
+  document.getElementById('grandmaLetterOverlay').classList.remove('hidden');
+}
+function closeGrandmaLetter(){
+  document.getElementById('grandmaLetterOverlay').classList.add('hidden');
+  // 다이어리(재열람)에서 열었으면 그 창은 유지, 엔딩 흐름이면 shop-open 해제
+  if(document.getElementById('questOverlay').classList.contains('hidden')) document.body.classList.remove('shop-open');
 }
 // 새 친구 등장 팝업 (메뉴 해금 시)
 function showNewFriendPopup(id){
@@ -9923,11 +10354,18 @@ document.getElementById('levelUpOverlay').onclick=()=>{ closeLevelUpPopup(); };
 document.getElementById('levelUpPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('endingOk').onclick=(e)=>{ e.stopPropagation(); closeEndingCard(); };
 document.getElementById('endingOverlay').onclick=()=>{ closeEndingCard(); };
+// (v57_001) 회상 카드 → 편지 → 닫기 (배경 탭도 버튼과 동일 진행 — 기존 엔딩 패턴 유지)
+document.getElementById('endingRecallOk').onclick=(e)=>{ e.stopPropagation(); document.getElementById('endingRecallOverlay').classList.add('hidden'); showGrandmaLetter(); };
+document.getElementById('endingRecallOverlay').onclick=()=>{ document.getElementById('endingRecallOverlay').classList.add('hidden'); showGrandmaLetter(); };
+document.getElementById('grandmaLetterOk').onclick=(e)=>{ e.stopPropagation(); closeGrandmaLetter(); };
+document.getElementById('grandmaLetterOverlay').onclick=()=>{ closeGrandmaLetter(); };
 document.getElementById('endingPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('giftCancel').onclick=(e)=>{ e.stopPropagation(); closeGiftPicker(); };
 document.getElementById('giftOverlay').onclick=()=>{ closeGiftPicker(); };
 document.getElementById('giftPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('giftIntroOk').onclick=(e)=>{ e.stopPropagation(); closeGiftIntro(); };
+document.getElementById('phoneIntroOk').onclick=(e)=>{ e.stopPropagation(); closePhoneIntro(); };   // (v54_003)
+document.getElementById('phoneIntroOverlay').onclick=()=>{ closePhoneIntro(); };   // (v54_003) 바깥 탭으로도 닫힘
 document.getElementById('giftIntroOverlay').onclick=()=>{ closeGiftIntro(); };
 document.getElementById('giftIntroPanel').onclick=(e)=>{ e.stopPropagation(); };
 document.getElementById('confessOk').onclick=(e)=>{ e.stopPropagation(); closeConfess(); };
@@ -10051,6 +10489,7 @@ document.getElementById('recipePanel').onclick=(e)=>{ e.stopPropagation(); };
 // 설정 열기/닫기
 function openSettings(){
   document.body.classList.add('shop-open');
+  refreshSfxBtn();   // (v54_004)
   document.getElementById('settingsOverlay').classList.remove('hidden');
   // 초기화 버튼은 항상 1단계(확인 전) 상태로 리셋
   const btn=document.getElementById('btnReset');
@@ -10062,7 +10501,65 @@ function closeSettings(){
 }
 document.getElementById('settingsClose').onclick=(e)=>{ e.stopPropagation(); closeSettings(); };
 document.getElementById('settingsOverlay').onclick=()=>{ closeSettings(); };
+// (v54_004) 효과음 토글 — 켤 때 코인 소리로 즉시 미리듣기
+function refreshSfxBtn(){ const b=document.getElementById('btnSfx'); if(b) b.textContent = sfxOn ? '켜짐 🔊' : '꺼짐 🔇'; }
+document.getElementById('btnSfx').onclick=(e)=>{ e.stopPropagation(); sfxOn=!sfxOn; refreshSfxBtn(); saveGame(); if(sfxOn) sfx('coin'); };
 document.getElementById('settingsPanel').onclick=(e)=>{ e.stopPropagation(); };
+// (v55_001) 세이브 내보내기 — 클립보드 복사, 실패 시 파일 다운로드 폴백. 저장 포맷 그대로(가공 없음)
+document.getElementById('btnExport').onclick=async (e)=>{
+  e.stopPropagation();
+  saveGame();   // 최신 상태를 먼저 기록
+  let raw=null;
+  try{ raw=localStorage.getItem(SAVE_KEY); }catch(err){}
+  if(!raw){ toast('아직 저장된 기록이 없어요'); return; }
+  try{
+    await navigator.clipboard.writeText(raw);
+    toast('📋 진행 기록을 복사했어요! 메모장에 붙여넣어 보관하세요', true);
+  }catch(err){
+    try{   // 클립보드 불가 환경 — 파일로 내려주기
+      const blob=new Blob([raw],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='cozy_cafe_save.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      toast('💾 진행 기록을 파일로 저장했어요', true);
+    }catch(e2){ toast('내보내기에 실패했어요'); }
+  }
+};
+// (v55_001) 세이브 가져오기 — 오버레이(설정 위에 겹침) + 검증 + 2탭 확인(btnReset 패턴)
+function openImport(){
+  const ta=document.getElementById('importTa'); ta.value='';
+  const btn=document.getElementById('btnImpApply');
+  btn.textContent='적용하기'; btn.classList.remove('confirm'); btn._armed=false; clearTimeout(btn._t);
+  document.getElementById('importOverlay').classList.remove('hidden');
+}
+function closeImport(){ document.getElementById('importOverlay').classList.add('hidden'); }
+document.getElementById('btnImport').onclick=(e)=>{ e.stopPropagation(); openImport(); };
+document.getElementById('importClose').onclick=(e)=>{ e.stopPropagation(); closeImport(); };
+document.getElementById('importOverlay').onclick=()=>{ closeImport(); };
+document.getElementById('importPanel').onclick=(e)=>{ e.stopPropagation(); };
+document.getElementById('btnImpApply').onclick=(e)=>{
+  e.stopPropagation();
+  const btn=e.currentTarget;
+  const txt=document.getElementById('importTa').value.trim();
+  if(!txt){ toast('먼저 기록을 붙여넣어 주세요'); return; }
+  let data=null;
+  try{ data=JSON.parse(txt); }catch(err){}
+  const ok = data && typeof data==='object' && !Array.isArray(data)
+    && (typeof data.wallet==='number' || typeof data.dayCount==='number' || data.friends);
+  if(!ok){ toast('기록 모양이 아니에요 — 복사가 잘렸는지 확인해 주세요', true); return; }
+  if(!btn._armed){
+    btn._armed=true; btn.textContent='지금 기록을 덮어쓸까요?'; btn.classList.add('confirm');
+    clearTimeout(btn._t);
+    btn._t=setTimeout(()=>{ btn._armed=false; btn.textContent='적용하기'; btn.classList.remove('confirm'); }, 3000);
+    return;
+  }
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));   // 재직렬화로 정규화 — 복원은 loadGame 방어 파싱이 담당
+    location.reload();
+  }catch(err){ toast('가져오기에 실패했어요'); }
+};
 // 게임 초기화 — 두 번 눌러 확인
 document.getElementById('btnReset').onclick=(e)=>{
   e.stopPropagation();
