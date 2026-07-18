@@ -894,7 +894,7 @@
     position:absolute; left:50%; transform:translateX(-50%);
     background:rgba(74,59,46,.9); color:#fff; font-size:12px;
     padding:5px 12px; border-radius:20px; bottom:12px; opacity:0;
-    transition:opacity .3s; pointer-events:none; z-index:30;
+    transition:opacity .3s; pointer-events:none; z-index:265;   /* (v59_002) 30→265: 상점(200)·친구 상세(260) 패널에 구매 토스트가 가려지던 문제 — 축하 팝업(400)보다는 아래 */
   }
   .toast.show{ opacity:1; }
   /* (v41_004) 진입 대사용 — 문장이 읽히도록 줄바꿈·너비 확장·중앙정렬 (컷신 없이 토스트로 목소리 전달) */
@@ -4604,6 +4604,7 @@ let storybookDone=[];       // 달성 목록 [{id, day}] (저장됨)
 let lifeStats={ served:0, coins:0, phone:0, theme:0, gift:0, party:0, _lastThemeDay:0 };
 let storybookNew=false;     // 런타임 전용 — 새 달성~탭 열람 사이 느낌표
 let sbEnterScroll=false;     // (v53_006) 런타임 전용 — 업적 탭 '진입' 시 1회, 첫 수령 대기 카드로 자동 스크롤 (수령 후 재렌더에선 안 움직임)
+let dqEnterScroll=false;     // (v59_003) 런타임 전용 — 데일리 탭 '진입' 시 1회, 첫 수령 가능 카드로 자동 스크롤 (v53_006 패턴 미러)
 const sbFriends=()=>Object.values(friends||{});
 const sbFriendCount=()=>sbFriends().filter(f=>(f.level||0)>=1).length;
 const STORYBOOK=[
@@ -4799,9 +4800,10 @@ function openQuest(){
   document.body.classList.add('shop-open');
   questView={ mode:'list' };
   sbEnterScroll=true;         // (v53_006) 다이어리 열기 = 진입 — 업적 탭이면 수령 대기 카드로 스크롤
+  dqEnterScroll=true;         // (v59_003) 데일리 탭이면 첫 수령 가능 카드로 스크롤
   checkStorybook();           // (v52_001) 열 때 최신 판정 — 새 업적 있으면 느낌표/토스트
+  document.getElementById('questOverlay').classList.remove('hidden');   // (v59_003) 렌더보다 먼저 해제 — hidden(display:none) 중엔 scrollTop/scrollTo가 무시됨(§3 불변 규칙). 동기 실행이라 깜빡임 없음
   renderQuest();
-  document.getElementById('questOverlay').classList.remove('hidden');
   clearInterval(questTickTimer);
   questTickTimer=setInterval(()=>{
     if(questDate!==todayKey()){            // 열어둔 채 자정 넘김 → 새 퀘스트 갈아끼우고 다시 그림
@@ -4917,6 +4919,16 @@ function renderQuest(){
         renderQuest(); refreshQuestBadge();
       }; }
     applyScroll();   // (v45_006)
+    // (v59_003) 진입 1회: 첫 수령 가능 카드(미션→올클 상자 순)로 자동 스크롤 — 없으면 기존 위치(최상단) 유지
+    if(dqEnterScroll){
+      dqEnterScroll=false;
+      const first=body.querySelector('[data-dclaim],[data-dallclaim]');
+      if(first){
+        const card=first.closest('.quest-card')||first;
+        const top=Math.max(0, card.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8);
+        try{ body.scrollTo({ top, behavior:'smooth' }); }catch(e){ body.scrollTop=top; }
+      }
+    }
     return;
   }
   if(questTab==='book'){   // (v52_002) 한 줄 카드 목록 + (v53_002) 보상 받기 버튼만
@@ -5012,7 +5024,7 @@ document.getElementById('questBtn').onclick=(e)=>{ e.stopPropagation(); openQues
 document.getElementById('questClose').onclick=(e)=>{ e.stopPropagation(); closeQuest(); };
 document.getElementById('questOverlay').onclick=()=>{ closeQuest(); };
 document.getElementById('questPanel').onclick=(e)=>{ e.stopPropagation(); };
-document.querySelectorAll('.q-tab').forEach(b=>{ b.onclick=(e)=>{ e.stopPropagation(); questTab=b.dataset.tab; if(questTab==='book') sbEnterScroll=true; questView={mode:'list'}; renderQuest(); }; });   // (v53_006)
+document.querySelectorAll('.q-tab').forEach(b=>{ b.onclick=(e)=>{ e.stopPropagation(); questTab=b.dataset.tab; if(questTab==='book') sbEnterScroll=true; if(questTab==='daily') dqEnterScroll=true; questView={mode:'list'}; renderQuest(); }; });   // (v53_006, v60_002 데일리도 탭 전환=진입)
 
 // ====== (v43_005) 일일 퀘스트 — 현실 날짜 기반 (인게임 Day 아님, 확정 스펙) ======
 // 로컬 날짜 문자열 키. 자정이 지나 처음 확인하는 시점에 템플릿 풀에서 3개 난수 생성.
@@ -5416,7 +5428,9 @@ const PARTY_ESC       = 0.75;   // (v48_003) 0.45→0.75 — 실플레이 웨이
 const PARTY_ESC_CAP   = 30;     // (v48_004 주석) 실질 죽은 값 — FLOOR(600ms)가 웨이브 7~17에 먼저 걸려 CAP 도달 불가. 안전핀으로만 유지
 const PARTY_SPAWN_FLOOR_MS = 600;  // (v48_003) 700→600 — 886ms를 편하게 처리했으므로 바닥을 더 낮춰 벽이 실제로 물리게. 웨이브 7에서 도달. 임시값
 // (v45_008) 웨이브 다양화 3종 — 인기 메뉴(CSD형)·예고 버스트(PvZ형)·사이드 증가(디너대시형)
-const PARTY_HOT_RATIO   = 0.6;   // 인기 메뉴 주문 집중 비율
+const PARTY_HOT_BASE    = 0.6;   // (v60_001) 인기 메뉴 주문 집중 비율 — 시작값 (구 PARTY_HOT_RATIO)
+const PARTY_HOT_STEP    = 0.05;  // (v60_001) 웨이브당 집중 확률 증가폭 — 병목을 착석→제조(오븐·재고)로 이동
+const PARTY_HOT_CAP     = 0.9;   // (v60_001) 집중 확률 상한 — W6+에서 도달(스폰 벽 6~7과 동기), 10%는 랜덤 유지
 const PARTY_BURST_DELAY = 2500;  // 웨이브업 예고 → 버스트 시작까지(가상ms)
 const PARTY_BURST_LEN   = 3000;  // 버스트 지속(가상ms)
 const PARTY_BURST_MULT  = 0.3;   // 버스트 중 스폰 간격 배수(짧게=밀집)
@@ -6686,8 +6700,8 @@ function pickUnlockedSide(){
 function spawnCustomer(){
   if(waitingQueue.length>=queueMax()) return;   // (v48_005) 줄 꽉 차면 안 옴 — 일반 6 / 파티 8
   const mainPool = MAIN_DISHES.filter(d=>unlockedDishes.includes(d.id)).map(d=>d.id);  const pool = mainPool.length ? mainPool : MAIN_DISHES.map(d=>d.id);
-  // (v45_008) 파티: 웨이브 인기 메뉴 60% 집중 / (v42_001) 테마 데이: 75% 테마 음식 (미해금이면 랜덤 폴백)
-  const want = (phase==='party' && partyHotDish && pool.includes(partyHotDish) && Math.random()<PARTY_HOT_RATIO)
+  // (v45_008→v60_001) 파티: 인기 메뉴 집중 — 웨이브 스케일 60%→90% (partyHotRatio) / (v42_001) 테마 데이: 75% 테마 음식 (미해금이면 랜덤 폴백)
+  const want = (phase==='party' && partyHotDish && pool.includes(partyHotDish) && Math.random()<partyHotRatio())
     ? partyHotDish
     : (isThemeDay() && pool.includes(themeFood) && Math.random()<THEME_RATIO)
     ? themeFood
@@ -8287,6 +8301,11 @@ function pickPartyHot(){
 // (v45_008) 사이드 주문 확률 — 파티에선 웨이브당 +STEP, 상한 CAP (뒤로 갈수록 '더 많이 시키는' 손님)
 function sideChance(){
   return phase==='party' ? Math.min(PARTY_SIDE_CAP, SIDE_CHANCE + partyWaveLevel*PARTY_SIDE_STEP) : SIDE_CHANCE;
+}
+// (v60_001) 인기 메뉴 집중 확률 — sideChance() 미러. 웨이브당 +STEP, 상한 CAP (W2 70% → W4 80% → W6+ 90%)
+// 매 웨이브 pickPartyHot()의 메뉴 교체가 전환 순간 숨통을 줘 강약 리듬 유지 — 병목은 착석이 아닌 제조로
+function partyHotRatio(){
+  return Math.min(PARTY_HOT_CAP, PARTY_HOT_BASE + partyWaveLevel*PARTY_HOT_STEP);
 }
 // (v48_004) 웨이브 레벨 = 파티 경과시간 기준 (뱀서식) — 서빙 속도와 무관하게 시간이 곧 난이도
 function partyWaveLv(){
@@ -10397,6 +10416,7 @@ function openFriends(){
   document.body.classList.add('shop-open');
   renderFriends();
   document.getElementById('friendsOverlay').classList.remove('hidden');
+  document.getElementById('friendsBody').scrollTop=0;   // (v59_001) 재오픈 시 항상 최상단 — hidden 해제 후에 실행해야 적용됨 (§3 불변 규칙)
 }
 function closeFriends(){
   document.getElementById('friendsOverlay').classList.add('hidden');
