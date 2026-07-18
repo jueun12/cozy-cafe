@@ -3109,7 +3109,7 @@
       <div class="rp-bonus hidden" id="resultBonus"></div>
     </div>
   </div>
-  <!-- (v40) 파티 시작 브리핑 카드 — 홈 위 모달. 최초=종료조건 / 2회차+=직전·최고 기록. 문구 임시 -->
+  <!-- (v40) 파티 시작 브리핑 카드 — 홈 위 모달. 최초=종료조건 / 2회차+=직전·최고 기록. 문구 v58_002 확정 -->
   <div class="result-overlay hidden" id="partyBriefOverlay">
     <div class="result-panel daystart-panel" id="partyBriefPanel">
       <button class="ds-close" id="partyBriefClose" aria-label="닫기">✕</button>
@@ -3159,9 +3159,9 @@
   </div>
 </div>
 
-<!-- (v40) iOS 사파리 탭 전용 홈화면 추가 유도 배너 — 문구 임시 -->
+<!-- (v40) iOS 사파리 탭 전용 홈화면 추가 유도 배너 — 문구 v58_002 확정 -->
 <div class="a2hs-banner hidden" id="a2hsBanner">
-  <span class="a2hs-txt">공유 → '홈 화면에 추가'하면 전체화면으로 즐길 수 있어요 📲</span>
+  <span class="a2hs-txt">공유 버튼 → '홈 화면에 추가'로 전체화면 카페를 즐겨보세요 📲</span>
   <button class="a2hs-close" id="a2hsClose" aria-label="닫기">✕</button>
 </div>
 
@@ -4595,7 +4595,7 @@ function refreshQuestBadge(){
 // 계층 계획: 챕터 12종(§4, 제목+조건 공개)=현행 / 기록(그라인드)=v52_003 / 히든(제목만 공개)=이후.
 // unlock: 저장값 읽기 전용 술어 — SEATED 상태머신 불가침. null이면 이벤트형(storybookMark로 순간 판정).
 // 한번 기록되면 유지 — 재구애로 rel이 초기화돼도 업적은 남음(도감 성격).
-// 컷 일러스트(1·4·11·12번 보상 연출, 참조 문서 §4)는 이미지 자산 준비 후 후속. line·토스트 전부 문구 임시.
+// 컷 일러스트(1·4·11·12번 보상 연출, 참조 문서 §4)는 이미지 자산 준비 후 후속(§7-b). line·토스트 문구는 v56_002·v58_002에서 확정.
 let storybookDone=[];       // 달성 목록 [{id, day}] (저장됨)
 // (v52_003) 누적 통계 — 기록형 업적 판정용. 저장 필드: lifeStats — loadGame 복원 동반(불변 규칙)
 // 갱신 훅: served=customerLeaves(만족) / coins=earnCoins(가게 수익, 파티 배율 반영 후) / phone=execPack 전량 완료
@@ -7806,8 +7806,8 @@ function tick(ts){
         const d=DISH[partyHotDish];
         const wv=wlNow+1;
         // (v47_004) 웨이브 5+부터 🔥 러시 톤으로 강조 — 무한 램프 "한계 접근" 체감(뱀서 강도 언어 점증)
-        const head = (wv>=5) ? ('🔥 웨이브 '+wv+' · 러시 타임!') : ('☕ 웨이브 '+wv+'! 손님들이 몰려와요!');
-        toast(head + ' 인기 메뉴: ' + (d?d.nm:''));   // 문구 임시 — 확정: 신민
+        const head = (wv>=5) ? ('🔥 웨이브 '+wv+' · 러시 타임!') : ('☕ 웨이브 '+wv+'! 손님들이 몰려와요 ·');
+        toast(head + ' 인기 메뉴는 ' + (d?d.nm:'') + '!');   // (v58_002 확정: 신민)
       }
       restartSpawnTimer();   // 새 간격 반영
       if(elTimer) elTimer.classList.toggle('rush', rushNow);   // 러시=색조 신호(폭 불변)
@@ -8016,7 +8016,7 @@ function updateDusk(s){
   let op=0;
   if(phase==='playing' && timeLeft<=DUSK_START){
     op=Math.min(DUSK_MAX, DUSK_MAX*(1 - timeLeft/DUSK_START));
-    if(!duskWarned){ duskWarned=true; showDuskPop(); }   // "🌇 마감 임박!" — 문구 임시, 확정은 신민
+    if(!duskWarned){ duskWarned=true; showDuskPop(); }   // "🌇 마감 시간이 다가와요!" — v46_004 확정(신민), 표시 문구는 #duskPop 참조
   }
   const v=op.toFixed(3);
   if(elDusk._op!==v){ elDusk._op=v; elDusk.style.opacity=v; }
@@ -8325,12 +8325,12 @@ function openPartyBriefing(){
   const sub=document.getElementById('partyBriefSub');
   const body=document.getElementById('partyBriefBody');
   if(!partyPlayed){
-    // 최초 입장 — 종료 조건 안내 (문구 임시)
-    if(sub) sub.textContent='끝없이 밀려드는 손님들, 얼마나 대접할 수 있을까요?';
-    if(body) body.innerHTML=`<div class="pb-info">🎉 손님이 계속 찾아오는 무한 모드예요.<br>손님을 한 분이라도 놓치면 파티가 끝나요.<br>언제든 ✕로 직접 마칠 수도 있어요!</div>`;
+    // 최초 입장 — 종료 조건 안내 (v58_002 확정: 신민)
+    if(sub) sub.textContent='손님이 끝없이 찾아오는 특별한 밤이에요';
+    if(body) body.innerHTML=`<div class="pb-info">🎉 파티에는 손님이 쉬지 않고 몰려와요.<br>한 분이라도 놓치면 파티가 막을 내려요.<br>힘들면 언제든 ✕로 마무리해도 좋아요!</div>`;
   } else {
-    // 재입장 — 직전 기록 + 최고 기록 (문구 임시)
-    if(sub) sub.textContent='이번엔 기록을 넘어볼까요?';
+    // 재입장 — 직전 기록 + 최고 기록 (v58_002 확정: 신민)
+    if(sub) sub.textContent='지난번보다 한 걸음 더, 기록에 도전해 볼까요?';
     if(body) body.innerHTML=
       `<div class="pb-rec"><span class="pb-lbl">직전 기록</span> 서빙 <b>${partyLastServed}</b> · 벌이 <b>${partyLastCoins}</b> · <b>${fmtDuration(partyLastDuration)}</b></div>`+
       `<div class="pb-rec"><span class="pb-lbl">🏆 최고 기록</span> 서빙 <b>${partyBestServed}</b> · 벌이 <b>${partyBestCoins}</b> · 최장 <b>${fmtDuration(partyBestDuration)}</b></div>`;
@@ -8435,7 +8435,7 @@ function showPartyEnd(reason, s, c, isNewBest, dur, nbD){
   const ec=document.getElementById('partyEndCoins'); if(ec) ec.textContent=c;
   const et=document.getElementById('partyEndTime'); if(et) et.textContent = fmtDuration(dur) + (nbD ? ' 🏆' : '');   // (v40) 이번 플레이 시간
   const wave=partyWaveLevel+1;   // (v48_004) 시간 기준 웨이브 — endParty 시점 런타임 값 사용(리셋은 startParty에서만)
-  if(m) m.textContent += `  ·  웨이브 ${wave} 도달`;   // 문구 임시 — 작가 다듬기 대기
+  if(m) m.textContent += `  ·  웨이브 ${wave} 달성!`;   // (v58_002 확정: 신민)
   const best=document.getElementById('partyEndBest');
   if(best){
     best.innerHTML = (isNewBest ? '🏆 최고 기록 갱신! ' : '최고 기록 · ') + `서빙 <b>${partyBestServed}</b> · 벌이 <b>${partyBestCoins}</b> · 최장 <b>${fmtDuration(partyBestDuration)}</b>`;
@@ -8495,8 +8495,8 @@ function closeDay(){
   document.getElementById('resultServed').textContent=`${served} / ${goal}`;
   const goalRow=document.getElementById('resultGoal');
   if(goalRow){
-    // (v39) 목표 단계: 달성 시 다음 목표 예고, 미달성이면 재도전 안내 — 문구 임시(신민 확정 대기)
-    goalRow.textContent = reached ? `🎉 목표 달성! 다음 목표 ${dayGoal(goalStage+1)}명` : `목표까지 ${goal}명 — 내일 다시 도전해요 🌙`;
+    // (v39) 목표 단계: 달성 시 다음 목표 예고, 미달성이면 재도전 안내 — v58_002 확정(신민). '목표까지 N명' 오독(변수=전체 목표) 문구로 해소
+    goalRow.textContent = reached ? `🎉 목표 달성! 내일 목표는 ${dayGoal(goalStage+1)}명이에요` : `오늘 목표는 ${goal}명 — 내일 다시 도전해요 🌙`;
     goalRow.classList.toggle('reached', reached);
   }
   document.getElementById('resultCoins').textContent=coins;
@@ -8864,6 +8864,7 @@ function updateShopAlert(){
 
 function renderShop(){
   const body=document.getElementById('shopBody');
+  const st=body.scrollTop;   // (v58_001) 구매 후 재렌더 시 스크롤 위치 보존 — innerHTML 비우는 순간 0으로 클램프되던 문제
   body.innerHTML='';
 
   // 오늘 매진 카드 (해당 카테고리를 오늘 이미 구매함)
@@ -8995,7 +8996,7 @@ function renderShop(){
   {
     const lv=furnUpgrades.cleanSpeed||0;
     if(lv>=CLEAN_SPEED_MAX_LV){
-      // (v39) 행주 MAX 달성 → 이 슬롯이 안내 점원으로 진화(기존 ⑧ 통합). 문구/아이콘 임시 — 신민 확정 대기.
+      // (v39) 행주 MAX 달성 → 이 슬롯이 안내 점원으로 진화(기존 ⑧ 통합). 문구/아이콘 🛎️ v58_002 확정(신민).
       const hlv=furnUpgrades.helperSpeed||0;
       if(hlv>=HELPER_SPEED_MAX_LV){
         const card=document.createElement('div');
@@ -9004,7 +9005,7 @@ function renderShop(){
           <div class="si-ico">🛎️</div>
           <div class="si-info">
             <div class="si-nm">안내 점원 <span class="lv-tag">MAX</span></div>
-            <div class="si-desc">최고 속도! 손님을 아주 빠르게 안내해요</div>
+            <div class="si-desc">더 바랄 게 없어요! 손님을 눈 깜짝할 새 안내해요</div>
           </div>
           <span class="si-soldout">MAX</span>`;
         body.appendChild(card);
@@ -9208,6 +9209,8 @@ function renderShop(){
   body.querySelectorAll('[data-helper]').forEach(btn=>{
     btn.addEventListener('click',e=>{ e.stopPropagation(); buyHelperSpeed(btn); });
   });
+
+  body.scrollTop=st;   // (v58_001) 스크롤 위치 복원 (내용이 줄면 자동 클램프)
 }
 
 function buyItem(itemId, btn){
@@ -9428,6 +9431,7 @@ function openShop(){
   renderShop();
   document.body.classList.add('shop-open');
   document.getElementById('shopOverlay').classList.remove('hidden');
+  document.getElementById('shopBody').scrollTop=0;   // (v58_001) 새로 열 때는 항상 최상단 — hidden 해제 후에 실행해야 적용됨 (display:none 중엔 무시)
 }
 function closeShop(){
   document.getElementById('shopOverlay').classList.add('hidden');
