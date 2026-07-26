@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v64_001</title>
+<title>포근한 디저트 가게 — v65_001</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -981,7 +981,8 @@
     position:absolute; z-index:115;
     /* (v63_002) 레일 균일 간격(0.53칸) — 중심 4.62 / box바닥 = 8.5 + 2.24*(1-0.768) = 9.020 */
     left:calc(4.587/16*100%); top:calc(9.020/9*100%);
-    transform:translate(-50%,-100%);
+    --sign-anchor:translate(-50%,-100%);  /* (v65_001) */
+    transform:var(--sign-anchor);
   }
   .shop-btn-pos.hidden{ display:none; }
   .shop-btn{
@@ -1035,7 +1036,8 @@
     position:absolute; z-index:115;
     /* (v63_002) 하단 레일 바닥선 8.5행 통일 — box바닥 = 8.5 + H*(1-0.809), H=13cqw=2.08칸 → 8.897 */
     left:calc((2 + 0.0)/16*100%); top:calc(8.897/9*100%);
-    transform:translate(-50%,-100%);
+    --sign-anchor:translate(-50%,-100%);  /* (v65_001) signReveal 키프레임과 앵커 공유 */
+    transform:var(--sign-anchor);
   }
   .friends-btn-pos.hidden{ display:none; }
   .friends-btn{
@@ -1166,13 +1168,16 @@
 
   /* 새로 열린 간판 등장 연출 — 통통 튀며 나타남 */
   .sign-reveal{ animation:signReveal 1s cubic-bezier(.34,1.7,.5,1) both; }
+  /* (v65_001) 앵커 변수화 — v63_002 바닥앵커 전환 시 구 중심앵커 하드코딩 잔존으로
+     fill-mode both가 해금 연출 후에도 버튼을 반 칸 아래로 밀던 회귀 수정.
+     변수 미정의 요소(파티·선반)는 폴백으로 기존 중심앵커 유지. */
   @keyframes signReveal{
-    0%  { opacity:0; transform:translate(-50%,-50%) scale(.1) rotate(-12deg); }
-    45% { opacity:1; transform:translate(-50%,-50%) scale(1.35) rotate(6deg); }
-    62% { transform:translate(-50%,-50%) scale(.88) rotate(-4deg); }
-    78% { transform:translate(-50%,-50%) scale(1.12) rotate(2deg); }
-    90% { transform:translate(-50%,-50%) scale(.97) rotate(-1deg); }
-    100%{ transform:translate(-50%,-50%) scale(1) rotate(0); }
+    0%  { opacity:0; transform:var(--sign-anchor, translate(-50%,-50%)) scale(.1) rotate(-12deg); }
+    45% { opacity:1; transform:var(--sign-anchor, translate(-50%,-50%)) scale(1.35) rotate(6deg); }
+    62% { transform:var(--sign-anchor, translate(-50%,-50%)) scale(.88) rotate(-4deg); }
+    78% { transform:var(--sign-anchor, translate(-50%,-50%)) scale(1.12) rotate(2deg); }
+    90% { transform:var(--sign-anchor, translate(-50%,-50%)) scale(.97) rotate(-1deg); }
+    100%{ transform:var(--sign-anchor, translate(-50%,-50%)) scale(1) rotate(0); }
   }
   /* '짜잔' 안내 토스트 — 화면 가운데 위쪽 */
   .feature-toast{
@@ -1759,7 +1764,8 @@
     position:absolute; z-index:115;
     /* (v63_002) 우상단(13.5,1.5 — v43_002 신민 지정) → 하단 레일 합류. icon_diary는 크롭 자산(여백 0)이라 box바닥=시각바닥=8.5 */
     left:calc(7.381/16*100%); top:calc(8.5/9*100%);
-    transform:translate(-50%,-100%);
+    --sign-anchor:translate(-50%,-100%);  /* (v65_001) */
+    transform:var(--sign-anchor);
   }
   .quest-btn-pos.hidden{ display:none; }
   /* (v63_001) 다이어리 버튼 — imgbtn 패턴 통일 (구 .quest-btn 그라데이션 알약 제거) */
