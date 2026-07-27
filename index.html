@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v66_003</title>
+<title>포근한 디저트 가게 — v66_005</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -7235,11 +7235,11 @@ function updateSeat(t){
     bubble+=`<div class="want-bubble${rdy}">${dishIcoInline(DISH[c.want])}${favTag}</div>`;
     hearts=heartsHTML(c);
   } else if(c.state==='waitingSide'){
-    [c.sideWant].concat(c.sideWant2?[c.sideWant2]:[]).forEach(sd=>{   // (v66_002) 많이 먹는 손님 — 사이드 동시 공개, bubble-stack flex-column 재사용
-      const rdy = tray.includes(sd) ? ' ready' : '';
-      const favTag = isFavOrder(c, sd) ? `<span class="fav-heart"><img src="${DECO_HEART}" alt=""></span>` : '';
-      bubble+=`<div class="want-bubble side${rdy}">${dishIcoInline(DISH[sd])}${favTag}</div>`;
-    });
+    // (v66_005) 사이드 동시 공개 = 티켓형 단일 버블 — 아이콘 가로 배열(포장 티켓과 동일 문법). June 지시: 세로 적층 → 한 버블
+    const sds=[c.sideWant].concat(c.sideWant2?[c.sideWant2]:[]);
+    const rdy = sds.some(sd=>tray.includes(sd)) ? ' ready' : '';                 // 하나라도 쟁반에 있으면 펄스 — "탭하면 전달됨"
+    const favTag = sds.some(sd=>isFavOrder(c, sd)) ? `<span class="fav-heart"><img src="${DECO_HEART}" alt=""></span>` : '';
+    bubble+=`<div class="want-bubble side${rdy}">${sds.map(sd=>dishIcoInline(DISH[sd])).join('')}${favTag}</div>`;
     hearts=heartsHTML(c);
   } else if(c.state==='eating'){
     // 먹는 중: 흰 말풍선(😋) 제거 → 캐릭터가 직접 까딱까딱. 접시+음식은 setTablePlate가 테이블 위에 표시 (v51_001)
@@ -10220,7 +10220,9 @@ function specialMysteryCards(){
     const total = ALL_MENU_IDS.length;
     const remain = total - have;
     if(have >= Math.ceil(total/2)){   // 절반 이상 해금했을 때부터 노출
-      const cond = `남은 메뉴 <b>${remain}종</b>을 모두<br>선보이면 만날 수 있어요`;
+      const cond = remain>0
+        ? `남은 메뉴 <b>${remain}종</b>을 모두<br>선보이면 만날 수 있어요`
+        : `소문을 듣고 곧<br>찾아올 것 같아요…`;   // (v66_004) remain=0 대기 상태 분기 — 하루 지연 전달. 문구 임시 — 확정: 신민
       html += `<div class="friend-card mystery special">
         <div class="friend-face mystery-face special-face">?</div>
         <div class="friend-cond">${cond}</div>
