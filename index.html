@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v65_007</title>
+<title>포근한 디저트 가게 — v65_008</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -1149,6 +1149,17 @@
     background:var(--badge-alert-url) center/contain no-repeat;
     z-index:5; transform-origin:center;
     animation:badgeAlive 4s ease-in-out infinite;
+  }
+  /* (v65_008) 오늘 전부 매진 — UPGRADE 버튼 SOLD OUT 도장 (상점 카드 si-soldout 시각 언어 재사용, glow·blur 없음) */
+  .shop-btn-pos.sold-out img.btn-base{ filter:saturate(.5); opacity:.85; }
+  .shop-btn-pos.sold-out .imgbtn::before{
+    content:'SOLD OUT'; position:absolute; left:50%; top:38%;
+    transform:translate(-50%,-50%) rotate(-6deg);
+    font-size:1.9cqw; font-weight:900; letter-spacing:.04em; white-space:nowrap;
+    color:#fff; background:#c0635a; border:0.3cqw solid #fff;
+    border-radius:1.6cqw; padding:0.5cqw 1.1cqw;
+    box-shadow:0 0.35cqw 0.5cqw rgba(0,0,0,.2);
+    z-index:6; pointer-events:none;
   }
   /* FRIENDS 버튼 (정사각 에셋) */
   #friendsBtn .imgbtn{ width:13cqw; max-width:13cqw; }
@@ -8842,6 +8853,7 @@ function dismissResult(){
   // 날짜 넘김은 OPEN 누를 때(openDay)로 이동. 여기선 방금 끝낸 일차 기준으로 해금만 판단.
   pendingNextDay=true;   // 다음 OPEN에서 날짜 +1
   dailyBought={ unlock:false, stock:false, price:false, heroSpeed:false, cleanSpeed:false, ovenSpeed:false, spawnSpeed:false, queuePatience:false, helperSpeed:false };   // 새 날 준비 → 업그레이드 다시 열림
+  updateShopAlert();   // (v65_008) SOLD OUT 도장 해제
   giftToday=[];   // 새 날 → 선물 다시 가능
   updateDayBadge();
   document.getElementById('openSign').classList.remove('hidden');
@@ -8896,32 +8908,32 @@ function isItemOwned(item){
 }
 
 // 지금 살 수 있는(미보유 + 코인 충분) 상품이 하나라도 있는지
-function hasBuyableItem(){
+function hasBuyableItem(ignoreWallet=false){   // (v65_008) true: 코인 무관 '오늘 살 것 자체가 남았는지' — 매진 판정 전용
   const ALL=[...MAIN_DISHES,...SIDE_DISHES];
   // 해금 가능 + 코인 충분 (노출되는 '다음 후보'만, 오늘 매진 아니면)
-  if(!dailyBought.unlock && nextUnlockCandidates().some(d=>wallet>=(d.unlockCost||50))) return true;
+  if(!dailyBought.unlock && nextUnlockCandidates().some(d=>ignoreWallet || wallet>=(d.unlockCost||50))) return true;
   // 가격 업그레이드 가능 + 코인 충분 (오늘 매진 아니면)
   const unlocked=ALL.filter(d=>unlockedDishes.includes(d.id));
-  if(!dailyBought.price && unlocked.some(d=>wallet>=menuUpCost(d.id))) return true;
+  if(!dailyBought.price && unlocked.some(d=>ignoreWallet || wallet>=menuUpCost(d.id))) return true;
   // 재고 +1 가능 + 코인 충분 (오늘 매진 아니면)
   if(!dailyBought.stock){
     const t=stockTargetDish();
-    if(t && wallet>=stockUpCost(t.id)) return true;
+    if(t && (ignoreWallet || wallet>=stockUpCost(t.id))) return true;
   }
   // 점원 속도 업그레이드 가능 + 코인 충분 (오늘 매진/최대 아니면)
   if(!dailyBought.heroSpeed && (furnUpgrades.heroSpeed||0)<HERO_SPEED_MAX_LV
-     && wallet>=heroSpeedCost(furnUpgrades.heroSpeed||0)) return true;
+     && (ignoreWallet || wallet>=heroSpeedCost(furnUpgrades.heroSpeed||0))) return true;
   // 청소 속도 업그레이드 가능 + 코인 충분
   if(!dailyBought.cleanSpeed && (furnUpgrades.cleanSpeed||0)<CLEAN_SPEED_MAX_LV
-     && wallet>=cleanSpeedCost(furnUpgrades.cleanSpeed||0)) return true;
+     && (ignoreWallet || wallet>=cleanSpeedCost(furnUpgrades.cleanSpeed||0))) return true;
   // 제조(오븐) 속도 업그레이드 가능 + 코인 충분
   if(!dailyBought.ovenSpeed && (furnUpgrades.ovenSpeed||0)<OVEN_SPEED_MAX_LV
-     && wallet>=ovenSpeedCost(furnUpgrades.ovenSpeed||0)) return true;
+     && (ignoreWallet || wallet>=ovenSpeedCost(furnUpgrades.ovenSpeed||0))) return true;
   // 손님 버프 — 입소문·잔잔한 음악 각각 독립 딜 체크
   if(!dailyBought.spawnSpeed && (furnUpgrades.spawnSpeed||0)<SPAWN_SPEED_MAX_LV
-     && wallet>=spawnSpeedCost(furnUpgrades.spawnSpeed||0)) return true;
+     && (ignoreWallet || wallet>=spawnSpeedCost(furnUpgrades.spawnSpeed||0))) return true;
   if(!dailyBought.queuePatience && (furnUpgrades.queuePatience||0)<QUEUE_PAT_MAX_LV
-     && wallet>=queuePatCost(furnUpgrades.queuePatience||0)) return true;
+     && (ignoreWallet || wallet>=queuePatCost(furnUpgrades.queuePatience||0))) return true;
   return false;
 }
 // 오늘 '재고 +1' 대상 메뉴: 해금된 메뉴 중 현재 재고가 가장 낮은 것(동률이면 해금 순서 앞쪽).
@@ -8939,7 +8951,9 @@ function stockTargetDish(){
 function updateShopAlert(){
   const btn=document.getElementById('shopBtn');
   if(!btn) return;
-  btn.classList.toggle('has-deal', hasBuyableItem());
+  const soldOut = !hasBuyableItem(true);   // (v65_008) 코인 무관 — 일일 소진+만렙 포함 '오늘 살 게 없음'
+  btn.classList.toggle('sold-out', soldOut);
+  btn.classList.toggle('has-deal', !soldOut && hasBuyableItem());
 }
 
 function renderShop(){
