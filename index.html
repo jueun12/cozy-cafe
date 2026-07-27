@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v65_006</title>
+<title>포근한 디저트 가게 — v65_007</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -2396,6 +2396,13 @@
     padding:0.3cqw 0.5cqw; z-index:13; pointer-events:none; white-space:nowrap;
   }
   .pack-ticket .dish-ico-img{ width:4cqw; height:4cqw; }   /* (v47_003) 손님 말풍선과 동일 크기 */
+  /* (v65_007) 포장 탭 리액션 — 티켓 통통 펄스. 위치 앵커(translateX)를 키프레임에 보존해 튀는 동안 좌표 유지 (v65_001 앵커 교훈) */
+  #packShelf.tapped .pack-ticket{ animation:packTicketPulse .35s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes packTicketPulse{
+    0%{ transform:translateX(-50%) scale(1); }
+    45%{ transform:translateX(-50%) scale(1.28); }
+    100%{ transform:translateX(-50%) scale(1); }
+  }
   /* (v51_003) 발신자 얼굴 크롭 — 전신 스탠딩에서 머리만 원형으로. 벨 버블·포장 티켓 공용 */
   .caller-face{
     width:3.2cqw; height:3.2cqw; border-radius:50%;
@@ -6518,7 +6525,8 @@ function updateQueueBadges(){
     } else if(a.type==='phone'){
       host = document.getElementById('phoneShelf'); if(!host) return;   // (v46_006)
     } else if(a.type==='pack'){
-      host = document.getElementById('packShelf'); if(!host) return;    // (v46_006)
+      const ps=document.getElementById('packShelf'); if(!ps) return;    // (v46_006)
+      host = ps.querySelector('.pack-ticket') || ps;   // (v65_007) 티켓 있으면 티켓 모서리에 앵커 — 투명 히트박스 허공 뱃지 방지
     } else {
       const t=tables[a.idx]; if(!t||!t.el) return;
       host = t.el;
@@ -8032,6 +8040,7 @@ document.getElementById('phoneShelf').onclick=(e)=>{
 document.getElementById('packShelf').onclick=(e)=>{
   e.stopPropagation();
   if(!isServing() || !phoneTicket) return;
+  tapFeedback(document.getElementById('packShelf'));   // (v65_007) 중복 재탭 포함 티켓 펄스 — 등록 여부와 무관하게 '눌림' 반응
   enqueueAction('pack', 0);
 };
 
