@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v66_005</title>
+<title>포근한 디저트 가게 — v66_008</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -5454,7 +5454,7 @@ const PARTY_SIDE_CAP    = 0.85;  // 사이드 확률 상한
 const PARTY_SIDE2_START_WL = 2;     // 내부 웨이브 기준(표시 W3)부터 발생
 const PARTY_SIDE2_BASE     = 0.10;  // 시작 확률
 const PARTY_SIDE2_STEP     = 0.07;  // 웨이브당 증가폭
-const PARTY_SIDE2_CAP      = 0.66;  // 상한 — 내부 10(표시 W11)에서 도달
+const PARTY_SIDE2_CAP      = 1.0;   // (v66_006) 상한 해제 — 내부 15(표시 W16, 10분)에 100%: 후반 사이드 손님 전원 2개
 let partyStartAt=0;             // 런타임 전용 — 파티 시작 gameNow 스탬프(주기 시계 기준)
 let partyWaveLevel=0;           // 런타임 전용 — 현재 상승 단계(전환 감지·표시용)
 let partyHotDish=null;          // (v45_008) 런타임 전용 — 이번 웨이브 인기 메뉴
@@ -6677,7 +6677,8 @@ function refreshWantedShelves(){
   const wanted=new Set();
   tables.forEach(t=>{
     const c=t.occupant; if(!c) return;
-    if(c.state==='waiting' && c.want) wanted.add(c.want);
+    if(c.state==='waiting' && c.want){ wanted.add(c.want);
+      if(c.bigEater && c.sideWant && !c.sideServed){ wanted.add(c.sideWant); if(c.sideWant2) wanted.add(c.sideWant2); } }   // (v66_008) 순서 자유
     else if(c.state==='waitingSide' && c.sideWant){ wanted.add(c.sideWant); if(c.sideWant2) wanted.add(c.sideWant2); }   // (v66_002) 사이드 2개 동시 공개
   });
   shelves.forEach(sh=>{
@@ -6690,7 +6691,8 @@ function refreshWantedShelves(){
 function reactGuestsToTray(dishId){
   tables.forEach(t=>{
     const c=t.occupant; if(!c) return;
-    const wantsIt = (c.state==='waiting' && c.want===dishId)
+    const wantsIt = (c.state==='waiting' && (c.want===dishId
+                       || (c.bigEater && !c.sideServed && (c.sideWant===dishId || c.sideWant2===dishId))))   // (v66_008) 순서 자유
                  || (c.state==='waitingSide' && (c.sideWant===dishId || c.sideWant2===dishId));   // (v66_002)
     if(wantsIt) popBubble(t, true);
   });
@@ -6703,13 +6705,44 @@ function serveTable(tableIdx){
 
   // 메인 대기 중
   if(c.state==='waiting'){
+    // (v66_008) 많이 먹는 손님: 순서 자유 — 쟁반에 있는 사이드는 메인 없이도 먼저 전달 (티켓 멘탈모델)
+    let sideCnt=0;
+    if(c.bigEater && c.sideWant && !c.sideServed){
+      let guard=4;
+      while(guard--){
+        let sp=tray.indexOf(c.sideWant);
+        if(sp<0 && c.sideWant2 && tray.indexOf(c.sideWant2)>=0){
+          const tmp=c.sideWant; c.sideWant=c.sideWant2; c.sideWant2=tmp;   // 둘째만 쟁반에 있으면 스왑
+          sp=tray.indexOf(c.sideWant);
+        }
+        if(sp<0) break;
+        tray.splice(sp,1);
+        c.sidesServed=(c.sidesServed||[]).concat([c.sideWant]);   // 지급은 시프트 전(v66_002 교훈)
+        c.paid=(c.paid||0)+dishPrice(c.sideWant);
+        sideCnt++;
+        if(c.sideWant2){ c.sideWant=c.sideWant2; c.sideWant2=null; }
+        else { c.sideServed=true; break; }
+      }
+    }
     const pos=tray.indexOf(c.want);
-    if(pos<0){ toast(`${DISH[c.want].nm}이(가) 쟁반에 없어요`); return; }
-    tray.splice(pos,1); renderTrayHud();
+    if(pos<0){
+      if(sideCnt){   // 사이드만 전달 — 착석 유지, 메인 계속 대기 (인내심 후하게 리셋)
+        renderTrayHud();
+        c.patience=1;
+        updateSeat(t);
+        serveBurst(t);
+        toast('고마워요! 😊');
+        refreshWantedShelves();
+        return;
+      }
+      toast(`${DISH[c.want].nm}이(가) 쟁반에 없어요`); return;
+    }
+    tray.splice(pos,1);
     c.state='eating';
     c.paid=(c.paid||0)+dishPrice(c.want);
-    // 사이드 주문이 있으면 조금 먹다가 사이드 요청, 없으면 다 먹고 떠남
-    c.eatUntil=gameNow+(c.sideWant?2500:3500);
+    renderTrayHud();
+    // 사이드 주문이 남아 있으면 조금 먹다가 사이드 요청, 없으면 다 먹고 떠남
+    c.eatUntil=gameNow+((c.sideWant && !c.sideServed)?2500:3500);
     updateSeat(t);
     serveBurst(t);
     toast('맛있게 드세요! 🍽️');
@@ -6961,7 +6994,7 @@ function seatInstant(c, tableIdx){
   showSeatHints(false);
   const sideWant = Math.random()<sideChance() ? pickUnlockedSide() : null;   // (v45_008) 파티 웨이브 스케일
   const sideWant2 = (sideWant && Math.random()<side2Chance()) ? pickUnlockedSide() : null;   // (v66_001) 많이 먹는 손님 — 중복 메뉴 허용
-  free.occupant={ guest:c.guest, want:c.want, sideWant, sideWant2, sidesServed:[],
+  free.occupant={ guest:c.guest, want:c.want, sideWant, sideWant2, bigEater:!!sideWant2, sidesServed:[],
                   sideServed:false, sideRequested:false,
                   state:'thinking', thinkUntil:gameNow+2200,
                   maxHearts:3, patience:1, patienceMs:patienceMsFor(c.guest) };
@@ -7034,7 +7067,7 @@ function seatAtTable(tableIdx, forceGuest){
     // 절반 확률로 사이드 추가 주문 (메인 먹는 도중에 뜸)
     const sideWant = Math.random()<sideChance() ? pickUnlockedSide() : null;   // (v45_008) 파티 웨이브 스케일
     const sideWant2 = (sideWant && Math.random()<side2Chance()) ? pickUnlockedSide() : null;   // (v66_001) 많이 먹는 손님 — 중복 메뉴 허용
-    free.occupant={ guest:c.guest, want:c.want, sideWant, sideWant2, sidesServed:[],
+    free.occupant={ guest:c.guest, want:c.want, sideWant, sideWant2, bigEater:!!sideWant2, sidesServed:[],
                     sideServed:false, sideRequested:false,
                     state:'thinking', thinkUntil:gameNow+2200,
                     maxHearts:3, patience:1, patienceMs:patienceMsFor(c.guest) };
@@ -7232,7 +7265,12 @@ function updateSeat(t){
   } else if(c.state==='waiting'){
     const rdy = tray.includes(c.want) ? ' ready' : '';
     const favTag = isFavOrder(c, c.want) ? `<span class="fav-heart"><img src="${DECO_HEART}" alt=""></span>` : '';
-    bubble+=`<div class="want-bubble${rdy}">${dishIcoInline(DISH[c.want])}${favTag}</div>`;
+    // (v66_006) 많이 먹는 손님은 착석부터 풀 티켓 공개 / (v66_008) 잔여 기준 — 먼저 준 사이드는 티켓에서 빠짐(3→2→1)
+    const pend = (c.bigEater && c.sideWant && !c.sideServed) ? [c.sideWant].concat(c.sideWant2?[c.sideWant2]:[]) : [];
+    const upcoming = pend.map(sd=>dishIcoInline(DISH[sd])).join('');
+    const rdy2 = (rdy || pend.some(sd=>tray.includes(sd))) ? ' ready' : '';   // 티켓에 남은 것 중 하나라도 쟁반에 있으면 펄스
+    const favTag2 = (favTag || pend.some(sd=>isFavOrder(c,sd))) ? `<span class="fav-heart"><img src="${DECO_HEART}" alt=""></span>` : '';
+    bubble+=`<div class="want-bubble${rdy2}">${dishIcoInline(DISH[c.want])}${upcoming}${favTag2}</div>`;
     hearts=heartsHTML(c);
   } else if(c.state==='waitingSide'){
     // (v66_005) 사이드 동시 공개 = 티켓형 단일 버블 — 아이콘 가로 배열(포장 티켓과 동일 문법). June 지시: 세로 적층 → 한 버블
