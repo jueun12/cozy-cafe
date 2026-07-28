@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v66_008</title>
+<title>포근한 디저트 가게 — v67_001</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -4669,9 +4669,9 @@ const STORYBOOK=[
   { id:'g_serve2', reward:500, kind:'rec', after:'g_serve1', emoji:'🧾', title:'오백 번의 배웅', cond:'손님 500명을 만족스럽게 배웅하면',
     unlock:()=>lifeStats.served>=500, prog:()=>[lifeStats.served,500],
     line:'이제 발소리만 들어도, 누가 왔는지 알 것 같다.' },
-  { id:'g_azit', reward:800, kind:'rec', emoji:'🛋️', title:'우리들의 아지트', cond:'손님 500명 배웅 + 가구 5종 보유',
-    unlock:()=>lifeStats.served>=500 && Array.isArray(ownedFurniture) && ownedFurniture.length>=5,
-    prog:()=>[Math.min(lifeStats.served,500),500],
+  { id:'g_azit', reward:800, kind:'rec', emoji:'🛋️', title:'우리들의 아지트', cond:'손님 1000명을 만족스럽게 배웅하면',   // (v67_001) 가구 조건 제거(배경 교체로 가구 시스템 소멸·도달 불가) → 1000명 상향으로 g_serve2와 차별화. 문구·수치 임시 — 확정: 신민
+    unlock:()=>lifeStats.served>=1000,
+    prog:()=>[Math.min(lifeStats.served,1000),1000],
     line:'어느새 다들, 약속 없이도 여기서 만난다.' },   // 참조 문서 §6 — 컷 일러스트는 자산 준비 후
   { id:'g_coin1', reward:300, kind:'rec', emoji:'🪙', title:'차곡차곡', cond:'가게 수익으로 10,000코인을 벌면',
     unlock:()=>lifeStats.coins>=10000, prog:()=>[lifeStats.coins,10000],
