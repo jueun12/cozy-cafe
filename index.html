@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>포근한 디저트 가게 — v67_001</title>
+<title>포근한 디저트 가게 — v67_005</title>
 <style>
   :root{
     --bg:#F4EBDD; --ink:#4A3B2E; --ink-soft:#8B7459;
@@ -2079,6 +2079,28 @@
   }
   .set-reset:active{ transform:translateY(0.3cqw); box-shadow:0 0.1cqw 0 #a84a3d; }
   .set-reset.confirm{ background:#c0392b; box-shadow:0 0.4cqw 0 #8e2a20; }
+  /* (v67_003) 볼륨 슬라이더 — 상점 톤(주황·크림) 준수, glow/blur 금지 */
+  .set-volpct{ flex:0 0 auto; font-size:1.7cqw; font-weight:700; color:var(--ink-soft); min-width:5.2cqw; text-align:right; }
+  .set-vol{
+    flex:0 0 auto; width:16cqw; height:3.2cqw; margin:0;   /* 요소=탭 히트 영역(두껍게), 트랙은 아래 pseudo로 얇게 */
+    -webkit-appearance:none; appearance:none; cursor:pointer;
+    background:transparent; outline:none;
+  }
+  .set-vol::-webkit-slider-runnable-track{
+    height:1cqw; background:#ecdcc2; border-radius:0.5cqw;
+  }
+  .set-vol::-moz-range-track{
+    height:1cqw; background:#ecdcc2; border-radius:0.5cqw;
+  }
+  .set-vol::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:2.6cqw; height:2.6cqw; border-radius:50%; margin-top:-0.8cqw;   /* (썸높이-트랙높이)/2 만큼 올려 중앙 정렬 */
+    background:#d96a5a; border:0.3cqw solid #fff; box-shadow:0 0.2cqw 0 #a84a3d;
+  }
+  .set-vol::-moz-range-thumb{
+    width:2.6cqw; height:2.6cqw; border-radius:50%;
+    background:#d96a5a; border:0.3cqw solid #fff; box-shadow:0 0.2cqw 0 #a84a3d;
+  }
   /* (v55_001) 세이브 가져오기 오버레이 */
   .imp-desc{ font-size:1.7cqw; color:var(--ink-soft); line-height:1.5; margin-bottom:1.2cqw; }
   .imp-ta{
@@ -2531,7 +2553,7 @@
   .waiter{
     --q-y:-1.2cqw;                     /* (v61_002) 대기열 스프라이트 상향 — 허리 잘림 완화. 하트도 동일 변수로 동반 이동 */
     position:absolute; width:4.2cqw; height:4.2cqw; transform:translate(-50%,-50%);
-    transition:left 1.8s linear, top 1.8s linear; z-index:15;
+    transition:left var(--queue-walk-s,1.8s) linear, top var(--queue-walk-s,1.8s) linear; z-index:15;   /* (v67_005) 입소문 연동 */
     touch-action:none;                 /* (v39) 드래그 시 페이지 스크롤 제스처 차단(탭은 유지) */
     -webkit-touch-callout:none;        /* 길게 눌러도 iOS 저장/공유 메뉴 안 뜨게 */
     -webkit-user-select:none; user-select:none;
@@ -2858,6 +2880,14 @@
             <div class="set-desc">벨·코인·서빙 소리</div>
           </div>
           <button class="set-reset" id="btnSfx">켜짐 🔊</button>
+        </div>
+        <div class="set-row"><!-- (v67_003) 볼륨 슬라이더 — STEP① setSfxVolume 소비 -->
+          <div class="set-info">
+            <div class="set-nm">효과음 크기</div>
+            <div class="set-desc">소리의 크기를 조절해요</div>
+          </div>
+          <span class="set-volpct" id="volPct">100%</span>
+          <input type="range" class="set-vol" id="volSlider" min="0" max="100" step="5" value="100" aria-label="효과음 크기">
         </div>
         <div class="set-row">
           <div class="set-info">
@@ -3760,11 +3790,14 @@ function findAisleCol(targetCol, fromX){
 // ====== 상태 ======
 const HERO_BASE_SPEED=0.5;     // 점원 기본 이동속도 (여유 있는 속도. 나중에 속도 버프로 올릴 예정)
 // 점원 이동 속도 업그레이드(영구). 10단계, 단계당 +10% → 최대 2배. 비용 base60 ×1.5/단계, 하루 1회 구매.
-const HERO_SPEED_MAX_LV    = 10;
+const HERO_SPEED_MAX_LV    = 15;   // (v67_005) 고인물 연장 10→15. 11렙부터 증분 +20%
 const HERO_SPEED_PER       = 0.10;
+const HERO_SPEED_PER2      = 0.20;   // (v67_005) 11렙~ 증분 — 고인물 "슉슉" 구간. 수치 임시 — 확정: June
 const HERO_SPEED_COST_BASE = 60;
 const HERO_SPEED_COST_MULT = 1.5;
-function heroSpeed(){ return HERO_BASE_SPEED * (1 + (furnUpgrades.heroSpeed||0) * HERO_SPEED_PER); }
+// (v67_005) 구간식 보너스: 1~10렙 렙당 +10%, 11렙~ 렙당 +20% (만렙 15 = +200%)
+function heroSpeedBonus(lv){ return Math.min(lv,10)*HERO_SPEED_PER + Math.max(0,lv-10)*HERO_SPEED_PER2; }
+function heroSpeed(){ return HERO_BASE_SPEED * (1 + heroSpeedBonus(furnUpgrades.heroSpeed||0)); }
 function heroSpeedCost(lv){ return Math.floor(HERO_SPEED_COST_BASE * Math.pow(HERO_SPEED_COST_MULT, lv)); }
 // 청소(테이블 닦기) 속도 업그레이드(영구). 3단계로 가파르게 단축(이후 Lv4~6 자동 세척 티어로 확장 예정). 비용 곡선은 신발과 동일, 하루 1회.
 const CLEAN_SPEED_MAX_LV    = 6;     // Lv0~3 수동 닦기 속도, Lv4~6 자동 세척 티어
@@ -3779,7 +3812,7 @@ function autoCleanDelay(){ return AUTO_CLEAN_MS[furnUpgrades.cleanSpeed||0] ?? 0
 function cleanSpeedCost(lv){ return Math.floor(CLEAN_SPEED_COST_BASE * Math.pow(CLEAN_SPEED_COST_MULT, lv)); }
 
 // 제조(오븐) 속도 업그레이드(영구). 10단계, 단계당 +10% 속도 → 최대 2배(제조 쿨다운 절반). 비용 곡선은 신발·청소와 동일, 하루 1회.
-const OVEN_SPEED_MAX_LV    = 10;
+const OVEN_SPEED_MAX_LV    = 15;   // (v67_005) 고인물 연장 10→15
 const OVEN_SPEED_PER       = 0.10;
 const OVEN_SPEED_COST_BASE = 60;
 const OVEN_SPEED_COST_MULT = 1.5;
@@ -3787,7 +3820,7 @@ function dishCd(id){ return Math.round((DISH[id]?DISH[id].cd:3000) / (1 + (furnU
 function ovenSpeedCost(lv){ return Math.floor(OVEN_SPEED_COST_BASE * Math.pow(OVEN_SPEED_COST_MULT, lv)); }
 
 // 손님 등장 간격 단축 업그레이드(영구) — "입소문". 10단계, 단계당 등장 빈도 +10% → 최대 2배(간격 절반). 비용 곡선은 신발·청소·오븐과 동일, 하루 1회.
-const SPAWN_SPEED_MAX_LV    = 10;
+const SPAWN_SPEED_MAX_LV    = 15;   // (v67_005) 고인물 연장 10→15
 const SPAWN_SPEED_PER       = 0.10;
 const SPAWN_SPEED_COST_BASE = 60;
 const SPAWN_SPEED_COST_MULT = 1.5;
@@ -3796,7 +3829,7 @@ function spawnIntervalMs(){ return Math.round(SPAWN_BASE_MS / (1 + (furnUpgrades
 function spawnSpeedCost(lv){ return Math.floor(SPAWN_SPEED_COST_BASE * Math.pow(SPAWN_SPEED_COST_MULT, lv)); }
 
 // 대기열 손님 인내심 업그레이드(영구) — "잔잔한 음악". 줄 인내심(QUEUE_PATIENCE_BASE_MS)을 늘려 손님이 줄에서 더 오래 기다림. SEATED(좌석 c.patience)와 무관. 10단계, 단계당 +10% → 최대 2배(45초→90초). 비용 곡선 동일, 하루 1회.
-const QUEUE_PAT_MAX_LV       = 10;
+const QUEUE_PAT_MAX_LV       = 15;   // (v67_005) 고인물 연장 10→15
 const QUEUE_PAT_PER          = 0.10;
 const QUEUE_PAT_COST_BASE    = 60;
 const QUEUE_PAT_COST_MULT    = 1.5;
@@ -3804,6 +3837,13 @@ const QUEUE_PATIENCE_BASE_MS = 45000;   // 기본 줄 인내심(ms). tick에서 
 function queuePatienceMs(){ return Math.round(QUEUE_PATIENCE_BASE_MS * (1 + (furnUpgrades.queuePatience||0) * QUEUE_PAT_PER)); }
 function queuePatCost(lv){ return Math.floor(QUEUE_PAT_COST_BASE * Math.pow(QUEUE_PAT_COST_MULT, lv)); }
 // (v39) 입소문/음악 슬롯 분리 — 날짜 번갈이(spawnSlotShowsSpawn) 제거됨.
+// (v67_005) 입소문 부가 효과 — 대기열 전진(.waiter transition) 가속. 렙당 6%, 만렙 15에서 1.8s→약 0.95s
+const QUEUE_WALK_BASE_S = 1.8;
+const QUEUE_WALK_PER    = 0.06;
+function applyQueueWalkSpeed(){
+  const lv=furnUpgrades.spawnSpeed||0;
+  document.documentElement.style.setProperty('--queue-walk-s', (QUEUE_WALK_BASE_S/(1+lv*QUEUE_WALK_PER)).toFixed(2)+'s');
+}
 let hero={x:0.5, y:0.74, tx:0.5, ty:0.74, moving:false, busy:false, speed:HERO_BASE_SPEED, path:null};
 // ====== 아웃게임(home) 유휴 배회 ======
 const WANDER_SPEED=HERO_BASE_SPEED*0.22;   // 아웃게임 배회 — 클릭 이동과 동일한 느긋한 힐링 속도
@@ -3914,7 +3954,7 @@ let helper={x:0.5, y:0.84, tx:0.5, ty:0.84, moving:false, busy:false, path:null,
 let helperEnabled=false;                     // (개발용 런타임 플래그) 003에서 업그레이드 해금과 연결. 기본 off.
 const HELPER_SPEED_BASE=HERO_BASE_SPEED*0.5;   // (v38_003) lv1 = 느리게 시작
 const HELPER_SPEED_PER=0.12;                   // 레벨당 이동 속도 +12%
-const HELPER_SPEED_MAX_LV=8;                   // 남자 점원 속도 최대 레벨 — 튜닝값
+const HELPER_SPEED_MAX_LV=13;                  // (v67_005) 고인물 연장 8→13 — 튜닝값
 const HELPER_SPEED_COST_BASE=120;              // 첫 해금(lv0→1) 비용 — 튜닝값
 const HELPER_SPEED_COST_MULT=1.5;
 function helperSpeedCost(lv){ return Math.floor(HELPER_SPEED_COST_BASE * Math.pow(HELPER_SPEED_COST_MULT, lv)); }
@@ -6275,11 +6315,26 @@ let phoneIntroShown=false;                    // (v54_003) 전화 안내 카드 
 
 // ====== (v54_004) 사운드 — Web Audio 신디사이즈 SFX (에셋 0바이트, 단일 HTML 유지. BGM은 의도적 제외 — 고도 버전 몫) ======
 let sfxOn=true;    // 설정 🔊 토글 — 영구 저장
+let sfxVolume=1;   // (v67_002) 마스터 볼륨 0~1 — 영구 저장. 구 세이브는 필드 부재 → 1 폴백
 let _actx=null;    // AudioContext — 모바일 자동재생 정책상 첫 사용자 제스처 후에만 동작
+let _masterGain=null;   // (v67_002) 모든 SFX가 통과하는 마스터 게인 — destination 직전 단일 지점
 function _audio(){
-  if(!_actx){ try{ _actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(!_actx){
+    try{
+      _actx=new (window.AudioContext||window.webkitAudioContext)();
+      _masterGain=_actx.createGain();
+      _masterGain.gain.value=sfxVolume;   // 생성 시점에 저장값 반영 (제스처 전 setSfxVolume 호출 대비)
+      _masterGain.connect(_actx.destination);
+    }catch(e){ return null; }
+  }
   if(_actx && _actx.state==='suspended'){ try{ _actx.resume(); }catch(e){} }
   return _actx;
+}
+// (v67_002) 내부 API — STEP ②(설정 UI)가 소비자. 0~1 클램프 → 게인 반영 → 저장
+function setSfxVolume(v){
+  sfxVolume=Math.max(0, Math.min(1, +v||0));
+  if(_masterGain) _masterGain.gain.value=sfxVolume;
+  saveGame();
 }
 document.addEventListener('pointerdown', function _wakeAudio(){ _audio(); }, {once:true, capture:true});   // 첫 탭에서 깨움
 // 공용 톤 — 짧은 어택/지수 감쇠 엔벨로프 (glow·blur 금지처럼 소리도 과장 금지: 볼륨 낮고 부드럽게)
@@ -6291,7 +6346,7 @@ function _tone(ctx, o){
   g.gain.setValueAtTime(0.0001, now);
   g.gain.exponentialRampToValueAtTime(vol, now+attack);
   g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
-  osc.connect(g); g.connect(ctx.destination);
+  osc.connect(g); g.connect(_masterGain||ctx.destination);   // (v67_002) 마스터 게인 경유
   osc.start(now); osc.stop(now+dur+0.05);
 }
 const SFX={
@@ -7309,7 +7364,7 @@ const SAVE_KEY='cozyCafeSave_v2';
 function saveGame(){
   try{
     checkStorybook();   // (v52_001) 술어형 페이지 자동 판정 — checkStorybook은 saveGame을 부르지 않음(재귀 방지)
-    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, goalStage, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, partyUnlocked, partyBestServed, partyBestCoins, partyBestDuration, partyLastServed, partyLastCoins, partyLastDuration, partyPlayed, giftToday, giftIntroShown, phoneIntroShown, sfxOn, partyIntroShown, tutorialDone, partnerId, invited, themeNextDay, themeFood, storyDone, storyActive, storyIntroShown, dailyQuests, questDate, dailyAllClaimed, storybookDone, lifeStats };
+    const data={ wallet, unlockedDishes, ownedFurniture, furnUpgrades, menuLevels, menuStock, dayCount, goalStage, pendingNextDay, allMenuDay, dailyBought, friends, featuresUnlocked, endingShown, partyUnlocked, partyBestServed, partyBestCoins, partyBestDuration, partyLastServed, partyLastCoins, partyLastDuration, partyPlayed, giftToday, giftIntroShown, phoneIntroShown, sfxOn, sfxVolume, partyIntroShown, tutorialDone, partnerId, invited, themeNextDay, themeFood, storyDone, storyActive, storyIntroShown, dailyQuests, questDate, dailyAllClaimed, storybookDone, lifeStats };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   }catch(e){ /* 아티팩트 미리보기 등에서 localStorage 차단될 수 있음 — 무시 */ }
 }
@@ -7335,6 +7390,7 @@ function loadGame(){
       if(typeof ov==='number' && ov>=0) furnUpgrades.ovenSpeed=Math.min(OVEN_SPEED_MAX_LV, Math.floor(ov));
       const sp=data.furnUpgrades.spawnSpeed;
       if(typeof sp==='number' && sp>=0) furnUpgrades.spawnSpeed=Math.min(SPAWN_SPEED_MAX_LV, Math.floor(sp));
+      applyQueueWalkSpeed();   // (v67_005) 저장된 입소문 레벨 → 대기열 전진 속도 반영
       const qp=data.furnUpgrades.queuePatience;
       if(typeof qp==='number' && qp>=0) furnUpgrades.queuePatience=Math.min(QUEUE_PAT_MAX_LV, Math.floor(qp));
       const hs=data.furnUpgrades.helperSpeed;
@@ -7442,6 +7498,7 @@ function loadGame(){
     if(typeof data.giftIntroShown==='boolean') giftIntroShown=data.giftIntroShown;
     if(typeof data.phoneIntroShown==='boolean') phoneIntroShown=data.phoneIntroShown;   // (v54_003)
     if(typeof data.sfxOn==='boolean') sfxOn=data.sfxOn;   // (v54_004)
+    if(typeof data.sfxVolume==='number' && data.sfxVolume>=0 && data.sfxVolume<=1){ sfxVolume=data.sfxVolume; if(_masterGain) _masterGain.gain.value=sfxVolume; }   // (v67_002) 부재 시 1 폴백
     if(typeof data.partyIntroShown==='boolean') partyIntroShown=data.partyIntroShown;
     if(typeof data.tutorialDone==='boolean') tutorialDone=data.tutorialDone;
     if(typeof data.partnerId==='string') partnerId=data.partnerId; else partnerId=null;
@@ -9133,7 +9190,7 @@ function renderShop(){
         <div class="si-ico">👟</div>
         <div class="si-info">
           <div class="si-nm">점원 신발 <span class="lv-tag">MAX</span></div>
-          <div class="si-desc">최고 속도! 이동 +${Math.round(HERO_SPEED_MAX_LV*HERO_SPEED_PER*100)}%</div>
+          <div class="si-desc">최고 속도! 이동 +${Math.round(heroSpeedBonus(HERO_SPEED_MAX_LV)*100)}%</div>
         </div>
         <span class="si-soldout">MAX</span>`;
       body.appendChild(card);
@@ -9142,8 +9199,8 @@ function renderShop(){
     } else {
       const cost=heroSpeedCost(lv);
       const canAfford=wallet>=cost;
-      const curPct=Math.round(lv*HERO_SPEED_PER*100);
-      const nxtPct=Math.round((lv+1)*HERO_SPEED_PER*100);
+      const curPct=Math.round(heroSpeedBonus(lv)*100);
+      const nxtPct=Math.round(heroSpeedBonus(lv+1)*100);
       const card=document.createElement('div');
       card.className='shop-item';
       card.innerHTML=`
@@ -9305,7 +9362,7 @@ function renderShop(){
         <div class="si-info">
           <div class="si-nm">입소문 <span class="lv-tag">Lv.${lv}</span></div>
           <div class="si-up-label">📣 손님 등장 +${curPct}%<span class="arr">→</span>+${nxtPct}%</div>
-          <div class="si-desc">손님이 더 자주 찾아와요</div>
+          <div class="si-desc">손님이 더 자주 찾아오고, 줄도 빨리 당겨져요</div><!-- (v67_005) 문구 임시 — 확정: 신민 -->
         </div>
         <button class="si-buy" data-spawn="1" ${canAfford?'':'disabled'}>
           <img class="coin-ic" src="${COIN_IMG}" alt="">${cost}
@@ -9494,7 +9551,7 @@ function buyHeroSpeed(btn){
   updateWalletHud();
   const sw=document.getElementById('shopWalletNum'); if(sw) sw.textContent=wallet;
   renderShop();
-  toast(`점원이 더 빨라졌어요! (이동 +${Math.round(furnUpgrades.heroSpeed*HERO_SPEED_PER*100)}%)`);
+  toast(`점원이 더 빨라졌어요! (이동 +${Math.round(heroSpeedBonus(furnUpgrades.heroSpeed)*100)}%)`);
 }
 // (v38_003) 안내 점원 해금/속도 업그레이드 — buyHeroSpeed 미러. 자동세척 MAX 이후에만 구매 가능.
 function buyHelperSpeed(btn){
@@ -9567,6 +9624,7 @@ function buySpawnSpeed(btn){
   reactBuyButton(btn, cost);
   wallet-=cost;
   furnUpgrades.spawnSpeed=lv+1;
+  applyQueueWalkSpeed();   // (v67_005) 부가 효과 즉시 반영
   dailyBought.spawnSpeed=true;
   spawnSparklePending=true;     // 상점 닫을 때 대기열 복도에서 좌→우로 별 반짝
   saveGame();
@@ -10666,6 +10724,7 @@ document.getElementById('recipePanel').onclick=(e)=>{ e.stopPropagation(); };
 function openSettings(){
   document.body.classList.add('shop-open');
   refreshSfxBtn();   // (v54_004)
+  refreshVolUI();    // (v67_003) 저장값 → 슬라이더·% 동기화
   document.getElementById('settingsOverlay').classList.remove('hidden');
   // 초기화 버튼은 항상 1단계(확인 전) 상태로 리셋
   const btn=document.getElementById('btnReset');
@@ -10680,6 +10739,20 @@ document.getElementById('settingsOverlay').onclick=()=>{ closeSettings(); };
 // (v54_004) 효과음 토글 — 켤 때 코인 소리로 즉시 미리듣기
 function refreshSfxBtn(){ const b=document.getElementById('btnSfx'); if(b) b.textContent = sfxOn ? '켜짐 🔊' : '꺼짐 🔇'; }
 document.getElementById('btnSfx').onclick=(e)=>{ e.stopPropagation(); sfxOn=!sfxOn; refreshSfxBtn(); saveGame(); if(sfxOn) sfx('coin'); };
+// (v67_003) 볼륨 슬라이더 배선 — input: 게인만 실시간(저장 없음, saveGame 남발 방지) / change: 커밋(저장)+프리뷰
+function refreshVolUI(){
+  const sl=document.getElementById('volSlider'), p=document.getElementById('volPct');
+  if(sl) sl.value=Math.round(sfxVolume*100);
+  if(p) p.textContent=Math.round(sfxVolume*100)+'%';
+}
+const _volSlider=document.getElementById('volSlider');
+_volSlider.onclick=(e)=>{ e.stopPropagation(); };
+_volSlider.oninput=(e)=>{
+  sfxVolume=Math.max(0, Math.min(1, (+e.target.value||0)/100));
+  if(_masterGain) _masterGain.gain.value=sfxVolume;
+  const p=document.getElementById('volPct'); if(p) p.textContent=Math.round(sfxVolume*100)+'%';
+};
+_volSlider.onchange=(e)=>{ setSfxVolume((+e.target.value||0)/100); refreshVolUI(); if(sfxOn) sfx('coin'); };
 document.getElementById('settingsPanel').onclick=(e)=>{ e.stopPropagation(); };
 // (v55_001) 세이브 내보내기 — 클립보드 복사, 실패 시 파일 다운로드 폴백. 저장 포맷 그대로(가공 없음)
 document.getElementById('btnExport').onclick=async (e)=>{
